@@ -44,7 +44,7 @@ export const HomePage: React.FC = () => {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            Shiori v0.0.2-alpha • Catálogo de Leituras
+            Shiori v0.0.3-alpha • Catálogo de Leituras
           </div>
           <h1 className={styles.title}>
             O seu catálogo definitivo para <span className={styles.titleGradient}>Mangás, Novels e Livros</span>.
