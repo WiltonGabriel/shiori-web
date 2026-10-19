@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import styles from "./NotFoundPage.module.css";
 import { Button } from "../../components/ui/Button/Button";
 import { Home, Compass, Bookmark, BookX } from "lucide-react";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 export const NotFoundPage: React.FC = () => {
+  useDocumentTitle("Página Não Encontrada | Shiori");
   return (
     <div className={styles.wrapper}>
       <div className={styles.content}>
