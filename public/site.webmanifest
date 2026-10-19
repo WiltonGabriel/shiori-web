@@ -1,0 +1,20 @@
+{
+  "name": "Shiori \u681e \u2014 Cat\u00e1logo de Leituras",
+  "short_name": "Shiori",
+  "description": "Cat\u00e1logo de leituras e acervo pessoal de mang\u00e1s, novels e livros",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#08090C",
+  "background_color": "#08090C",
+  "display": "standalone"
+}
