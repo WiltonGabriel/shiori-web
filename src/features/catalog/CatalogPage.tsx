@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import styles from "./CatalogPage.module.css";
 import { WorkService } from "../../services/work.service";
 import { CatalogService } from "../../services/catalog.service";
@@ -12,14 +11,13 @@ import { Input } from "../../components/ui/Input/Input";
 import { Modal } from "../../components/ui/Modal/Modal";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
 import type { ObraResponse } from "../../types/work.types";
-import { Star, Plus, Check, SlidersHorizontal } from "lucide-react";
+import { Star, Plus, Check } from "lucide-react";
 
 const DEFAULT_FILTERS: FilterState = {
   searchQuery: "",
   selectedTypes: [],
   minChapters: 0,
   genresState: {},
-  tagsState: {},
   sortBy: "NOTA_DESC",
 };
 
@@ -62,13 +60,6 @@ export const CatalogPage: React.FC = () => {
       .filter(([_, s]) => s === -1)
       .map(([g]) => g.toLowerCase());
 
-    const includedTags = Object.entries(filters.tagsState)
-      .filter(([_, s]) => s === 1)
-      .map(([t]) => t.toLowerCase());
-    const excludedTags = Object.entries(filters.tagsState)
-      .filter(([_, s]) => s === -1)
-      .map(([t]) => t.toLowerCase());
-
     const result = works.filter((w) => {
       // 1. Busca textual
       if (filters.searchQuery.trim()) {
@@ -101,19 +92,6 @@ export const CatalogPage: React.FC = () => {
       if (excludedGenres.length > 0) {
         const hasAnyExcluded = excludedGenres.some((g) => obraGeneros.includes(g));
         if (hasAnyExcluded) return false;
-      }
-
-      // 6. Tags: DEVE conter todas as inclusas (+)
-      const obraTags = (w.tags || []).map((t) => t.toLowerCase());
-      if (includedTags.length > 0) {
-        const hasAllTags = includedTags.every((t) => obraTags.includes(t));
-        if (!hasAllTags) return false;
-      }
-
-      // 7. Tags: NÃO PODE conter nenhuma das excluídas (-)
-      if (excludedTags.length > 0) {
-        const hasAnyExcludedTag = excludedTags.some((t) => obraTags.includes(t));
-        if (hasAnyExcludedTag) return false;
       }
 
       return true;
@@ -162,18 +140,9 @@ export const CatalogPage: React.FC = () => {
   return (
     <div>
       <div className={styles.header}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "0.5rem" }}>
-          <h1 className={styles.title}>Catálogo de Leituras</h1>
-          <Link to="/busca-profunda">
-            <Button variant="secondary" size="sm">
-              <SlidersHorizontal size={15} />
-              <span>Abrir Busca Profunda</span>
-            </Button>
-          </Link>
-        </div>
-
+        <h1 className={styles.title}>Catálogo de Leituras</h1>
         <p className={styles.subtitle}>
-          Consulte o acervo de mangás, novels, livros e quadrinhos com filtros rápidos ou utilize a busca profunda completa.
+          Consulte o acervo de mangás, novels, livros e quadrinhos com filtros rápidos ou abra a busca profunda.
         </p>
 
         <AdvancedSearchFilter

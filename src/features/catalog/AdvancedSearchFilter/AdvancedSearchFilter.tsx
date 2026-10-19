@@ -14,7 +14,6 @@ export interface FilterState {
   selectedTypes: TipoObra[];
   minChapters: number;
   genresState: Record<string, TriState>;
-  tagsState: Record<string, TriState>;
   sortBy: SortOption;
 }
 
@@ -44,19 +43,6 @@ const COMMON_GENRES = [
   "Shoujo",
 ];
 
-const COMMON_TAGS = [
-  "Reencarnação",
-  "Sistema",
-  "Protagonista Forte",
-  "Magia",
-  "Isekai",
-  "Viagem no Tempo",
-  "Vingança",
-  "Nobreza",
-  "Monstros",
-  "Romance Lento",
-];
-
 export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
   filters,
   onChange,
@@ -67,8 +53,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
   const activeCount =
     filters.selectedTypes.length +
     (filters.minChapters > 0 ? 1 : 0) +
-    Object.values(filters.genresState).filter((s) => s !== 0).length +
-    Object.values(filters.tagsState).filter((s) => s !== 0).length;
+    Object.values(filters.genresState).filter((s) => s !== 0).length;
 
   const handleTypeToggle = (type: TipoObra) => {
     const isSelected = filters.selectedTypes.includes(type);
@@ -82,12 +67,6 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
     const updated = { ...filters.genresState, [genre]: nextState };
     if (nextState === 0) delete updated[genre];
     onChange({ ...filters, genresState: updated });
-  };
-
-  const handleTagChange = (tag: string, nextState: TriState) => {
-    const updated = { ...filters.tagsState, [tag]: nextState };
-    if (nextState === 0) delete updated[tag];
-    onChange({ ...filters, tagsState: updated });
   };
 
   return (
@@ -124,17 +103,17 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
         </button>
       </div>
 
-      {/* Painel Rápido de Filtros com Atalho para Busca Profunda */}
+      {/* Painel de Filtros Básicos com Botão para Busca Profunda */}
       {isExpanded && (
         <div className={styles.panel}>
-          {/* Card Destaque: Busca Profunda */}
+          {/* Botão de Destaque para Busca Profunda */}
           <div className={styles.deepSearchBanner}>
             <div className={styles.deepSearchInfo}>
-              <Sparkles size={20} className={styles.deepSearchIcon} />
+              <Sparkles size={18} className={styles.deepSearchIcon} />
               <div>
                 <div className={styles.deepSearchTitle}>Busca Profunda no Catálogo</div>
                 <div className={styles.deepSearchDesc}>
-                  Acesse filtros cirúrgicos com todos os 36 gêneros, operadores lógicos [E / OU], idiomas, status e faixas numéricas.
+                  Filtros completos com 36 gêneros, tags temáticas, operadores lógicos [E / OU], idiomas e status.
                 </div>
               </div>
             </div>
@@ -189,7 +168,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
             </div>
           </div>
 
-          {/* Gêneros (Tri-State: Neutro, +Incluir, -Excluir) */}
+          {/* Gêneros Principais */}
           <div className={styles.filterSection}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>Gêneros Principais</span>
@@ -202,24 +181,6 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
                   label={genre}
                   state={filters.genresState[genre] || 0}
                   onChange={(s: TriState) => handleGenreChange(genre, s)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Tags Temáticas */}
-          <div className={styles.filterSection}>
-            <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>Tags Temáticas</span>
-              <span className={styles.helperText}>Elementos de enredo e arquétipos</span>
-            </div>
-            <div className={styles.chipGroup}>
-              {COMMON_TAGS.map((tag) => (
-                <TriStateChip
-                  key={tag}
-                  label={tag}
-                  state={filters.tagsState[tag] || 0}
-                  onChange={(s: TriState) => handleTagChange(tag, s)}
                 />
               ))}
             </div>
@@ -279,31 +240,6 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
                   type="button"
                   className={styles.tagRemoveBtn}
                   onClick={() => handleGenreChange(genre, 0)}
-                  title="Remover filtro"
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            );
-          })}
-
-          {Object.entries(filters.tagsState).map(([tag, state]) => {
-            if (state === 0) return null;
-            const isInclude = state === 1;
-            return (
-              <span
-                key={tag}
-                className={styles.activeTag}
-                style={{
-                  color: isInclude ? "#34D399" : "#FDA4AF",
-                  borderColor: isInclude ? "rgba(16, 185, 129, 0.4)" : "rgba(244, 63, 94, 0.4)",
-                }}
-              >
-                {isInclude ? "+" : "-"} {tag}
-                <button
-                  type="button"
-                  className={styles.tagRemoveBtn}
-                  onClick={() => handleTagChange(tag, 0)}
                   title="Remover filtro"
                 >
                   <X size={12} />

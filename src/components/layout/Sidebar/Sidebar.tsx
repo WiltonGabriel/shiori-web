@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.css";
 import { useAuthStore } from "../../../store/authStore";
-import { Home, Compass, SlidersHorizontal, Bookmark, ShieldAlert } from "lucide-react";
+import { Home, Compass, Bookmark, ShieldAlert } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuthStore();
@@ -28,16 +28,6 @@ export const Sidebar: React.FC = () => {
       >
         <Compass size={18} />
         <span>Explorar Catálogo</span>
-      </NavLink>
-
-      <NavLink
-        to="/busca-profunda"
-        className={({ isActive }) =>
-          `${styles.navLink} ${isActive ? styles.active : ""}`
-        }
-      >
-        <SlidersHorizontal size={18} />
-        <span>Busca Profunda</span>
       </NavLink>
 
       <NavLink
