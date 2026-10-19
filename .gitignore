@@ -26,3 +26,9 @@ dist-ssr
 # Documentacao privada e memoria da IA
 docs/memory/
 
+# Variaveis de ambiente privadas
+.env
+.env.*
+!.env.example
+
+

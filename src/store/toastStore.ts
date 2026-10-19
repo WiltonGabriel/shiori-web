@@ -59,17 +59,46 @@ export const toast = {
   },
 
   error: (err: unknown, fallbackTitle = "Erro na Operação") => {
+    // 1. Instância formal de ShioriApiError (RFC 9457 ProblemDetail)
     if (err instanceof ShioriApiError) {
+      const detailMessage = err.problem.detail || err.message;
       useToastStore.getState().addToast({
         type: "error",
         title: err.problem.title || fallbackTitle,
-        detail: err.problem.detail || err.message,
+        detail: detailMessage,
         status: err.status,
         validationErrors: err.problem.errosValidacao,
       });
       return;
     }
 
+    // 2. Erro vindo do Axios ou HTTP contendo ProblemDetail diretamente no response.data
+    const axiosResponse = (err as any)?.response?.data;
+    if (axiosResponse && typeof axiosResponse === "object") {
+      const title = axiosResponse.title || fallbackTitle;
+      const detail = axiosResponse.detail || axiosResponse.message || (err as any)?.message;
+      if (detail || title) {
+        useToastStore.getState().addToast({
+          type: "error",
+          title,
+          detail: detail || "O provedor externo está temporariamente indisponível.",
+          status: (err as any)?.response?.status,
+        });
+        return;
+      }
+    }
+
+    // 3. Objeto genérico com campo detail
+    if (err && typeof err === "object" && "detail" in err && typeof (err as any).detail === "string") {
+      useToastStore.getState().addToast({
+        type: "error",
+        title: (err as any).title || fallbackTitle,
+        detail: (err as any).detail,
+      });
+      return;
+    }
+
+    // 4. Instância de Error padrão
     if (err instanceof Error) {
       useToastStore.getState().addToast({
         type: "error",
@@ -79,6 +108,7 @@ export const toast = {
       return;
     }
 
+    // 5. String simples
     if (typeof err === "string") {
       useToastStore.getState().addToast({
         type: "error",

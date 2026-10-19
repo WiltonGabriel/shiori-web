@@ -148,7 +148,7 @@ export const CatalogPage: React.FC = () => {
       const results = await WorkService.searchExternalWorks(externalSearchTerm.trim());
       setExternalResults(results || []);
       if (!results || results.length === 0) {
-        toast.info("Nenhuma obra encontrada nos provedores externos (AniList, MangaDex, Open Library).");
+        toast.info("Nenhuma obra encontrada nos provedores externos (AniList, MangaDex, Kitsu, Open Library).");
       }
     } catch (err: any) {
       toast.error(err, "Falha na busca externa");
@@ -709,7 +709,7 @@ export const CatalogPage: React.FC = () => {
             <div className={styles.externalSearchSection}>
               <div className={styles.externalSearchHeader}>
                 <span className={styles.externalSearchTitle}>
-                  Preenchimento Automático via Provedores (AniList, MangaDex, Open Library)
+                  Preenchimento Automático via Provedores (AniList, MangaDex, Kitsu, Open Library)
                 </span>
                 <Sparkles size={15} style={{ color: "var(--brand-light)" }} />
               </div>
