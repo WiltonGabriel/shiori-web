@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <defs>
+    <linearGradient id="shiori-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="50%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="shiori-ribbon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <!-- Fundo sutil com borda arredondada -->
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="#12141A" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+  <!-- Marcador de página estilizado (Shiori) -->
+  <path d="M18 10 H30 V36 L24 31 L18 36 Z" fill="url(#shiori-grad)" />
+  <!-- Fita dourada acentuada -->
+  <path d="M21 10 H27 V26 L24 23 L21 26 Z" fill="url(#shiori-ribbon)" opacity="0.95" />
+</svg>

@@ -1,0 +1,99 @@
+
+.hero {
+  position: relative;
+  border-radius: var(--radius-xl);
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(14, 16, 23, 0.85));
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 2.5rem;
+  overflow: hidden;
+}
+
+.heroContent {
+  max-width: 680px;
+}
+
+.badgeHighlight {
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+
+.titleGradient {
+  background: linear-gradient(135deg, #FFF, var(--brand-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.worksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feedItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.feedBody {
+  flex: 1;
+}
+
+.feedUser {
+  font-weight: 600;
+  color: var(--brand-light);
+}
+
+.feedText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+
+.feedTime {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

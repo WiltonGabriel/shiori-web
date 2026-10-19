@@ -1,0 +1,48 @@
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.25rem;
+  gap: 1rem;
+  font-size: var(--text-xs);
+  animation: slideDown 0.3s ease-out;
+}
+
+.info {
+  background: rgba(99, 102, 241, 0.15);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--brand-light);
+}
+
+.aviso {
+  background: rgba(245, 158, 11, 0.15);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-amber-light);
+}
+
+.urgente {
+  background: rgba(239, 68, 68, 0.2);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.4);
+  color: #FCA5A5;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: currentColor;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
