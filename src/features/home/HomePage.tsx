@@ -122,7 +122,8 @@ export const HomePage: React.FC = () => {
         setIsLoadingFeed(true);
         const data = await SocialService.getFeed();
         if (isMounted) {
-          setFeedItems(data || []);
+          const list = Array.isArray(data) ? data : (data as any)?.content || [];
+          setFeedItems(list);
         }
       } catch (err) {
         console.error("Falha ao carregar feed social:", err);
@@ -450,7 +451,7 @@ export const HomePage: React.FC = () => {
               <span>Entrar com Minha Conta</span>
             </Button>
           </div>
-        ) : feedItems.length === 0 ? (
+        ) : (!Array.isArray(feedItems) || feedItems.length === 0) ? (
           <div className={styles.emptyStateCard}>
             <Users size={32} style={{ color: "var(--text-muted)" }} />
             <h3 className={styles.emptyStateTitle}>Seu feed está silencioso</h3>
@@ -466,7 +467,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className={styles.feedList}>
-            {feedItems.map((item) => {
+            {(Array.isArray(feedItems) ? feedItems : []).map((item) => {
               const isLiked = Boolean(likedActivities[item.id]);
 
               return (
