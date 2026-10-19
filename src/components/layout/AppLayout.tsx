@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Outlet } from "react-router-dom";
 import styles from "./AppLayout.module.css";
 import { Navbar } from "./Navbar/Navbar";
@@ -11,15 +11,14 @@ import { ToastContainer } from "../ui/Toast/ToastContainer";
 import { useAuthStore } from "../../store/authStore";
 
 export const AppLayout: React.FC = () => {
-  const { user, isAuthenticated } = useAuthStore();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user, isAuthenticated, isAuthModalOpen, openAuthModal, closeAuthModal } = useAuthStore();
 
   const showOnboarding = Boolean(isAuthenticated && user && !user.onboardingConcluido);
 
   return (
     <div className={styles.layout}>
       <BroadcastBanner />
-      <Navbar onOpenAuthModal={() => setIsAuthModalOpen(true)} />
+      <Navbar onOpenAuthModal={openAuthModal} />
       <div className={styles.bodyWrapper}>
         <Sidebar />
         <main className={styles.mainContent}>
@@ -29,7 +28,7 @@ export const AppLayout: React.FC = () => {
       <BottomNav />
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={closeAuthModal}
       />
       <OnboardingModal isOpen={showOnboarding} />
       <ToastContainer />

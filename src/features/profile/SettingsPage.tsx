@@ -16,7 +16,10 @@ import {
   ShieldCheck,
   AlertTriangle,
   Lock,
+  Eye,
 } from "lucide-react";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import type { Visibilidade } from "../../types/catalog.types";
 
 function maskEmail(email: string): string {
   if (!email || !email.includes("@")) return email;
@@ -26,8 +29,24 @@ function maskEmail(email: string): string {
 }
 
 export const SettingsPage: React.FC = () => {
+  useDocumentTitle(
+    "Configurações da Conta | Shiori",
+    "Gerencie a segurança da sua conta, credenciais de acesso, privacidade e direitos LGPD."
+  );
+
   const { user, updateUser, logout } = useAuthStore();
   const navigate = useNavigate();
+
+  // Preferência de Privacidade Padrão
+  const [defaultPrivacy, setDefaultPrivacy] = useState<Visibilidade>(() => {
+    return (localStorage.getItem("shiori_default_privacy") as Visibilidade) || "RESTRITO";
+  });
+
+  const handleDefaultPrivacyChange = (val: Visibilidade) => {
+    setDefaultPrivacy(val);
+    localStorage.setItem("shiori_default_privacy", val);
+    toast.success(`Privacidade padrão para novas leituras definida como: ${val}`);
+  };
 
   // Modais de Alteração
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -206,7 +225,47 @@ export const SettingsPage: React.FC = () => {
         </Card>
       </section>
 
-      {/* 2. Privacidade e LGPD */}
+      {/* 2. Preferências de Leitura e Privacidade Padrão */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>
+          <Eye size={18} style={{ color: "var(--brand-primary)" }} />
+          <span>Privacidade Padrão de Leituras</span>
+        </h2>
+
+        <Card className={styles.card}>
+          <div className={styles.settingRow}>
+            <div className={styles.settingInfo}>
+              <span className={styles.settingLabel}>Visibilidade Padrão para Novas Leituras</span>
+              <span className={styles.settingDesc}>
+                Define a visibilidade inicial ao adicionar novas obras à sua estante (Público, Restrito ou Privado).
+              </span>
+            </div>
+            <select
+              value={defaultPrivacy}
+              onChange={(e) => handleDefaultPrivacyChange(e.target.value as Visibilidade)}
+              style={{
+                padding: "0.6rem 0.95rem",
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-light)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--text-primary)",
+                fontWeight: 600,
+                fontSize: "var(--text-xs)",
+                cursor: "pointer",
+                outline: "none",
+                minHeight: "var(--touch-target-min)",
+              }}
+              title="Seletor de privacidade padrão"
+            >
+              <option value="PUBLICO">Público (Visível a todos)</option>
+              <option value="RESTRITO">Restrito (Conexões mútuas)</option>
+              <option value="PRIVADO">Privado (Apenas você)</option>
+            </select>
+          </div>
+        </Card>
+      </section>
+
+      {/* 3. Privacidade e Portabilidade (LGPD) */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>
           <ShieldCheck size={18} style={{ color: "#34D399" }} />

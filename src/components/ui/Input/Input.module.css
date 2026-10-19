@@ -1,4 +1,3 @@
-
 .container {
   display: flex;
   flex-direction: column;
@@ -55,4 +54,9 @@
 .errorMessage {
   font-size: var(--text-xs);
   color: var(--accent-rose);
+}
+
+.helperText {
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }

@@ -30,10 +30,16 @@ import {
   ToggleLeft,
   RotateCcw,
 } from "lucide-react";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 type AdminTab = "DASHBOARD" | "SUGESTOES" | "DENUNCIAS" | "MESCLAR" | "INTEGRACOES" | "FLAGS";
 
 export const AdminDashboardPage: React.FC = () => {
+  useDocumentTitle(
+    "Painel Administrativo | Shiori",
+    "Gestão e curadoria do acervo, fila de denúncias, métricas do dashboard e feature flags."
+  );
+
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<AdminTab>("DASHBOARD");
 

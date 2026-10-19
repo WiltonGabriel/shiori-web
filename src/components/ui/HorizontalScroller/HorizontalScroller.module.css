@@ -1,0 +1,99 @@
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.scroller {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  width: 100%;
+  padding: 0.25rem 0.15rem;
+  transition: mask-image 0.2s ease, -webkit-mask-image 0.2s ease;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Máscaras de Gradiente para Continuidade Visual */
+.maskBoth {
+  mask-image: linear-gradient(to right, transparent 0%, black 28px, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 28px, black calc(100% - 28px), transparent 100%);
+}
+
+.maskLeft {
+  mask-image: linear-gradient(to right, transparent 0%, black 28px, black 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 28px, black 100%);
+}
+
+.maskRight {
+  mask-image: linear-gradient(to left, transparent 0%, black 28px, black 100%);
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 28px, black 100%);
+}
+
+/* Botões Dinâmicos de Navegação */
+.navButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0.95;
+  transition: all var(--transition-fast);
+}
+
+.navButton:hover {
+  background: var(--brand-primary);
+  color: #ffffff;
+  border-color: var(--brand-primary);
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
+.navButton:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.navButton:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.navButtonLeft {
+  left: -8px;
+}
+
+.navButtonRight {
+  right: -8px;
+}
+
+@media (min-width: 768px) {
+  .navButtonLeft {
+    left: -14px;
+  }
+  .navButtonRight {
+    right: -14px;
+  }
+}

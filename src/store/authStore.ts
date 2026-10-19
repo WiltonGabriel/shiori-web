@@ -6,6 +6,9 @@ interface AuthState {
   user: AuthenticatedUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthModalOpen: boolean;
+  openAuthModal: () => void;
+  closeAuthModal: () => void;
   initAuth: () => void;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegistroRequest) => Promise<void>;
@@ -17,6 +20,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isAuthModalOpen: false,
+
+  openAuthModal: () => set({ isAuthModalOpen: true }),
+  closeAuthModal: () => set({ isAuthModalOpen: false }),
 
   initAuth: () => {
     try {
@@ -33,12 +40,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (credentials: LoginRequest) => {
     const user = await AuthService.login(credentials);
-    set({ user, isAuthenticated: true });
+    set({ user, isAuthenticated: true, isAuthModalOpen: false });
   },
 
   register: async (data: RegistroRequest) => {
     const user = await AuthService.register(data);
-    set({ user, isAuthenticated: true });
+    set({ user, isAuthenticated: true, isAuthModalOpen: false });
   },
 
   updateUser: (partial: Partial<AuthenticatedUser>) => {

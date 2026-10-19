@@ -1,17 +1,19 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import styles from "./ShelfPage.module.css";
 import { CatalogService } from "../../services/catalog.service";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { HorizontalScroller } from "../../components/ui/HorizontalScroller/HorizontalScroller";
 import { Card } from "../../components/ui/Card/Card";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { Modal } from "../../components/ui/Modal/Modal";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
-import type { ItemCatalogoResponse, StatusLeitura } from "../../types/catalog.types";
+import type { ItemCatalogoResponse, StatusLeitura, Visibilidade } from "../../types/catalog.types";
 import {
-  Plus,
   Edit3,
   ExternalLink,
   Trash2,
@@ -19,24 +21,46 @@ import {
   RotateCcw,
   CheckCircle,
   AlertTriangle,
+  LayoutGrid,
+  List,
+  Eye,
+  Shield,
+  Lock,
+  Compass,
+  Star,
+  BookOpen,
 } from "lucide-react";
 
-type FilterTab = "TODOS" | "LENDO" | "TERMINOU" | "ENGAVETADO" | "PLANEJADO" | "ABDICOU";
+type FilterTab = "TODOS" | "LENDO" | "ENGAVETADO" | "TERMINOU" | "PLANEJADO" | "ABDICOU";
 
-const STATUS_TABS: FilterTab[] = ["TODOS", "LENDO", "TERMINOU", "ENGAVETADO", "PLANEJADO", "ABDICOU"];
+const STATUS_TABS: { value: FilterTab; label: string }[] = [
+  { value: "TODOS", label: "Todos" },
+  { value: "LENDO", label: "Lendo" },
+  { value: "ENGAVETADO", label: "Engavetado" },
+  { value: "TERMINOU", label: "Terminou" },
+  { value: "PLANEJADO", label: "Planejado" },
+  { value: "ABDICOU", label: "Abdicou" },
+];
 
 export const ShelfPage: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
+  useDocumentTitle(
+    "Meu Catálogo | Shiori",
+    "Acompanhe o ritmo de leitura de seus mangás, novels e livros. Registre notas, conclua ciclos e acesse seus links seguros."
+  );
+
+  const { isAuthenticated, openAuthModal } = useAuthStore();
   const [items, setItems] = useState<ItemCatalogoResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>("TODOS");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Modal de Edição Rápida
   const [editingItem, setEditingItem] = useState<ItemCatalogoResponse | null>(null);
   const [capituloAtual, setCapituloAtual] = useState<number>(0);
   const [volumeAtual, setVolumeAtual] = useState<number>(0);
   const [statusLeitura, setStatusLeitura] = useState<StatusLeitura>("LENDO");
+  const [visibilidade, setVisibilidade] = useState<Visibilidade>("RESTRITO");
   const [nota, setNota] = useState<number>(0);
   const [anotacao, setAnotacao] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
@@ -45,11 +69,13 @@ export const ShelfPage: React.FC = () => {
   const [closingCycleItem, setClosingCycleItem] = useState<ItemCatalogoResponse | null>(null);
   const [cycleRating, setCycleRating] = useState<number>(10);
   const [cycleNote, setCycleNote] = useState<string>("");
-  const [cycleDate, setCycleDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
+  const [cycleDate, setCycleDate] = useState<string>(
+    () => new Date().toISOString().split("T")[0]
+  );
   const [isClosingCycle, setIsClosingCycle] = useState(false);
 
-  // Modal de Saída Externa para urlLeitura
-  const [externalUrlModal, setExternalUrlModal] = useState<string | null>(null);
+  // Modal de Segurança para Redirecionamento Externo
+  const [safetyModalUrl, setSafetyModalUrl] = useState<string | null>(null);
 
   const loadShelf = async () => {
     if (!isAuthenticated) {
@@ -78,14 +104,42 @@ export const ShelfPage: React.FC = () => {
   const filteredItems = useMemo(() => {
     if (activeTab === "TODOS") return items;
     if (activeTab === "ABDICOU") {
-      return items.filter((i) => i.statusLeitura === "DROPOU");
+      return items.filter((i) => i.statusLeitura === "DROPOU" || (i.statusLeitura as any) === "ABDICOU");
     }
     return items.filter((i) => i.statusLeitura === activeTab);
   }, [items, activeTab]);
 
+  // Contagem para cada aba
+  const tabCounts = useMemo(() => {
+    const counts: Record<FilterTab, number> = {
+      TODOS: items.length,
+      LENDO: 0,
+      ENGAVETADO: 0,
+      TERMINOU: 0,
+      PLANEJADO: 0,
+      ABDICOU: 0,
+    };
+    items.forEach((item) => {
+      if (item.statusLeitura === "LENDO") counts.LENDO++;
+      else if (item.statusLeitura === "ENGAVETADO") counts.ENGAVETADO++;
+      else if (item.statusLeitura === "TERMINOU") counts.TERMINOU++;
+      else if (item.statusLeitura === "PLANEJADO") counts.PLANEJADO++;
+      else if (item.statusLeitura === "DROPOU" || (item.statusLeitura as any) === "ABDICOU") counts.ABDICOU++;
+    });
+    return counts;
+  }, [items]);
+
+  // Botão +1 Otimista
   const handleQuickIncrement = async (item: ItemCatalogoResponse) => {
+    const proximoCap = (item.progressoAtual || 0) + 1;
+    const anterior = item.progressoAtual;
+
+    // Atualização otimista
+    setItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, progressoAtual: proximoCap } : i))
+    );
+
     try {
-      const proximoCap = (item.progressoAtual || 0) + 1;
       const atualizado = await CatalogService.updateProgress(item.id, {
         capituloAtual: proximoCap,
         volumeAtual: item.volumeAtual,
@@ -95,6 +149,9 @@ export const ShelfPage: React.FC = () => {
       setItems((prev) => prev.map((i) => (i.id === item.id ? atualizado : i)));
       toast.success(`Capítulo ${proximoCap} registrado para ${item.obraTitulo}!`);
     } catch (err: any) {
+      setItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, progressoAtual: anterior } : i))
+      );
       toast.error(err, "Erro ao Registrar Progresso");
     }
   };
@@ -104,6 +161,7 @@ export const ShelfPage: React.FC = () => {
     setCapituloAtual(item.progressoAtual || 0);
     setVolumeAtual(item.volumeAtual || 0);
     setStatusLeitura(item.statusLeitura);
+    setVisibilidade(item.visibilidade || "RESTRITO");
     setNota(item.avaliacaoPessoal || 0);
     setAnotacao("");
   };
@@ -122,8 +180,13 @@ export const ShelfPage: React.FC = () => {
         anotacao: anotacao.trim() || undefined,
       });
 
+      if (visibilidade !== editingItem.visibilidade) {
+        await CatalogService.updateVisibility(editingItem.id, { visibilidade });
+        atualizado.visibilidade = visibilidade;
+      }
+
       setItems((prev) => prev.map((i) => (i.id === editingItem.id ? atualizado : i)));
-      toast.success("Progresso atualizado com sucesso!");
+      toast.success("Progresso e preferências atualizados!");
       setEditingItem(null);
     } catch (err: any) {
       toast.error(err, "Erro ao Salvar Progresso");
@@ -157,7 +220,10 @@ export const ShelfPage: React.FC = () => {
       });
 
       setItems((prev) => prev.map((i) => (i.id === closingCycleItem.id ? atualizado : i)));
-      toast.success(`Parabéns! Ciclo de leitura finalizado para ${closingCycleItem.obraTitulo}!`);
+      toast.success(
+        `Ciclo de leitura finalizado com nota ${cycleRating} para ${closingCycleItem.obraTitulo}!`,
+        "Ciclo Concluído"
+      );
       setClosingCycleItem(null);
     } catch (err: any) {
       toast.error(err, "Erro ao Concluir Ciclo");
@@ -167,7 +233,7 @@ export const ShelfPage: React.FC = () => {
   };
 
   const handleRemove = async (id: number) => {
-    if (!window.confirm("Deseja realmente remover esta obra da sua estante?")) {
+    if (!window.confirm("Deseja realmente remover esta obra da sua estante pessoal?")) {
       return;
     }
 
@@ -180,24 +246,67 @@ export const ShelfPage: React.FC = () => {
     }
   };
 
+  const renderVisibilityBadge = (vis: Visibilidade) => {
+    switch (vis) {
+      case "PUBLICO":
+        return (
+          <span className={styles.visibilityBadge} title="Leitura visível publicamente no seu perfil">
+            <Eye size={11} style={{ color: "var(--brand-light)" }} />
+            <span>Público</span>
+          </span>
+        );
+      case "PRIVADO":
+        return (
+          <span className={styles.visibilityBadge} title="Leitura estritamente privada">
+            <Lock size={11} style={{ color: "var(--accent-rose)" }} />
+            <span>Privado</span>
+          </span>
+        );
+      case "RESTRITO":
+      default:
+        return (
+          <span className={styles.visibilityBadge} title="Visível apenas para você e conexões mútuas">
+            <Shield size={11} style={{ color: "#34D399" }} />
+            <span>Restrito</span>
+          </span>
+        );
+    }
+  };
+
+  const renderStatusBadge = (status: StatusLeitura) => {
+    switch (status) {
+      case "LENDO":
+        return <Badge variant="brand">Lendo</Badge>;
+      case "TERMINOU":
+        return <Badge variant="success">Terminou</Badge>;
+      case "ENGAVETADO":
+        return <Badge variant="warning">Engavetado</Badge>;
+      case "PLANEJADO":
+        return <Badge variant="neutral">Planejado</Badge>;
+      case "DROPOU":
+      case "ABDICOU" as any:
+        return <Badge variant="neutral">Abdicou</Badge>;
+      default:
+        return <Badge variant="neutral">{status}</Badge>;
+    }
+  };
+
   if (!isAuthenticated) {
     return (
-      <div style={{ maxWidth: 600, margin: "3rem auto" }}>
-        <Card style={{ textAlign: "center", padding: "3rem 2rem" }}>
-          <h2 style={{ fontSize: "var(--text-xl)", marginBottom: "0.5rem" }}>
+      <div style={{ maxWidth: 580, margin: "3rem auto" }}>
+        <Card style={{ textAlign: "center", padding: "3.5rem 2rem" }}>
+          <BookOpen size={42} style={{ color: "var(--brand-light)", margin: "0 auto 1.25rem" }} />
+          <h2 style={{ fontSize: "var(--text-xl)", fontWeight: 800, marginBottom: "0.5rem" }}>
             Acesso à Estante Pessoal
           </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", marginBottom: "1.5rem" }}>
-            Faça login para acompanhar suas leituras, registrar notas de capítulos e salvar links privados.
+          <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", marginBottom: "1.75rem", lineHeight: 1.6 }}>
+            Faça login para acompanhar o progresso de suas obras capítulo a capítulo, registrar notas de ciclos e gerenciar seus links seguros de leitura.
           </p>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <Button
               variant="primary"
               size="md"
-              onClick={() => {
-                const enterBtn = document.querySelector('header button[type="button"]') as HTMLButtonElement | null;
-                enterBtn?.click();
-              }}
+              onClick={openAuthModal}
             >
               <LogIn size={16} />
               <span>Entrar com Minha Conta</span>
@@ -209,29 +318,75 @@ export const ShelfPage: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className={styles.pageContainer}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Meu Catálogo</h1>
-        <p className={styles.subtitle}>
-          Sua estante pessoal na nuvem. Acompanhe seu ritmo de leitura, ciclos finalizados e links seguros de leitura.
-        </p>
+        <div className={styles.titleArea}>
+          <div>
+            <h1 className={styles.title}>Meu Catálogo</h1>
+            <p className={styles.subtitle}>
+              Sua estante pessoal e diário de leitura. Acompanhe seu ritmo capítulo a capítulo, registre anotações e conclua ciclos.
+            </p>
+          </div>
 
-        <div className={styles.tabs}>
-          {STATUS_TABS.map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={`${styles.tab} ${activeTab === status ? styles.tabActive : ""}`}
-              onClick={() => setActiveTab(status)}
+          <Link to="/catalogo">
+            <Button variant="secondary" size="sm">
+              <Compass size={16} />
+              <span>Explorar Catálogo Global</span>
+            </Button>
+          </Link>
+        </div>
+
+        {/* Barra de Controles: Abas de Estado e Alternador Visual */}
+        <div className={styles.controlsRow}>
+          <div className={styles.tabsContainer}>
+            <HorizontalScroller
+              step={220}
+              ariaLabel="Abas de filtro da estante"
+              showFade
             >
-              {status === "ENGAVETADO" ? "Engavetado" : status === "ABDICOU" ? "Abdicou" : status}
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  className={`${styles.tab} ${activeTab === tab.value ? styles.tabActive : ""}`}
+                  onClick={() => setActiveTab(tab.value)}
+                  role="tab"
+                  aria-selected={activeTab === tab.value}
+                >
+                  <span>{tab.label}</span>
+                  <span className={styles.tabCount}>{tabCounts[tab.value]}</span>
+                </button>
+              ))}
+            </HorizontalScroller>
+          </div>
+
+          <div className={styles.viewToggle} role="group" aria-label="Modo de visualização">
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${viewMode === "grid" ? styles.toggleBtnActive : ""}`}
+              onClick={() => setViewMode("grid")}
+              title="Visão em Grade"
+              aria-label="Visão em Grade"
+            >
+              <LayoutGrid size={15} />
+              <span>Grade</span>
             </button>
-          ))}
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${viewMode === "list" ? styles.toggleBtnActive : ""}`}
+              onClick={() => setViewMode("list")}
+              title="Visão em Lista"
+              aria-label="Visão em Lista"
+            >
+              <List size={15} />
+              <span>Lista</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
           <Spinner size="lg" />
         </div>
       ) : loadError ? (
@@ -248,46 +403,64 @@ export const ShelfPage: React.FC = () => {
           </Button>
         </Card>
       ) : filteredItems.length === 0 ? (
-        <Card style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-          Nenhum item na estante para o filtro <strong>{activeTab === "ABDICOU" ? "Abdicou" : activeTab}</strong>.
+        <Card style={{ textAlign: "center", padding: "4rem 2rem", color: "var(--text-muted)" }}>
+          <BookOpen size={36} style={{ color: "var(--border-light)", margin: "0 auto 1rem auto" }} />
+          <p style={{ fontSize: "var(--text-base)", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>
+            Nenhum item na estante para o filtro{" "}
+            <strong>
+              {STATUS_TABS.find((t) => t.value === activeTab)?.label || activeTab}
+            </strong>
+          </p>
+          <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+            Adicione obras através do catálogo global para acompanhar seu ritmo de leitura!
+          </p>
+          <Link to="/catalogo">
+            <Button variant="primary" size="sm" style={{ margin: "0 auto" }}>
+              <Compass size={16} />
+              <span>Explorar Catálogo</span>
+            </Button>
+          </Link>
         </Card>
-      ) : (
+      ) : viewMode === "grid" ? (
+        /* ===================================================================
+         * VISÃO EM GRADE (Cards com Capas 3:4)
+         * =================================================================== */
         <div className={styles.grid}>
           {filteredItems.map((item) => {
             const hasTotalCap = item.obraTotalCapitulos !== undefined && item.obraTotalCapitulos > 0;
             const percentCap = hasTotalCap
-              ? Math.min(100, Math.round(((item.progressoAtual || 0) / (item.obraTotalCapitulos || 1)) * 100))
+              ? Math.min(
+                  100,
+                  Math.round(((item.progressoAtual || 0) / (item.obraTotalCapitulos || 1)) * 100)
+                )
               : 0;
 
-            const badgeStatus =
-              item.statusLeitura === "DROPOU"
-                ? "Abdicou"
-                : item.statusLeitura === "ENGAVETADO"
-                ? "Engavetado"
-                : item.statusLeitura;
-
             return (
-              <Card key={item.id} className={styles.itemCard}>
+              <div key={item.id} className={styles.shelfCard}>
                 <div className={styles.coverWrapper}>
                   {item.obraCapaUrl ? (
-                    <img src={item.obraCapaUrl} alt={item.obraTitulo} className={styles.coverImg} loading="lazy" />
+                    <img
+                      src={item.obraCapaUrl}
+                      alt={item.obraTitulo}
+                      className={styles.coverImg}
+                      loading="lazy"
+                    />
                   ) : (
-                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: "0.65rem" }}>
-                      Sem Capa
-                    </div>
+                    <BookOpen size={24} style={{ color: "var(--text-muted)" }} />
                   )}
                 </div>
 
-                <div className={styles.itemInfo}>
-                  <h3 className={styles.itemTitle} title={item.obraTitulo}>
-                    {item.obraTitulo}
-                  </h3>
+                <div className={styles.cardBody}>
+                  <div className={styles.cardHeaderRow}>
+                    <h3 className={styles.cardTitle} title={item.obraTitulo}>
+                      {item.obraTitulo}
+                    </h3>
+                    {renderVisibilityBadge(item.visibilidade)}
+                  </div>
 
-                  <div className={styles.progressRow}>
-                    <Badge variant={item.statusLeitura === "ENGAVETADO" ? "warning" : item.statusLeitura === "TERMINOU" ? "success" : "brand"}>
-                      {badgeStatus}
-                    </Badge>
-                    <span className={styles.progressText}>
+                  <div className={styles.progressInfo}>
+                    {renderStatusBadge(item.statusLeitura)}
+                    <span>
                       {hasTotalCap
                         ? `Cap. ${item.progressoAtual || 0} / ${item.obraTotalCapitulos} (${percentCap}%)`
                         : `Cap. ${item.progressoAtual || 0} lidos`}
@@ -302,51 +475,59 @@ export const ShelfPage: React.FC = () => {
                     />
                   </div>
 
-                  {item.obraTotalVolumes ? (
-                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
-                      Volume: {item.volumeAtual || 0} / {item.obraTotalVolumes}
-                    </div>
-                  ) : null}
+                  <div className={styles.cardMetaRow}>
+                    {item.obraTotalVolumes ? (
+                      <span>Vol. {item.volumeAtual || 0} / {item.obraTotalVolumes}</span>
+                    ) : null}
+                    {item.avaliacaoPessoal !== undefined && item.avaliacaoPessoal > 0 && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", color: "var(--accent-amber)" }}>
+                        <Star size={11} fill="currentColor" />
+                        {item.avaliacaoPessoal.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
 
-                  <div className={styles.actions}>
-                    <Button
-                      variant="primary"
-                      size="sm"
+                  <div className={styles.actionsRow}>
+                    <button
+                      type="button"
+                      className={styles.quickPlusBtn}
                       onClick={() => handleQuickIncrement(item)}
-                      title="Avançar +1 capítulo"
+                      title={`Incrementar +1 capítulo de ${item.obraTitulo}`}
+                      aria-label={`Incrementar +1 capítulo de ${item.obraTitulo}`}
                     >
-                      <Plus size={14} />
-                      <span>+1</span>
-                    </Button>
+                      +1
+                    </button>
 
-                    <Button
-                      variant="secondary"
-                      size="sm"
+                    <button
+                      type="button"
+                      className={styles.cycleBtn}
                       onClick={() => handleOpenCloseCycle(item)}
-                      title="Concluir / Fechar Ciclo de Leitura"
+                      title="Registrar conclusão de ciclo com nota e anotação"
                     >
-                      <CheckCircle size={14} />
-                      <span>Concluir</span>
-                    </Button>
+                      <CheckCircle size={13} />
+                      <span>Registro de Ciclo</span>
+                    </button>
 
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleOpenEdit(item)}
                       title="Editar detalhes do progresso"
+                      aria-label="Editar progresso"
                     >
-                      <Edit3 size={14} />
+                      <Edit3 size={13} />
                     </Button>
 
                     {item.urlLeitura && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setExternalUrlModal(item.urlLeitura!)}
+                        onClick={() => setSafetyModalUrl(item.urlLeitura!)}
                         title="Abrir link privado de leitura"
                         style={{ color: "var(--brand-light)" }}
+                        aria-label="Abrir link externo de leitura"
                       >
-                        <ExternalLink size={14} />
+                        <ExternalLink size={13} />
                       </Button>
                     )}
 
@@ -356,18 +537,333 @@ export const ShelfPage: React.FC = () => {
                       onClick={() => handleRemove(item.id)}
                       title="Remover da estante"
                       style={{ marginLeft: "auto", color: "var(--accent-rose)" }}
+                      aria-label="Remover obra da estante"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
                     </Button>
                   </div>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
+      ) : (
+        /* ===================================================================
+         * VISÃO EM LISTA (Tabela Compacta com Rolagem Interna)
+         * =================================================================== */
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th style={{ width: 50 }}>Capa</th>
+                <th>Obra</th>
+                <th style={{ width: 110 }}>Status</th>
+                <th style={{ width: 160 }}>Progresso</th>
+                <th style={{ width: 110 }}>Visibilidade</th>
+                <th style={{ textAlign: "right", width: 220 }}>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item) => {
+                const hasTotalCap = item.obraTotalCapitulos !== undefined && item.obraTotalCapitulos > 0;
+                const percentCap = hasTotalCap
+                  ? Math.min(
+                      100,
+                      Math.round(((item.progressoAtual || 0) / (item.obraTotalCapitulos || 1)) * 100)
+                    )
+                  : 0;
+
+                return (
+                  <tr key={item.id}>
+                    <td>
+                      {item.obraCapaUrl ? (
+                        <img
+                          src={item.obraCapaUrl}
+                          alt={item.obraTitulo}
+                          className={styles.tableCover}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 36,
+                            height: 48,
+                            borderRadius: "var(--radius-sm)",
+                            background: "var(--bg-surface)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <BookOpen size={16} style={{ color: "var(--text-muted)" }} />
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div className={styles.tableObraCell}>
+                        <div>
+                          <span className={styles.tableTitle}>{item.obraTitulo}</span>
+                          {item.avaliacaoPessoal !== undefined && item.avaliacaoPessoal > 0 && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                color: "var(--accent-amber)",
+                                fontSize: "0.7rem",
+                                marginTop: "0.15rem",
+                              }}
+                            >
+                              <Star size={11} fill="currentColor" />
+                              Nota: {item.avaliacaoPessoal.toFixed(1)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{renderStatusBadge(item.statusLeitura)}</td>
+                    <td>
+                      <div className={styles.tableProgress}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>
+                          {hasTotalCap
+                            ? `Cap. ${item.progressoAtual || 0} / ${item.obraTotalCapitulos}`
+                            : `Cap. ${item.progressoAtual || 0}`}
+                        </span>
+                        <div className={styles.progressBarContainer} style={{ height: 4 }}>
+                          <div
+                            className={styles.progressBarFill}
+                            style={{ width: hasTotalCap ? `${percentCap}%` : "100%" }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td>{renderVisibilityBadge(item.visibilidade)}</td>
+                    <td style={{ textAlign: "right" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                        <button
+                          type="button"
+                          className={styles.quickPlusBtn}
+                          onClick={() => handleQuickIncrement(item)}
+                          title="Avançar +1 capítulo"
+                          aria-label={`Incrementar +1 capítulo de ${item.obraTitulo}`}
+                        >
+                          +1
+                        </button>
+
+                        <button
+                          type="button"
+                          className={styles.cycleBtn}
+                          onClick={() => handleOpenCloseCycle(item)}
+                          title="Registro de ciclo"
+                        >
+                          <CheckCircle size={12} />
+                          <span>Ciclo</span>
+                        </button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEdit(item)}
+                          title="Editar progresso"
+                          aria-label="Editar"
+                        >
+                          <Edit3 size={13} />
+                        </Button>
+
+                        {item.urlLeitura && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSafetyModalUrl(item.urlLeitura!)}
+                            title="Abrir link de leitura"
+                            style={{ color: "var(--brand-light)" }}
+                            aria-label="Link externo"
+                          >
+                            <ExternalLink size={13} />
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemove(item.id)}
+                          title="Remover"
+                          style={{ color: "var(--accent-rose)" }}
+                          aria-label="Remover"
+                        >
+                          <Trash2 size={13} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      {/* Modal: Editar Detalhes do Progresso */}
+      {/* ===================================================================
+       * MODAL 1: REGISTRO DE CICLO CONCLUÍDO
+       * =================================================================== */}
+      {closingCycleItem && (
+        <Modal
+          isOpen={true}
+          onClose={() => setClosingCycleItem(null)}
+          title={`Registro de Ciclo: ${closingCycleItem.obraTitulo}`}
+        >
+          <form onSubmit={handleConfirmCloseCycle} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <div className={styles.cycleModalHeader}>
+              {closingCycleItem.obraCapaUrl && (
+                <img
+                  src={closingCycleItem.obraCapaUrl}
+                  alt={closingCycleItem.obraTitulo}
+                  className={styles.cycleCoverMini}
+                />
+              )}
+              <div>
+                <strong style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>
+                  {closingCycleItem.obraTitulo}
+                </strong>
+                <p style={{ margin: "0.2rem 0 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+                  Conclusão do ciclo de leitura. Ao salvar, a obra será marcada como <strong>Terminou</strong> e registrada em seu histórico.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                  Nota do Ciclo (0 a 10)
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="10"
+                    value={cycleRating}
+                    onChange={(e) => setCycleRating(Math.min(10, Math.max(0, parseFloat(e.target.value) || 0)))}
+                    style={{
+                      padding: "0.65rem 0.95rem",
+                      background: "var(--bg-surface)",
+                      border: "1px solid var(--border-light)",
+                      borderRadius: "var(--radius-md)",
+                      color: "var(--text-primary)",
+                      fontFamily: "inherit",
+                      fontSize: "var(--text-sm)",
+                      width: "100%",
+                      outline: "none",
+                    }}
+                  />
+                  <span style={{ display: "flex", alignItems: "center", gap: "0.2rem", color: "var(--accent-amber)", fontWeight: 800, fontSize: "var(--text-sm)" }}>
+                    <Star size={16} fill="currentColor" />
+                    {cycleRating.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+
+              <Input
+                label="Data de Conclusão"
+                type="date"
+                value={cycleDate}
+                onChange={(e) => setCycleDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                Anotações e Reflexões Pessoais (Opcional)
+              </label>
+              <textarea
+                placeholder="O que você achou do desfecho, personagens e narrativa desta obra?"
+                value={cycleNote}
+                onChange={(e) => setCycleNote(e.target.value)}
+                rows={3}
+                style={{
+                  padding: "0.65rem 0.95rem",
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border-light)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--text-primary)",
+                  fontFamily: "inherit",
+                  fontSize: "var(--text-sm)",
+                  resize: "vertical",
+                  outline: "none",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setClosingCycleItem(null)}
+                disabled={isClosingCycle}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                isLoading={isClosingCycle}
+              >
+                <CheckCircle size={16} />
+                <span>Salvar Ciclo Concluído</span>
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* ===================================================================
+       * MODAL 2: AVISO DISCRETO DE SEGURANÇA PARA LINK EXTERNO
+       * =================================================================== */}
+      {safetyModalUrl && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSafetyModalUrl(null)}
+          title="Redirecionamento para Site Externo"
+        >
+          <div>
+            <div className={styles.safetyModalWarning}>
+              <AlertTriangle size={24} style={{ color: "var(--accent-amber)", flexShrink: 0 }} />
+              <div>
+                <strong style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)", display: "block", marginBottom: "0.2rem" }}>
+                  Aviso de Segurança
+                </strong>
+                <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                  Você está sendo redirecionado para fora do domínio do Shiori. Este endereço foi registrado exclusivamente em sua estante privada como atalho de leitura.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.safetyUrlBox}>{safetyModalUrl}</div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+              <Button variant="secondary" size="md" onClick={() => setSafetyModalUrl(null)}>
+                Voltar ao Shiori
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => {
+                  window.open(safetyModalUrl, "_blank", "noopener,noreferrer");
+                  setSafetyModalUrl(null);
+                }}
+              >
+                <ExternalLink size={16} />
+                <span>Continuar para o Site</span>
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ===================================================================
+       * MODAL 3: EDITAR DETALHES DO PROGRESSO
+       * =================================================================== */}
       {editingItem && (
         <Modal
           isOpen={true}
@@ -395,11 +891,67 @@ export const ShelfPage: React.FC = () => {
               />
             </div>
 
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                  Status de Leitura
+                </label>
+                <select
+                  value={statusLeitura}
+                  onChange={(e) => setStatusLeitura(e.target.value as StatusLeitura)}
+                  style={{
+                    padding: "0.65rem 0.95rem",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-light)",
+                    borderRadius: "var(--radius-md)",
+                    color: "var(--text-primary)",
+                    minHeight: "var(--touch-target-min)",
+                    outline: "none",
+                  }}
+                >
+                  <option value="LENDO">Lendo</option>
+                  <option value="ENGAVETADO">Engavetado</option>
+                  <option value="TERMINOU">Terminou</option>
+                  <option value="PLANEJADO">Planejado</option>
+                  <option value="DROPOU">Abdicou</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                  Visibilidade da Leitura
+                </label>
+                <select
+                  value={visibilidade}
+                  onChange={(e) => setVisibilidade(e.target.value as Visibilidade)}
+                  style={{
+                    padding: "0.65rem 0.95rem",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-light)",
+                    borderRadius: "var(--radius-md)",
+                    color: "var(--text-primary)",
+                    minHeight: "var(--touch-target-min)",
+                    outline: "none",
+                  }}
+                >
+                  <option value="PUBLICO">Público (Visível no perfil)</option>
+                  <option value="RESTRITO">Restrito (Conexões mútuas)</option>
+                  <option value="PRIVADO">Privado (Apenas você)</option>
+                </select>
+              </div>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
               <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
-                Status de Leitura
+                Nota Pessoal (0 a 10)
               </label>
-              <select
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="10"
+                value={nota}
+                onChange={(e) => setNota(parseFloat(e.target.value) || 0)}
                 style={{
                   padding: "0.65rem 0.95rem",
                   background: "var(--bg-surface)",
@@ -409,81 +961,18 @@ export const ShelfPage: React.FC = () => {
                   minHeight: "var(--touch-target-min)",
                   outline: "none",
                 }}
-                value={statusLeitura}
-                onChange={(e) => setStatusLeitura(e.target.value as StatusLeitura)}
-              >
-                <option value="LENDO">LENDO</option>
-                <option value="TERMINOU">TERMINOU</option>
-                <option value="ENGAVETADO">Engavetado</option>
-                <option value="PLANEJADO">PLANEJADO</option>
-                <option value="DROPOU">ABDICOU</option>
-              </select>
+              />
             </div>
-
-            <Input
-              label="Nota Pessoal (0.0 a 10.0)"
-              type="number"
-              step="0.5"
-              min="0"
-              max="10"
-              value={nota}
-              onChange={(e) => setNota(parseFloat(e.target.value) || 0)}
-            />
-
-            <Input
-              label="Anotação / Comentário Privado"
-              placeholder="O que achou deste capítulo?"
-              value={anotacao}
-              onChange={(e) => setAnotacao(e.target.value)}
-            />
-
-            <Button type="submit" variant="primary" size="md" isLoading={isSaving} style={{ marginTop: "0.5rem" }}>
-              Salvar Atualização
-            </Button>
-          </form>
-        </Modal>
-      )}
-
-      {/* Modal: Fechar Ciclo de Leitura */}
-      {closingCycleItem && (
-        <Modal
-          isOpen={true}
-          onClose={() => setClosingCycleItem(null)}
-          title={`Finalizar Leitura: ${closingCycleItem.obraTitulo}`}
-        >
-          <form onSubmit={handleConfirmCloseCycle} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
-              Você está registrando a conclusão desta obra. O status passará para <strong>TERMINOU</strong> e este ciclo ficará registrado no seu histórico.
-            </p>
-
-            <Input
-              label="Nota Final de Avaliação (0.0 a 10.0)"
-              type="number"
-              step="0.5"
-              min="0"
-              max="10"
-              value={cycleRating}
-              onChange={(e) => setCycleRating(parseFloat(e.target.value) || 0)}
-              required
-            />
-
-            <Input
-              label="Data de Conclusão"
-              type="date"
-              value={cycleDate}
-              onChange={(e) => setCycleDate(e.target.value)}
-              required
-            />
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
               <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
-                Anotação / Crítica Pessoal (Opcional)
+                Anotação / Registro
               </label>
               <textarea
-                placeholder="Escreva sua opinião geral e sentimentos sobre o encerramento da obra..."
-                value={cycleNote}
-                onChange={(e) => setCycleNote(e.target.value)}
-                rows={3}
+                placeholder="Ex: Começando o arco da ilha de Jeju..."
+                value={anotacao}
+                onChange={(e) => setAnotacao(e.target.value)}
+                rows={2}
                 style={{
                   padding: "0.65rem 0.95rem",
                   background: "var(--bg-surface)",
@@ -498,62 +987,29 @@ export const ShelfPage: React.FC = () => {
               />
             </div>
 
-            <Button type="submit" variant="primary" size="md" isLoading={isClosingCycle} style={{ marginTop: "0.5rem" }}>
-              Confirmar Conclusão do Ciclo
-            </Button>
-          </form>
-        </Modal>
-      )}
-
-      {/* Modal: Aviso de Saída Externa */}
-      {externalUrlModal && (
-        <Modal
-          isOpen={true}
-          onClose={() => setExternalUrlModal(null)}
-          title="Aviso de Saída Externa"
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", padding: "1rem", background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: "var(--radius-md)" }}>
-              <AlertTriangle size={20} style={{ color: "var(--accent-amber)", flexShrink: 0, marginTop: "2px" }} />
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                <strong style={{ color: "var(--text-primary)" }}>Você está prestes a sair do Shiori.</strong>
-                <p style={{ margin: "0.35rem 0 0 0" }}>
-                  O link a seguir foi cadastrado exclusivamente por você em sua conta:
-                </p>
-                <div style={{ wordBreak: "break-all", background: "var(--bg-surface)", padding: "0.4rem 0.6rem", borderRadius: "var(--radius-sm)", marginTop: "0.5rem", fontFamily: "monospace", color: "var(--brand-light)" }}>
-                  {externalUrlModal}
-                </div>
-              </div>
-            </div>
-
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", margin: 0, lineHeight: 1.5 }}>
-              Lembramos que o Shiori é um catálogo e rastreador pessoal de leituras e não hospeda, replica, armazena ou redistribui conteúdos de terceiros.
-            </p>
-
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
               <Button
                 variant="secondary"
                 size="md"
-                onClick={() => setExternalUrlModal(null)}
+                onClick={() => setEditingItem(null)}
+                disabled={isSaving}
               >
-                Voltar ao Catálogo
+                Cancelar
               </Button>
-
               <Button
+                type="submit"
                 variant="primary"
                 size="md"
-                onClick={() => {
-                  window.open(externalUrlModal, "_blank", "noopener,noreferrer");
-                  setExternalUrlModal(null);
-                }}
+                isLoading={isSaving}
               >
-                <ExternalLink size={14} />
-                <span>Prosseguir para Link Externo</span>
+                Salvar Alterações
               </Button>
             </div>
-          </div>
+          </form>
         </Modal>
       )}
     </div>
   );
 };
+
+export default ShelfPage;

@@ -19,10 +19,18 @@ import {
   Settings,
   ArrowRight,
   Bookmark,
+  User,
+  LogIn,
 } from "lucide-react";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 export const ProfilePage: React.FC = () => {
-  const { user, updateUser } = useAuthStore();
+  useDocumentTitle(
+    "Meu Perfil | Shiori",
+    "Perfil do leitor no Shiori. Veja suas estatísticas de leitura, obras concluídas e estante pessoal."
+  );
+
+  const { user, updateUser, isAuthenticated, openAuthModal } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [perfil, setPerfil] = useState<UsuarioPerfilResponse | null>(null);
@@ -91,6 +99,32 @@ export const ProfilePage: React.FC = () => {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ maxWidth: 580, margin: "3rem auto" }}>
+        <Card style={{ textAlign: "center", padding: "3.5rem 2rem" }}>
+          <User size={42} style={{ color: "var(--brand-light)", margin: "0 auto 1.25rem" }} />
+          <h2 style={{ fontSize: "var(--text-xl)", fontWeight: 800, marginBottom: "0.5rem" }}>
+            Perfil de Leitor
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", marginBottom: "1.75rem", lineHeight: 1.6 }}>
+            Faça login para acompanhar suas estatísticas, personalizar seu perfil de leitor e gerenciar sua estante.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={openAuthModal}
+            >
+              <LogIn size={16} />
+              <span>Entrar com Minha Conta</span>
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -172,8 +206,10 @@ export const ProfilePage: React.FC = () => {
         </Card>
 
         <Card className={styles.statCard}>
-          <span className={styles.statValue}>{perfil?.pontosConfianca || 0}</span>
-          <span className={styles.statLabel}>Pontos de Confiança</span>
+          <span className={styles.statValue}>
+            {shelfItems.reduce((acc, curr) => acc + (curr.progressoAtual || 0), 0)}
+          </span>
+          <span className={styles.statLabel}>Capítulos Lidos</span>
         </Card>
 
         <Card className={styles.statCard}>
@@ -184,10 +220,8 @@ export const ProfilePage: React.FC = () => {
         </Card>
 
         <Card className={styles.statCard}>
-          <span className={styles.statValue}>
-            {shelfItems.filter((i) => i.statusLeitura === "LENDO").length}
-          </span>
-          <span className={styles.statLabel}>Lendo Atualmente</span>
+          <span className={styles.statValue}>{perfil?.pontosConfianca || 0}</span>
+          <span className={styles.statLabel}>Pontos de Confiança</span>
         </Card>
       </div>
 
