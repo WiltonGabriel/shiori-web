@@ -14,6 +14,9 @@ import { useAuthStore } from "./store/authStore";
 import { useBroadcastStore } from "./store/broadcastStore";
 import { BroadcastService } from "./services/broadcast.service";
 
+import { ProtectedRoute } from "./components/guards/ProtectedRoute";
+import { AdminRoleRoute } from "./components/guards/AdminRoleRoute";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -45,11 +48,20 @@ export const App: React.FC = () => {
               <Route index element={<HomePage />} />
               <Route path="catalogo" element={<CatalogPage />} />
               <Route path="explorar" element={<Navigate to="/catalogo" replace />} />
-              <Route path="meu-catalogo" element={<ShelfPage />} />
-              <Route path="estante" element={<Navigate to="/meu-catalogo" replace />} />
-              <Route path="perfil" element={<ProfilePage />} />
-              <Route path="configuracoes" element={<SettingsPage />} />
-              <Route path="admin" element={<AdminDashboardPage />} />
+
+              {/* Rotas Protegidas de Leitor */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="meu-catalogo" element={<ShelfPage />} />
+                <Route path="estante" element={<Navigate to="/meu-catalogo" replace />} />
+                <Route path="perfil" element={<ProfilePage />} />
+                <Route path="configuracoes" element={<SettingsPage />} />
+              </Route>
+
+              {/* Rota Protegida de Governança SysOverseer */}
+              <Route element={<AdminRoleRoute />}>
+                <Route path="admin" element={<AdminDashboardPage />} />
+              </Route>
+
               {/* Página 404 para qualquer rota não mapeada */}
               <Route path="*" element={<NotFoundPage />} />
             </Route>
@@ -61,3 +73,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

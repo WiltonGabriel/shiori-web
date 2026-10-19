@@ -124,6 +124,7 @@ const IncorporationForm: React.FC<IncorporationFormProps> = ({
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Nome da obra na sua estante"
               required
+              autoFocus
             />
           </div>
 

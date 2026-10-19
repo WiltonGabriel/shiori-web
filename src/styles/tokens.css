@@ -46,7 +46,15 @@
   --sidebar-active-color: #A5B4FC;
   --sidebar-active-border: rgba(99, 102, 241, 0.35);
 
-  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+  --card-shadow-hover: 0 12px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px rgba(99, 102, 241, 0.15);
+
+  /* Tokens de Esqueleto e Carregamento Suave */
+  --skeleton-base: rgba(255, 255, 255, 0.06);
+  --skeleton-highlight: rgba(255, 255, 255, 0.12);
+
+  /* Anéis de Foco e Acessibilidade */
+  --focus-ring: 0 0 0 2px var(--bg-app), 0 0 0 4px var(--brand-primary);
 
   /* ===================================================================
    * TIPOGRAFIA RESPONSIVA COM CLAMP FLUIDO
@@ -140,4 +148,9 @@ html.light,
   --sidebar-active-border: #C7D2FE;
 
   --card-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+  --card-shadow-hover: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 0 15px rgba(79, 70, 229, 0.12);
+
+  --skeleton-base: rgba(15, 23, 42, 0.06);
+  --skeleton-highlight: rgba(15, 23, 42, 0.12);
 }
+

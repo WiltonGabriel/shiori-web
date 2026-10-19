@@ -8,9 +8,11 @@ import { Input } from "../../components/ui/Input/Input";
 import { Modal } from "../../components/ui/Modal/Modal";
 import { Avatar } from "../../components/ui/Avatar/Avatar";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
-import { HorizontalScroller } from "../../components/ui/HorizontalScroller/HorizontalScroller";
+import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
+import { AdminHeader, type AdminTab } from "./components/AdminHeader";
+import { AdminBroadcastsTab } from "./components/AdminBroadcastsTab";
 import type {
   AdminDashboardResponse,
   ProvedorIntegracaoResponse,
@@ -21,6 +23,7 @@ import type {
   GeneroResponse,
   AdminUsuarioResponse,
   RegistroAuditoriaResponse,
+  BroadcastResponse,
 } from "../../types/admin.types";
 import {
   Users,
@@ -31,7 +34,6 @@ import {
   XCircle,
   GitMerge,
   FileQuestion,
-  ShieldAlert,
   Server,
   ToggleLeft,
   RotateCcw,
@@ -44,17 +46,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-
-type AdminTab =
-  | "DASHBOARD"
-  | "SUGESTOES"
-  | "DENUNCIAS"
-  | "USUARIOS"
-  | "GENEROS"
-  | "INTEGRACOES"
-  | "FLAGS"
-  | "AUDITORIA"
-  | "MESCLAR";
 
 export const AdminDashboardPage: React.FC = () => {
   useDocumentTitle(
@@ -70,6 +61,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [denuncias, setDenuncias] = useState<DenunciaComentarioResponse[]>([]);
   const [integrations, setIntegrations] = useState<ProvedorIntegracaoResponse[]>([]);
   const [flags, setFlags] = useState<FeatureFlagResponse[]>([]);
+  const [broadcasts, setBroadcasts] = useState<BroadcastResponse[]>([]);
   const [generos, setGeneros] = useState<GeneroResponse[]>([]);
   const [usuarios, setUsuarios] = useState<AdminUsuarioResponse[]>([]);
   const [auditorias, setAuditorias] = useState<RegistroAuditoriaResponse[]>([]);
@@ -99,19 +91,15 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Carregamento inicial de métricas e filas
   const loadAdminData = async () => {
-    if (user?.role !== "ROLE_ADMIN") {
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
-      const [dashRes, sugRes, denRes, intRes, flagRes] = await Promise.allSettled([
+      const [dashRes, sugRes, denRes, intRes, flagRes, broadRes] = await Promise.allSettled([
         AdminService.getDashboard(),
         AdminService.listPendingSuggestions(),
         AdminService.listOpenReports(),
         AdminService.listIntegrations(),
         AdminService.listFeatureFlags(),
+        AdminService.listBroadcasts(),
       ]);
 
       if (dashRes.status === "fulfilled") setDashboard(dashRes.value);
@@ -119,10 +107,23 @@ export const AdminDashboardPage: React.FC = () => {
       if (denRes.status === "fulfilled") setDenuncias(denRes.value.content || []);
       if (intRes.status === "fulfilled") setIntegrations(intRes.value || []);
       if (flagRes.status === "fulfilled") setFlags(flagRes.value || []);
-    } catch (err: any) {
+      if (broadRes.status === "fulfilled") setBroadcasts(broadRes.value.content || []);
+    } catch (err: unknown) {
       toast.error(err, "Falha ao Carregar Dados Administrativos");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadBroadcasts = async () => {
+    try {
+      setIsTabLoading(true);
+      const res = await AdminService.listBroadcasts();
+      setBroadcasts(res.content || []);
+    } catch (err: unknown) {
+      toast.error(err, "Falha ao Carregar Comunicados");
+    } finally {
+      setIsTabLoading(false);
     }
   };
 
@@ -131,7 +132,7 @@ export const AdminDashboardPage: React.FC = () => {
       setIsTabLoading(true);
       const data = await AdminService.listGenres();
       setGeneros(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err, "Falha ao Carregar Gêneros");
     } finally {
       setIsTabLoading(false);
@@ -143,7 +144,7 @@ export const AdminDashboardPage: React.FC = () => {
       setIsTabLoading(true);
       const res = await AdminService.listUsers(0, 50);
       setUsuarios(res.content || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err, "Falha ao Carregar Usuários");
     } finally {
       setIsTabLoading(false);
@@ -155,7 +156,7 @@ export const AdminDashboardPage: React.FC = () => {
       setIsTabLoading(true);
       const res = await AdminService.listAuditLogs(0, 50);
       setAuditorias(res.content || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err, "Falha ao Carregar Auditoria");
     } finally {
       setIsTabLoading(false);
@@ -168,16 +169,16 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Carregamento sob demanda das abas específicas
   useEffect(() => {
-    if (user?.role !== "ROLE_ADMIN") return;
-
     if (activeTab === "GENEROS" && generos.length === 0) {
       loadGenres();
     } else if (activeTab === "USUARIOS" && usuarios.length === 0) {
       loadUsers();
     } else if (activeTab === "AUDITORIA" && auditorias.length === 0) {
       loadAudits();
+    } else if (activeTab === "BROADCASTS" && broadcasts.length === 0) {
+      loadBroadcasts();
     }
-  }, [activeTab, user]);
+  }, [activeTab, generos.length, usuarios.length, auditorias.length, broadcasts.length]);
 
   // Handlers de Sugestão e Denúncia
   const handleEvaluateSuggestion = async (sugestaoId: number, aprovado: boolean) => {
@@ -381,18 +382,6 @@ export const AdminDashboardPage: React.FC = () => {
     );
   }, [usuarios, userSearchTerm]);
 
-  if (user?.role !== "ROLE_ADMIN") {
-    return (
-      <div className="container" style={{ padding: "4rem 1rem", textAlign: "center" }}>
-        <ShieldAlert size={48} style={{ color: "var(--accent-rose)", margin: "0 auto 1.5rem" }} />
-        <h1 style={{ fontSize: "var(--text-xl)", fontWeight: 800 }}>Acesso Restrito ao SysOverseer</h1>
-        <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem" }}>
-          Esta página é destinada exclusivamente à governança de alto nível do Shiori.
-        </p>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="container" style={{ padding: "5rem 1rem", textAlign: "center" }}>
@@ -406,116 +395,20 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="container" style={{ padding: "2rem 1rem 5rem" }}>
-      {/* Cabeçalho */}
-      <div className={styles.header}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
-          <div>
-            <h1 className={styles.title}>Painel de Administração</h1>
-            <p className={styles.subtitle}>
-              Supervisão geral, governança de integrações, moderação de membros, curadoria de vocabulário e auditoria.
-            </p>
-          </div>
-          <Button variant="secondary" size="sm" onClick={loadAdminData}>
-            <RotateCcw size={14} />
-            <span>Atualizar Painel</span>
-          </Button>
-        </div>
-
-        {/* Abas Administrativas com Rolagem Horizontal Fluida */}
-        <div className={styles.tabsContainer}>
-          <HorizontalScroller
-            step={220}
-            showArrows={true}
-            showFade={true}
-            ariaLabel="Navegação das abas do painel administrativo"
-            className={styles.adminTabsScroller}
-            contentClassName={styles.adminTabs}
-          >
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "DASHBOARD" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("DASHBOARD")}
-            >
-              <Layers size={14} />
-              <span>Métricas Gerais</span>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "SUGESTOES" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("SUGESTOES")}
-            >
-              <FileQuestion size={14} />
-              <span>Sugestões Pendentes</span>
-              {sugestoes.length > 0 && <span className={styles.badgeCount}>{sugestoes.length}</span>}
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "DENUNCIAS" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("DENUNCIAS")}
-            >
-              <AlertOctagon size={14} />
-              <span>Denúncias Abertas</span>
-              {denuncias.length > 0 && <span className={styles.badgeCount}>{denuncias.length}</span>}
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "USUARIOS" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("USUARIOS")}
-            >
-              <Users size={14} />
-              <span>Usuários & Strikes</span>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "GENEROS" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("GENEROS")}
-            >
-              <Tags size={14} />
-              <span>Gêneros Oficiais</span>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "INTEGRACOES" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("INTEGRACOES")}
-            >
-              <Server size={14} />
-              <span>Provedores Externos ({integrations.length})</span>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "FLAGS" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("FLAGS")}
-            >
-              <ToggleLeft size={14} />
-              <span>Feature Flags ({flags.length})</span>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "AUDITORIA" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("AUDITORIA")}
-            >
-              <History size={14} />
-              <span>Log de Auditoria</span>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.adminTab} ${activeTab === "MESCLAR" ? styles.adminTabActive : ""}`}
-              onClick={() => setActiveTab("MESCLAR")}
-            >
-              <GitMerge size={14} />
-              <span>Mesclar Obras</span>
-            </button>
-          </HorizontalScroller>
-        </div>
-      </div>
+      {/* Cabeçalho Dedicado SysOverseer com Navegação das 9 Abas de Governança */}
+      <AdminHeader
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        counts={{
+          sugestoes: sugestoes.length,
+          denuncias: denuncias.length,
+          broadcasts: broadcasts.filter((b) => b.ativo).length,
+          integracoes: integrations.length,
+          flags: flags.length,
+        }}
+        onRefresh={loadAdminData}
+        isRefreshing={isLoading}
+      />
 
       {/* 1. Visão Geral / Dashboard */}
       {activeTab === "DASHBOARD" && dashboard && (
@@ -571,9 +464,11 @@ export const AdminDashboardPage: React.FC = () => {
           </h2>
 
           {sugestoes.length === 0 ? (
-            <Card style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-              Nenhuma sugestão de edição pendente de avaliação.
-            </Card>
+            <EmptyState
+              icon={<FileQuestion size={28} />}
+              title="Nenhuma sugestão pendente"
+              description="Todas as sugestões de edição da comunidade já foram avaliadas."
+            />
           ) : (
             <div className={styles.listCards}>
               {sugestoes.map((s) => (
@@ -640,9 +535,11 @@ export const AdminDashboardPage: React.FC = () => {
           </h2>
 
           {denuncias.length === 0 ? (
-            <Card style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-              Nenhuma denúncia aberta no momento. O ecossistema está pacífico!
-            </Card>
+            <EmptyState
+              icon={<AlertOctagon size={28} />}
+              title="Nenhuma denúncia aberta"
+              description="O ecossistema está pacífico! Não há infrações ou denúncias aguardando moderação."
+            />
           ) : (
             <div className={styles.listCards}>
               {denuncias.map((d) => (
@@ -1080,7 +977,16 @@ export const AdminDashboardPage: React.FC = () => {
         </section>
       )}
 
-      {/* 8. Log de Auditoria Visual */}
+      {/* 8. Comunicados Globais / Broadcasts */}
+      {activeTab === "BROADCASTS" && (
+        <AdminBroadcastsTab
+          broadcasts={broadcasts}
+          isLoading={isTabLoading}
+          onRefresh={loadBroadcasts}
+        />
+      )}
+
+      {/* 9. Log de Auditoria Visual */}
       {activeTab === "AUDITORIA" && (
         <section className={styles.section}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>

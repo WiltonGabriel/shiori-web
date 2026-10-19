@@ -10,6 +10,7 @@ import { Avatar } from "../../components/ui/Avatar/Avatar";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
+import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
 import type { UsuarioPerfilResponse } from "../../types/user.types";
 import type { ItemCatalogoResponse } from "../../types/catalog.types";
 import {
@@ -19,8 +20,7 @@ import {
   Settings,
   ArrowRight,
   Bookmark,
-  User,
-  LogIn,
+  Compass,
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
@@ -30,7 +30,7 @@ export const ProfilePage: React.FC = () => {
     "Perfil do leitor no Shiori. Veja suas estatísticas de leitura, obras concluídas e estante pessoal."
   );
 
-  const { user, updateUser, isAuthenticated, openAuthModal } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [perfil, setPerfil] = useState<UsuarioPerfilResponse | null>(null);
@@ -99,32 +99,6 @@ export const ProfilePage: React.FC = () => {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
         <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div style={{ maxWidth: 580, margin: "3rem auto" }}>
-        <Card style={{ textAlign: "center", padding: "3.5rem 2rem" }}>
-          <User size={42} style={{ color: "var(--brand-light)", margin: "0 auto 1.25rem" }} />
-          <h2 style={{ fontSize: "var(--text-xl)", fontWeight: 800, marginBottom: "0.5rem" }}>
-            Perfil de Leitor
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", marginBottom: "1.75rem", lineHeight: 1.6 }}>
-            Faça login para acompanhar suas estatísticas, personalizar seu perfil de leitor e gerenciar sua estante.
-          </p>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={openAuthModal}
-            >
-              <LogIn size={16} />
-              <span>Entrar com Minha Conta</span>
-            </Button>
-          </div>
-        </Card>
       </div>
     );
   }
@@ -239,9 +213,17 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         {shelfItems.length === 0 ? (
-          <Card style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-            Sua estante ainda está vazia. Adicione obras pelo catálogo para acompanhar suas leituras!
-          </Card>
+          <EmptyState
+            icon={<Bookmark size={32} />}
+            title="Sua estante ainda está vazia"
+            description="Explore o catálogo global para adicionar mangás, manhwas ou livros à sua estante pessoal e acompanhar seu progresso."
+            action={{
+              label: "Explorar Catálogo",
+              href: "/catalogo",
+              icon: <Compass size={16} />,
+              variant: "primary",
+            }}
+          />
         ) : (
           <div className={styles.shelfGrid}>
             {shelfItems.slice(0, 4).map((item) => (

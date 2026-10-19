@@ -1,0 +1,145 @@
+.headerWrapper {
+  margin-bottom: 2rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+  box-shadow: var(--card-shadow);
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sysBadge {
+  font-family: monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem;
+  background: rgba(99, 102, 241, 0.18);
+  color: var(--brand-light);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.roleBadge {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tabsContainer {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.75rem;
+  position: relative;
+  width: 100%;
+}
+
+.adminTabsScroller {
+  width: 100%;
+}
+
+.adminTabs {
+  display: flex;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  width: max-content;
+  min-width: 100%;
+  align-items: center;
+}
+
+.adminTab {
+  padding: 0.55rem 0.95rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.adminTab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.adminTabActive {
+  color: var(--brand-light) !important;
+  background: rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+}
+
+.badgeCount {
+  background: var(--brand-glow);
+  color: var(--brand-light);
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  font-weight: 800;
+}
+
+.badgeCountAlert {
+  background: rgba(244, 63, 94, 0.2);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  font-weight: 800;
+}

@@ -8,7 +8,8 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { HorizontalScroller } from "../../components/ui/HorizontalScroller/HorizontalScroller";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
-import { Spinner } from "../../components/ui/Spinner/Spinner";
+import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
+import { CatalogCardSkeleton } from "../../components/ui/Skeleton/Skeleton";
 import {
   TIPO_OBRA_LABELS,
   type ObraResponse,
@@ -29,7 +30,6 @@ import {
   BookPlus,
   ChevronLeft,
   ChevronRight,
-  BookOpen,
   EyeOff,
 } from "lucide-react";
 
@@ -215,8 +215,10 @@ export const CatalogPage: React.FC = () => {
 
       {/* 3. Grade de Resultados de Cartões de Obra */}
       {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
-          <Spinner size="lg" />
+        <div className={styles.grid}>
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <CatalogCardSkeleton key={idx} />
+          ))}
         </div>
       ) : assistedNotice ? (
         <div className={styles.assistedNoticeCard}>
@@ -259,36 +261,28 @@ export const CatalogPage: React.FC = () => {
           </div>
         </div>
       ) : paginatedWorks.length === 0 ? (
-        <div className={styles.emptyCard}>
-          <BookOpen size={42} style={{ color: "var(--border-light)" }} />
-          <div>
-            <h3 style={{ fontSize: "var(--text-base)", fontWeight: 700, margin: "0 0 0.4rem 0" }}>
-              Nenhuma obra encontrada
-            </h3>
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", margin: 0 }}>
-              Não encontramos resultados para os filtros selecionados. Tente ajustar os termos de busca ou sugira o cadastro manual desta obra!
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center" }}>
-            <Button variant="secondary" size="sm" onClick={handleResetFilters}>
-              Limpar Filtros
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  openAuthModal();
-                  return;
-                }
-                setIsSuggestModalOpen(true);
-              }}
-            >
-              <BookPlus size={15} />
-              <span>Sugerir Obra Manual</span>
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          icon={<Search size={32} />}
+          title="Nenhuma obra encontrada"
+          description="Não encontramos resultados para os filtros e termos selecionados. Tente ajustar os termos de busca ou sugira o cadastro manual desta obra!"
+          action={{
+            label: "Sugerir Obra Manual",
+            onClick: () => {
+              if (!isAuthenticated) {
+                openAuthModal();
+                return;
+              }
+              setIsSuggestModalOpen(true);
+            },
+            icon: <BookPlus size={16} />,
+            variant: "primary",
+          }}
+          secondaryAction={{
+            label: "Limpar Filtros",
+            onClick: handleResetFilters,
+            variant: "secondary",
+          }}
+        />
       ) : (
         <>
           <div className={styles.grid}>

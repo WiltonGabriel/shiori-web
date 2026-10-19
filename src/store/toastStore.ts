@@ -46,6 +46,54 @@ export const useToastStore = create<ToastState>((set) => ({
   clearToasts: () => set({ toasts: [] }),
 }));
 
+function humanizeErrorMessage(
+  status?: number,
+  detail?: string,
+  fallback = "Ocorreu um erro inesperado. Tente novamente mais tarde."
+): string {
+  if (detail) {
+    if (
+      detail.includes("ConstraintViolationException") ||
+      detail.includes("could not execute statement") ||
+      detail.includes("duplicate key")
+    ) {
+      return "Não foi possível concluir a ação: registro duplicado ou restrição de integridade.";
+    }
+    if (detail.includes("Network Error") || detail.includes("ERR_NETWORK")) {
+      return "Não foi possível conectar ao servidor Shiori. Verifique sua conexão ou se a API está online.";
+    }
+    if (detail.includes("JWT expired") || detail.includes("Token expired") || detail.includes("expired token")) {
+      return "Sua sessão expirou por segurança. Conecte-se novamente à sua conta.";
+    }
+    return detail;
+  }
+
+  switch (status) {
+    case 400:
+      return "Requisição inválida. Verifique os dados preenchidos no formulário.";
+    case 401:
+      return "Você precisa estar conectado para realizar esta operação.";
+    case 403:
+      return "Acesso restrito. Sua conta não possui permissão para esta ação de governança.";
+    case 404:
+      return "O registro solicitado não foi encontrado ou não está mais disponível.";
+    case 409:
+      return "Conflito de dados: este registro já existe na plataforma.";
+    case 422:
+      return "Os dados enviados não puderam ser validados pelo servidor.";
+    case 429:
+      return "Limite de requisições excedido. Por favor, aguarde alguns instantes.";
+    case 500:
+      return "O servidor Shiori encontrou uma instabilidade temporária. Tente novamente em instantes.";
+    case 502:
+    case 503:
+    case 504:
+      return "O servidor ou provedor externo está temporariamente indisponível.";
+    default:
+      return fallback;
+  }
+}
+
 /**
  * Utilitário global para disparo de avisos na interface integrado à RFC 9457 do Spring Boot
  */
@@ -61,7 +109,11 @@ export const toast = {
   error: (err: unknown, fallbackTitle = "Erro na Operação") => {
     // 1. Instância formal de ShioriApiError (RFC 9457 ProblemDetail)
     if (err instanceof ShioriApiError) {
-      const detailMessage = err.problem.detail || err.message;
+      const detailMessage = humanizeErrorMessage(
+        err.status,
+        err.problem.detail || err.message,
+        "Falha na comunicação com o servidor Shiori."
+      );
       useToastStore.getState().addToast({
         type: "error",
         title: err.problem.title || fallbackTitle,
@@ -75,17 +127,18 @@ export const toast = {
     // 2. Erro vindo do Axios ou HTTP contendo ProblemDetail diretamente no response.data
     const axiosResponse = (err as any)?.response?.data;
     if (axiosResponse && typeof axiosResponse === "object") {
+      const status = (err as any)?.response?.status;
       const title = axiosResponse.title || fallbackTitle;
-      const detail = axiosResponse.detail || axiosResponse.message || (err as any)?.message;
-      if (detail || title) {
-        useToastStore.getState().addToast({
-          type: "error",
-          title,
-          detail: detail || "O provedor externo está temporariamente indisponível.",
-          status: (err as any)?.response?.status,
-        });
-        return;
-      }
+      const rawDetail = axiosResponse.detail || axiosResponse.message || (err as any)?.message;
+      const detail = humanizeErrorMessage(status, rawDetail);
+      useToastStore.getState().addToast({
+        type: "error",
+        title,
+        detail,
+        status,
+        validationErrors: axiosResponse.errosValidacao,
+      });
+      return;
     }
 
     // 3. Objeto genérico com campo detail
@@ -93,7 +146,7 @@ export const toast = {
       useToastStore.getState().addToast({
         type: "error",
         title: (err as any).title || fallbackTitle,
-        detail: (err as any).detail,
+        detail: humanizeErrorMessage(undefined, (err as any).detail),
       });
       return;
     }
@@ -103,7 +156,7 @@ export const toast = {
       useToastStore.getState().addToast({
         type: "error",
         title: fallbackTitle,
-        detail: err.message,
+        detail: humanizeErrorMessage(undefined, err.message),
       });
       return;
     }
@@ -113,7 +166,7 @@ export const toast = {
       useToastStore.getState().addToast({
         type: "error",
         title: fallbackTitle,
-        detail: err,
+        detail: humanizeErrorMessage(undefined, err),
       });
       return;
     }
@@ -141,3 +194,4 @@ export const toast = {
     });
   },
 };
+

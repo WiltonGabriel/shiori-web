@@ -12,6 +12,7 @@ import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Avatar } from "../../components/ui/Avatar/Avatar";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
+import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
 import { TIPO_OBRA_LABELS, type ObraResponse } from "../../types/work.types";
 import type { AtividadeFeedResponse } from "../../types/social.types";
 import type { ItemCatalogoResponse } from "../../types/catalog.types";
@@ -397,19 +398,17 @@ export const HomePage: React.FC = () => {
               })}
             </HorizontalScroller>
           ) : (
-            <div className={styles.emptyStateCard}>
-              <BookOpen size={32} style={{ color: "var(--brand-light)" }} />
-              <h3 className={styles.emptyStateTitle}>Nenhuma leitura em andamento</h3>
-              <p className={styles.emptyStateDesc}>
-                Explore o catálogo global para adicionar mangás, manhwas ou livros à sua estante pessoal.
-              </p>
-              <Link to="/catalogo">
-                <Button variant="primary" size="sm">
-                  <Compass size={16} />
-                  <span>Explorar Catálogo</span>
-                </Button>
-              </Link>
-            </div>
+            <EmptyState
+              icon={<BookOpen size={32} />}
+              title="Nenhuma leitura em andamento"
+              description="Explore o catálogo global para adicionar mangás, manhwas ou livros à sua estante pessoal."
+              action={{
+                label: "Explorar Catálogo",
+                href: "/catalogo",
+                icon: <Compass size={16} />,
+                variant: "primary",
+              }}
+            />
           )}
         </section>
       )}
@@ -436,35 +435,28 @@ export const HomePage: React.FC = () => {
             <Spinner size="md" />
           </div>
         ) : !isAuthenticated ? (
-          <div className={styles.emptyStateCard}>
-            <Users size={36} style={{ color: "var(--brand-light)" }} />
-            <h3 className={styles.emptyStateTitle}>Conecte-se com outros leitores</h3>
-            <p className={styles.emptyStateDesc}>
-              Faça login para acompanhar o progresso de leitura em tempo real dos seus amigos,
-              ver notas avaliadas e trocar impressões sobre obras.
-            </p>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={openAuthModal}
-            >
-              <span>Entrar com Minha Conta</span>
-            </Button>
-          </div>
+          <EmptyState
+            icon={<Users size={32} />}
+            title="Conecte-se com outros leitores"
+            description="Faça login para acompanhar o progresso de leitura em tempo real dos seus amigos, ver notas avaliadas e trocar impressões sobre obras."
+            action={{
+              label: "Entrar com Minha Conta",
+              onClick: openAuthModal,
+              variant: "primary",
+            }}
+          />
         ) : (!Array.isArray(feedItems) || feedItems.length === 0) ? (
-          <div className={styles.emptyStateCard}>
-            <Users size={32} style={{ color: "var(--text-muted)" }} />
-            <h3 className={styles.emptyStateTitle}>Seu feed está silencioso</h3>
-            <p className={styles.emptyStateDesc}>
-              Conecte-se com amigos ou adicione novas obras para acompanhar o ritmo e avaliações da comunidade!
-            </p>
-            <Link to="/catalogo">
-              <Button variant="secondary" size="sm">
-                <Compass size={16} />
-                <span>Explorar Catálogo</span>
-              </Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={<Users size={32} />}
+            title="Seu feed está silencioso"
+            description="Conecte-se com amigos ou adicione novas obras para acompanhar o ritmo e avaliações da comunidade!"
+            action={{
+              label: "Explorar Catálogo",
+              href: "/catalogo",
+              icon: <Compass size={16} />,
+              variant: "secondary",
+            }}
+          />
         ) : (
           <div className={styles.feedList}>
             {(Array.isArray(feedItems) ? feedItems : []).map((item) => {

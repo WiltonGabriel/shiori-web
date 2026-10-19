@@ -1,4 +1,3 @@
-
 .button {
   display: inline-flex;
   align-items: center;
@@ -13,11 +12,23 @@
   white-space: nowrap;
   user-select: none;
   min-height: var(--touch-target-min);
+  outline: none;
+  position: relative;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
 }
 
 .button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Tamanhos */
@@ -87,4 +98,5 @@
 }
 .danger:hover:not(:disabled) {
   filter: brightness(1.1);
+  transform: translateY(-1px);
 }

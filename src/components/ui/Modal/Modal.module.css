@@ -1,8 +1,7 @@
-
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(4, 5, 8, 0.75);
+  background: rgba(4, 5, 8, 0.78);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -18,13 +17,14 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   max-height: 90dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
 }
 
 .header {
@@ -33,12 +33,14 @@
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
 }
 
 .title {
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .closeButton {
@@ -49,17 +51,48 @@
   padding: 0.35rem;
   border-radius: var(--radius-sm);
   display: flex;
-  min-height: auto;
-  transition: color var(--transition-fast);
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .closeButton:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
 }
 
 .body {
   padding: 1.5rem;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .backdrop {
+    padding: 1rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dialog {
+    max-height: 88dvh;
+    border-radius: var(--radius-xl);
+  }
+
+  .header {
+    padding: 1.1rem 1.25rem;
+  }
+
+  .body {
+    padding: 1.25rem;
+  }
 }
 
 @keyframes fadeIn {

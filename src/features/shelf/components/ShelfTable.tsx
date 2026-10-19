@@ -24,7 +24,6 @@ interface ShelfTableProps {
   onOpenCycle: (item: ItemCatalogoResponse) => void;
   onOpenEdit: (item: ItemCatalogoResponse) => void;
   onUnlink: (itemId: number) => void;
-  onOpenSafetyUrl: (url: string) => void;
   onRemove: (itemId: number) => void;
   onUpdateMeta: (itemId: number) => void;
 }
@@ -35,7 +34,6 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
   onOpenCycle,
   onOpenEdit,
   onUnlink,
-  onOpenSafetyUrl,
   onRemove,
   onUpdateMeta,
 }) => {
@@ -183,16 +181,22 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                     )}
 
                     {item.urlLeitura && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onOpenSafetyUrl(item.urlLeitura!)}
-                        title="Abrir link de leitura"
-                        style={{ color: "var(--brand-light)" }}
-                        aria-label="Link externo"
+                      <a
+                        href={item.urlLeitura}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: "none", display: "inline-flex" }}
+                        title={`Abrir link privado de leitura em nova aba: ${item.urlLeitura}`}
+                        aria-label="Abrir link privado de leitura"
                       >
-                        <ExternalLink size={13} />
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          style={{ color: "var(--brand-light)" }}
+                        >
+                          <ExternalLink size={13} />
+                        </Button>
+                      </a>
                     )}
 
                     <Button

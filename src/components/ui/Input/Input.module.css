@@ -7,8 +7,13 @@
 
 .label {
   font-size: var(--text-xs);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.container:focus-within .label {
+  color: var(--brand-light);
 }
 
 .inputWrapper {
@@ -26,17 +31,32 @@
   border-radius: var(--radius-md);
   color: var(--text-primary);
   min-height: var(--touch-target-min);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+  outline: none;
+}
+
+.input:hover:not(:focus):not(:disabled) {
+  border-color: var(--border-light);
 }
 
 .input:focus {
-  outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--brand-glow);
+  background: var(--bg-surface);
+}
+
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--bg-app);
 }
 
 .hasError {
   border-color: var(--accent-rose) !important;
+}
+
+.hasError:focus {
+  box-shadow: 0 0 0 3px var(--accent-rose-glow) !important;
 }
 
 .hasLeadingIcon {
@@ -49,11 +69,17 @@
   color: var(--text-muted);
   display: flex;
   pointer-events: none;
+  transition: color var(--transition-fast);
+}
+
+.container:focus-within .leadingIcon {
+  color: var(--brand-light);
 }
 
 .errorMessage {
   font-size: var(--text-xs);
   color: var(--accent-rose);
+  font-weight: 500;
 }
 
 .helperText {
