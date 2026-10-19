@@ -1,0 +1,63 @@
+services:
+  # ===================================================================
+  # FRONT-END (SPA React + Vite + Nginx Reverse Proxy /api/)
+  # ===================================================================
+  shiori-web:
+    image: ghcr.io/wiltongabriel/shiori-web:latest
+    container_name: shiori-web
+    restart: unless-stopped
+    networks:
+      - proxy_network
+      - shiori-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy_network"
+      - "traefik.http.routers.shiori-web.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web.entrypoints=websecure"
+      - "traefik.http.routers.shiori-web.tls=true"
+      - "traefik.http.routers.shiori-web.tls.certresolver=leresolver"
+      - "traefik.http.services.shiori-web.loadbalancer.server.port=80"
+    depends_on:
+      shiori-api:
+        condition: service_healthy
+
+  # ===================================================================
+  # BACK-END (Spring Boot REST API)
+  # ===================================================================
+  shiori-api:
+    image: ghcr.io/wiltongabriel/shiori-api:latest
+    container_name: shiori-api
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8088}:8080"
+    environment:
+      - PORT=8080
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JPA_DDL_AUTO=${JPA_DDL_AUTO:-update}
+      - JPA_SHOW_SQL=${JPA_SHOW_SQL:-false}
+      - JPA_FORMAT_SQL=${JPA_FORMAT_SQL:-false}
+      - SHIORI_CRYPTO_KEY=${SHIORI_CRYPTO_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-86400000}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_REGION=${S3_REGION:-us-east-1}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-shiori-media}
+      - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    networks:
+      - shiori-network
+
+networks:
+  proxy_network:
+    external: true
+  shiori-network:
+    driver: bridge
