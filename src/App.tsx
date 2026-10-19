@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppLayout } from "./components/layout/AppLayout";
 import { HomePage } from "./features/home/HomePage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
+import { DeepSearchPage } from "./features/catalog/DeepSearch/DeepSearchPage";
 import { ShelfPage } from "./features/shelf/ShelfPage";
 import { AdminDashboardPage } from "./features/admin/AdminDashboardPage";
 import { useAuthStore } from "./store/authStore";
@@ -39,6 +40,8 @@ export const App: React.FC = () => {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path="explorar" element={<CatalogPage />} />
+            <Route path="explorar/busca-profunda" element={<DeepSearchPage />} />
+            <Route path="busca-profunda" element={<DeepSearchPage />} />
             <Route path="estante" element={<ShelfPage />} />
             <Route path="admin" element={<AdminDashboardPage />} />
           </Route>

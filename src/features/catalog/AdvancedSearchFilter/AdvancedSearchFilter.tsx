@@ -1,25 +1,61 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import styles from "./AdvancedSearchFilter.module.css";
-import { Input } from "../../../components/ui/Input/Input";
 import { TriStateChip } from "../../../components/ui/TriStateChip/TriStateChip";
-import {
-  type SearchFiltersState,
-  type TriState,
-  type SortOption,
-  COMMON_GENRES,
-  COMMON_TAGS,
-} from "../../../types/filter.types";
-import type { TipoObra } from "../../../types/work.types";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Input } from "../../../components/ui/Input/Input";
+import { Button } from "../../../components/ui/Button/Button";
+import type { TipoObra, TriState } from "../../../types/work.types";
+import { Search, SlidersHorizontal, X, ArrowRight, Sparkles } from "lucide-react";
+
+export type SortOption = "NOTA_DESC" | "CAPITULOS_DESC" | "TITULO_ASC";
+
+export interface FilterState {
+  searchQuery: string;
+  selectedTypes: TipoObra[];
+  minChapters: number;
+  genresState: Record<string, TriState>;
+  tagsState: Record<string, TriState>;
+  sortBy: SortOption;
+}
 
 interface AdvancedSearchFilterProps {
-  filters: SearchFiltersState;
-  onChange: (nextFilters: SearchFiltersState) => void;
+  filters: FilterState;
+  onChange: (filters: FilterState) => void;
   onReset: () => void;
 }
 
 const ALL_TYPES: TipoObra[] = ["MANGA", "NOVEL", "MANHWA", "MANHUA", "COMIC", "LIVRO"];
-const CHAPTER_STEPS = [0, 10, 50, 100, 300, 500];
+const CHAPTER_STEPS = [0, 20, 50, 100, 200, 500];
+
+const COMMON_GENRES = [
+  "Ação",
+  "Aventura",
+  "Comédia",
+  "Drama",
+  "Fantasia",
+  "Romance",
+  "Ficção Científica",
+  "Sobrenatural",
+  "Mistério",
+  "Psicológico",
+  "Vida Escolar",
+  "Seinen",
+  "Shounen",
+  "Shoujo",
+];
+
+const COMMON_TAGS = [
+  "Reencarnação",
+  "Sistema",
+  "Protagonista Forte",
+  "Magia",
+  "Isekai",
+  "Viagem no Tempo",
+  "Vingança",
+  "Nobreza",
+  "Monstros",
+  "Romance Lento",
+];
 
 export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
   filters,
@@ -28,19 +64,18 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Calcula total de filtros ativos além da busca
   const activeCount =
     filters.selectedTypes.length +
+    (filters.minChapters > 0 ? 1 : 0) +
     Object.values(filters.genresState).filter((s) => s !== 0).length +
-    Object.values(filters.tagsState).filter((s) => s !== 0).length +
-    (filters.minChapters > 0 ? 1 : 0);
+    Object.values(filters.tagsState).filter((s) => s !== 0).length;
 
   const handleTypeToggle = (type: TipoObra) => {
-    const exists = filters.selectedTypes.includes(type);
-    const nextTypes = exists
+    const isSelected = filters.selectedTypes.includes(type);
+    const updated = isSelected
       ? filters.selectedTypes.filter((t) => t !== type)
       : [...filters.selectedTypes, type];
-    onChange({ ...filters, selectedTypes: nextTypes });
+    onChange({ ...filters, selectedTypes: updated });
   };
 
   const handleGenreChange = (genre: string, nextState: TriState) => {
@@ -84,14 +119,33 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <SlidersHorizontal size={16} />
-          <span>Filtros Avançados</span>
+          <span>Filtros</span>
           {activeCount > 0 && <span className={styles.activeCountBadge}>{activeCount}</span>}
         </button>
       </div>
 
-      {/* Painel Avançado NovelUpdates */}
+      {/* Painel Rápido de Filtros com Atalho para Busca Profunda */}
       {isExpanded && (
         <div className={styles.panel}>
+          {/* Card Destaque: Busca Profunda */}
+          <div className={styles.deepSearchBanner}>
+            <div className={styles.deepSearchInfo}>
+              <Sparkles size={20} className={styles.deepSearchIcon} />
+              <div>
+                <div className={styles.deepSearchTitle}>Busca Profunda no Catálogo</div>
+                <div className={styles.deepSearchDesc}>
+                  Acesse filtros cirúrgicos com todos os 36 gêneros, operadores lógicos [E / OU], idiomas, status e faixas numéricas.
+                </div>
+              </div>
+            </div>
+            <Link to="/busca-profunda">
+              <Button variant="primary" size="sm">
+                <span>Busca Profunda</span>
+                <ArrowRight size={14} />
+              </Button>
+            </Link>
+          </div>
+
           {/* Formato / Tipo */}
           <div className={styles.filterSection}>
             <div className={styles.sectionHeader}>
@@ -138,7 +192,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
           {/* Gêneros (Tri-State: Neutro, +Incluir, -Excluir) */}
           <div className={styles.filterSection}>
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>Gêneros (Estilo NovelUpdates)</span>
+              <span className={styles.sectionLabel}>Gêneros Principais</span>
               <span className={styles.helperText}>Clique 1x para Incluir (+), 2x para Excluir (-)</span>
             </div>
             <div className={styles.chipGroup}>
@@ -147,7 +201,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
                   key={genre}
                   label={genre}
                   state={filters.genresState[genre] || 0}
-                  onChange={(s) => handleGenreChange(genre, s)}
+                  onChange={(s: TriState) => handleGenreChange(genre, s)}
                 />
               ))}
             </div>
@@ -165,7 +219,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
                   key={tag}
                   label={tag}
                   state={filters.tagsState[tag] || 0}
-                  onChange={(s) => handleTagChange(tag, s)}
+                  onChange={(s: TriState) => handleTagChange(tag, s)}
                 />
               ))}
             </div>

@@ -1,26 +1,35 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import styles from "./CatalogPage.module.css";
 import { WorkService } from "../../services/work.service";
 import { CatalogService } from "../../services/catalog.service";
+import { useAuthStore } from "../../store/authStore";
+import { AdvancedSearchFilter, type FilterState } from "./AdvancedSearchFilter/AdvancedSearchFilter";
 import { Card } from "../../components/ui/Card/Card";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
-import { Modal } from "../../components/ui/Modal/Modal";
 import { Input } from "../../components/ui/Input/Input";
+import { Modal } from "../../components/ui/Modal/Modal";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
-import { useAuthStore } from "../../store/authStore";
-import { AdvancedSearchFilter } from "./AdvancedSearchFilter/AdvancedSearchFilter";
-import { type SearchFiltersState, DEFAULT_FILTERS } from "../../types/filter.types";
 import type { ObraResponse } from "../../types/work.types";
-import { Plus, Star, Check } from "lucide-react";
+import { Star, Plus, Check, SlidersHorizontal } from "lucide-react";
+
+const DEFAULT_FILTERS: FilterState = {
+  searchQuery: "",
+  selectedTypes: [],
+  minChapters: 0,
+  genresState: {},
+  tagsState: {},
+  sortBy: "NOTA_DESC",
+};
 
 export const CatalogPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
   const [works, setWorks] = useState<ObraResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<SearchFiltersState>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
-  // Modal para adicionar obra à estante
+  // Estado do Modal de Adicionar à Estante
   const [selectedWork, setSelectedWork] = useState<ObraResponse | null>(null);
   const [readingUrl, setReadingUrl] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -28,45 +37,47 @@ export const CatalogPage: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const loadWorks = async () => {
+    const fetchWorks = async () => {
       try {
         const data = await WorkService.listWorks();
         if (isMounted) setWorks(data);
+      } catch (err) {
+        console.error("Falha ao buscar catálogo:", err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     };
-    loadWorks();
+    fetchWorks();
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Lógica de Filtragem e Ordenação Estilo NovelUpdates
+  // Lógica de Filtragem e Ordenação
   const filteredWorks = useMemo(() => {
     const includedGenres = Object.entries(filters.genresState)
-      .filter(([, state]) => state === 1)
-      .map(([genre]) => genre.toLowerCase());
-
+      .filter(([_, s]) => s === 1)
+      .map(([g]) => g.toLowerCase());
     const excludedGenres = Object.entries(filters.genresState)
-      .filter(([, state]) => state === -1)
-      .map(([genre]) => genre.toLowerCase());
+      .filter(([_, s]) => s === -1)
+      .map(([g]) => g.toLowerCase());
 
     const includedTags = Object.entries(filters.tagsState)
-      .filter(([, state]) => state === 1)
-      .map(([tag]) => tag.toLowerCase());
-
+      .filter(([_, s]) => s === 1)
+      .map(([t]) => t.toLowerCase());
     const excludedTags = Object.entries(filters.tagsState)
-      .filter(([, state]) => state === -1)
-      .map(([tag]) => tag.toLowerCase());
+      .filter(([_, s]) => s === -1)
+      .map(([t]) => t.toLowerCase());
 
     const result = works.filter((w) => {
-      // 1. Busca por texto
-      if (filters.searchQuery) {
-        const q = filters.searchQuery.toLowerCase();
-        const matchTitle = w.tituloPrincipal.toLowerCase().includes(q);
-        const matchOriginal = w.tituloOriginal?.toLowerCase().includes(q);
-        if (!matchTitle && !matchOriginal) return false;
+      // 1. Busca textual
+      if (filters.searchQuery.trim()) {
+        const query = filters.searchQuery.toLowerCase().trim();
+        const mainTitle = w.tituloPrincipal.toLowerCase();
+        const origTitle = (w.tituloOriginal || "").toLowerCase();
+        if (!mainTitle.includes(query) && !origTitle.includes(query)) {
+          return false;
+        }
       }
 
       // 2. Formato literário
@@ -151,9 +162,18 @@ export const CatalogPage: React.FC = () => {
   return (
     <div>
       <div className={styles.header}>
-        <h1 className={styles.title}>Catálogo de Leituras</h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "0.5rem" }}>
+          <h1 className={styles.title}>Catálogo de Leituras</h1>
+          <Link to="/busca-profunda">
+            <Button variant="secondary" size="sm">
+              <SlidersHorizontal size={15} />
+              <span>Abrir Busca Profunda</span>
+            </Button>
+          </Link>
+        </div>
+
         <p className={styles.subtitle}>
-          Consulte o acervo de literatura asiática e ocidental com filtros avançados de inclusão e exclusão estilo NovelUpdates.
+          Consulte o acervo de mangás, novels, livros e quadrinhos com filtros rápidos ou utilize a busca profunda completa.
         </p>
 
         <AdvancedSearchFilter
