@@ -2,30 +2,44 @@
 .hero {
   position: relative;
   border-radius: var(--radius-xl);
-  padding: 3rem 2rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(14, 16, 23, 0.85));
-  border: 1px solid var(--border-subtle);
+  padding: 3rem 2.25rem;
+  background: var(--hero-bg);
+  border: 1px solid var(--hero-border);
   margin-bottom: 2.5rem;
   overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: all var(--transition-normal);
 }
 
 .heroContent {
   max-width: 680px;
 }
 
-.badgeHighlight {
-  margin-bottom: 1rem;
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  background: var(--hero-badge-bg);
+  border: 1px solid var(--hero-badge-border);
+  color: var(--hero-badge-text);
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
 }
 
 .title {
   font-size: var(--text-3xl);
   font-weight: 800;
   line-height: 1.15;
+  color: var(--text-primary);
   margin-bottom: 1rem;
 }
 
 .titleGradient {
-  background: linear-gradient(135deg, #FFF, var(--brand-light));
+  background: var(--hero-title-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -34,7 +48,7 @@
   font-size: var(--text-base);
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .actions {
@@ -57,12 +71,23 @@
 .sectionTitle {
   font-size: var(--text-xl);
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .worksGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1.25rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  background: var(--bg-glass-card);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-lg);
 }
 
 .feedList {
@@ -75,7 +100,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.25rem;
 }
 
 .feedBody {
@@ -83,8 +108,8 @@
 }
 
 .feedUser {
-  font-weight: 600;
-  color: var(--brand-light);
+  font-weight: 700;
+  color: var(--brand-primary);
 }
 
 .feedText {

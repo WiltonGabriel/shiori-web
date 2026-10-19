@@ -43,8 +43,8 @@ export const HomePage: React.FC = () => {
     <div>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <div className={styles.badgeHighlight}>
-            <Badge variant="brand">Shiori v0.0.2-alpha • Catálogo & Acervo Pessoal</Badge>
+          <div className={styles.heroBadge}>
+            Shiori v0.0.2-alpha • Catálogo de Leituras
           </div>
           <h1 className={styles.title}>
             O seu catálogo definitivo para <span className={styles.titleGradient}>Mangás, Novels e Livros</span>.
@@ -84,9 +84,9 @@ export const HomePage: React.FC = () => {
             <Spinner size="lg" />
           </div>
         ) : works.length === 0 ? (
-          <Card style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-            Nenhuma obra em destaque no momento.
-          </Card>
+          <div className={styles.emptyState}>
+            Nenhuma obra em destaque no momento. Explore o catálogo para descobrir novos títulos!
+          </div>
         ) : (
           <div className={styles.worksGrid}>
             {works.slice(0, 6).map((obra) => (

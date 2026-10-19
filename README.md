@@ -1,6 +1,6 @@
 # Shiori Web 栞 (Front-end Oficial)
 
-Front-end oficial da rede social literária e acervo pessoal **Shiori**, voltado ao acompanhamento de leituras de mangás, novels, livros e quadrinhos.
+Front-end oficial do **Catálogo de Leituras Shiori**, voltado à organização e acompanhamento de leituras de mangás, novels, livros e quadrinhos.
 
 ---
 

@@ -7,6 +7,7 @@
   flex-direction: column;
   padding: 1.5rem 0.75rem;
   gap: 0.5rem;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 @media (min-width: 1024px) {
@@ -22,19 +23,20 @@
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
   font-size: var(--text-sm);
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
 }
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-elevated);
   color: var(--text-primary);
 }
 
 .active {
-  background: var(--brand-glow) !important;
-  color: var(--brand-light) !important;
-  font-weight: 600;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: var(--sidebar-active-bg) !important;
+  color: var(--sidebar-active-color) !important;
+  border-color: var(--sidebar-active-border) !important;
+  font-weight: 700;
 }
