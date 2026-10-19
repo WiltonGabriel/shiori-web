@@ -12,6 +12,10 @@ export default defineConfig({
         target: 'http://100.127.79.49:8088',
         changeOrigin: true,
       },
+      '/obras': {
+        target: 'http://100.127.79.49:8088',
+        changeOrigin: true,
+      },
       '/actuator': {
         target: 'http://100.127.79.49:8088',
         changeOrigin: true,

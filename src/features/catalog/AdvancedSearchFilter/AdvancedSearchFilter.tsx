@@ -1,17 +1,14 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import styles from "./AdvancedSearchFilter.module.css";
 import { TriStateChip } from "../../../components/ui/TriStateChip/TriStateChip";
 import { Input } from "../../../components/ui/Input/Input";
-import { Button } from "../../../components/ui/Button/Button";
-import type { TipoObra, TriState } from "../../../types/work.types";
-import { Search, SlidersHorizontal, X, ArrowRight, Sparkles } from "lucide-react";
-
-export type SortOption = "NOTA_DESC" | "CAPITULOS_DESC" | "TITULO_ASC";
+import type { TipoObra, StatusPublicacao, TriState, SortOption } from "../../../types/work.types";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 export interface FilterState {
   searchQuery: string;
   selectedTypes: TipoObra[];
+  selectedStatuses: StatusPublicacao[];
   minChapters: number;
   genresState: Record<string, TriState>;
   sortBy: SortOption;
@@ -24,6 +21,14 @@ interface AdvancedSearchFilterProps {
 }
 
 const ALL_TYPES: TipoObra[] = ["MANGA", "NOVEL", "MANHWA", "MANHUA", "COMIC", "LIVRO"];
+
+const ALL_STATUSES: { value: StatusPublicacao; label: string }[] = [
+  { value: "EM_LANCAMENTO", label: "Em Lançamento" },
+  { value: "CONCLUIDO", label: "Concluído" },
+  { value: "EM_HIATO", label: "Em Hiato" },
+  { value: "CANCELADO", label: "Cancelado" },
+];
+
 const CHAPTER_STEPS = [0, 20, 50, 100, 200, 500];
 
 const COMMON_GENRES = [
@@ -52,6 +57,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
 
   const activeCount =
     filters.selectedTypes.length +
+    filters.selectedStatuses.length +
     (filters.minChapters > 0 ? 1 : 0) +
     Object.values(filters.genresState).filter((s) => s !== 0).length;
 
@@ -61,6 +67,14 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
       ? filters.selectedTypes.filter((t) => t !== type)
       : [...filters.selectedTypes, type];
     onChange({ ...filters, selectedTypes: updated });
+  };
+
+  const handleStatusToggle = (status: StatusPublicacao) => {
+    const isSelected = filters.selectedStatuses.includes(status);
+    const updated = isSelected
+      ? filters.selectedStatuses.filter((s) => s !== status)
+      : [...filters.selectedStatuses, status];
+    onChange({ ...filters, selectedStatuses: updated });
   };
 
   const handleGenreChange = (genre: string, nextState: TriState) => {
@@ -90,6 +104,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
           <option value="NOTA_DESC">Maior Avaliação</option>
           <option value="CAPITULOS_DESC">Mais Capítulos</option>
           <option value="TITULO_ASC">Título (A-Z)</option>
+          <option value="RECENTES">Recentes</option>
         </select>
 
         <button
@@ -103,33 +118,13 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
         </button>
       </div>
 
-      {/* Painel de Filtros Básicos com Botão para Busca Profunda */}
       {isExpanded && (
         <div className={styles.panel}>
-          {/* Botão de Destaque para Busca Profunda */}
-          <div className={styles.deepSearchBanner}>
-            <div className={styles.deepSearchInfo}>
-              <Sparkles size={18} className={styles.deepSearchIcon} />
-              <div>
-                <div className={styles.deepSearchTitle}>Busca Profunda no Catálogo</div>
-                <div className={styles.deepSearchDesc}>
-                  Filtros completos com 36 gêneros, tags temáticas, operadores lógicos [E / OU], idiomas e status.
-                </div>
-              </div>
-            </div>
-            <Link to="/busca-profunda">
-              <Button variant="primary" size="sm">
-                <span>Busca Profunda</span>
-                <ArrowRight size={14} />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Formato / Tipo */}
+          {/* Formato Literário */}
           <div className={styles.filterSection}>
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>Formato Literário</span>
-              <span className={styles.helperText}>Selecione um ou mais formatos</span>
+              <span className={styles.sectionLabel}>Formato Literário (Tipo)</span>
+              <span className={styles.helperText}>Múltipla seleção</span>
             </div>
             <div className={styles.chipGroup}>
               {ALL_TYPES.map((type) => {
@@ -148,11 +143,34 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
             </div>
           </div>
 
+          {/* Status de Publicação */}
+          <div className={styles.filterSection}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionLabel}>Status de Publicação</span>
+              <span className={styles.helperText}>Múltipla seleção</span>
+            </div>
+            <div className={styles.chipGroup}>
+              {ALL_STATUSES.map((item) => {
+                const isSelected = filters.selectedStatuses.includes(item.value);
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={`${styles.typeBtn} ${isSelected ? styles.typeBtnActive : ""}`}
+                    onClick={() => handleStatusToggle(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Mínimo de Capítulos */}
           <div className={styles.filterSection}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>Capítulos Lançados (Mínimo)</span>
-              <span className={styles.helperText}>Filtre obras por extensão da leitura</span>
+              <span className={styles.helperText}>Extensão da leitura</span>
             </div>
             <div className={styles.chipGroup}>
               {CHAPTER_STEPS.map((ch) => (
@@ -202,6 +220,20 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
                 type="button"
                 className={styles.tagRemoveBtn}
                 onClick={() => handleTypeToggle(t)}
+                title="Remover filtro"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+
+          {filters.selectedStatuses.map((s) => (
+            <span key={s} className={styles.activeTag}>
+              Status: {s}
+              <button
+                type="button"
+                className={styles.tagRemoveBtn}
+                onClick={() => handleStatusToggle(s)}
                 title="Remover filtro"
               >
                 <X size={12} />

@@ -8,11 +8,13 @@ import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Avatar } from "../../components/ui/Avatar/Avatar";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
+import { useAuthStore } from "../../store/authStore";
 import type { ObraResponse } from "../../types/work.types";
 import type { AtividadeFeedResponse } from "../../types/social.types";
-import { Compass, Bookmark, Star, ArrowRight } from "lucide-react";
+import { Compass, Bookmark, Star, ArrowRight, Activity } from "lucide-react";
 
 export const HomePage: React.FC = () => {
+  const { isAuthenticated } = useAuthStore();
   const [works, setWorks] = useState<ObraResponse[]>([]);
   const [feed, setFeed] = useState<AtividadeFeedResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,60 +23,74 @@ export const HomePage: React.FC = () => {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        const [worksRes, feedRes] = await Promise.allSettled([
-          WorkService.listHomeWorks(),
-          SocialService.getFeed(),
-        ]);
+        const promises: Promise<any>[] = [WorkService.listHomeWorks()];
+        if (isAuthenticated) {
+          promises.push(SocialService.getFeed());
+        }
+
+        const [worksRes, feedRes] = await Promise.allSettled(promises);
         if (isMounted) {
           if (worksRes.status === "fulfilled") setWorks(worksRes.value);
-          if (feedRes.status === "fulfilled") setFeed(feedRes.value);
+          if (feedRes && feedRes.status === "fulfilled") setFeed(feedRes.value);
         }
       } finally {
         if (isMounted) setIsLoading(false);
       }
     };
+
     fetchData();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <div>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            Shiori v0.0.7-alpha • Catálogo de Leituras
+            Shiori v0.0.8-alpha • Catálogo e Rastreador de Leituras
           </div>
           <h1 className={styles.title}>
-            O seu catálogo definitivo para <span className={styles.titleGradient}>Mangás, Novels e Livros</span>.
+            Seu Catálogo Pessoal de <span className={styles.titleGradient}>Mangás, Novels, Manhwas e Livros</span>.
           </h1>
           <p className={styles.subtitle}>
-            Acompanhe cada capítulo lido, registre notas pessoais criptografadas,
-            guarde seus links privados de leitura com segurança e compartilhe sua paixão com amigos.
+            Acompanhe seu progresso de leitura capítulo a capítulo, registre anotações e avaliações pessoais,
+            armazene seus links privados de leitura e compartilhe sua paixão com amigos.
           </p>
           <div className={styles.actions}>
-            <Link to="/explorar">
+            <Link to="/catalogo">
               <Button variant="primary" size="md">
                 <Compass size={18} />
                 <span>Explorar Catálogo</span>
               </Button>
             </Link>
-            <Link to="/estante">
+            <Link to="/meu-catalogo">
               <Button variant="secondary" size="md">
                 <Bookmark size={18} />
-                <span>Minha Estante</span>
+                <span>Meu Catálogo</span>
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
+      {/* Seção 1: Obras em Destaque do Catálogo Global */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Obras em Destaque</h2>
-          <Link to="/explorar" style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--brand-light)", fontSize: "var(--text-sm)" }}>
-            <span>Ver todas</span>
+          <Link
+            to="/catalogo"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.25rem",
+              color: "var(--brand-light)",
+              fontSize: "var(--text-sm)",
+              fontWeight: 600,
+            }}
+          >
+            <span>Ver catálogo completo</span>
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -118,9 +134,13 @@ export const HomePage: React.FC = () => {
         )}
       </section>
 
-      {feed.length > 0 && (
+      {/* Seção 2: Feed Social de Amigos (quando logado) */}
+      {isAuthenticated && feed.length > 0 && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: "1rem" }}>Atualizações Recentes no Catálogo</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+            <Activity size={20} style={{ color: "var(--brand-primary)" }} />
+            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Atividades Recentes de Amigos</h2>
+          </div>
           <div className={styles.feedList}>
             {feed.slice(0, 5).map((item) => (
               <Card key={item.id} className={styles.feedItem}>
@@ -129,7 +149,7 @@ export const HomePage: React.FC = () => {
                   <div>
                     <span className={styles.feedUser}>@{item.usuarioApelido}</span>{" "}
                     <span style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)" }}>
-                      {item.descricao || "atualizou sua leitura"}
+                      {item.descricao || "atualizou seu ritmo de leitura"}
                     </span>
                   </div>
                   {item.obraTitulo && (

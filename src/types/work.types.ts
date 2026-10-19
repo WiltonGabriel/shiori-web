@@ -27,24 +27,16 @@ export interface ObraCadastroRequest {
   sinopse?: string;
   totalCapitulosLancados?: number;
   tipoObra: TipoObra;
-  generos?: string[];
-  tags?: string[];
 }
 
 export type TriState = 0 | 1 | -1;
-export type LogicalOperator = "AND" | "OR";
+export type SortOption = "NOTA_DESC" | "CAPITULOS_DESC" | "TITULO_ASC" | "RECENTES";
 
-export interface DeepSearchFilters {
+export interface CatalogSearchFilters {
   searchQuery: string;
   selectedTypes: TipoObra[];
   selectedStatuses: StatusPublicacao[];
-  selectedLanguages: string[];
+  selectedGenres: string[];
   minChapters: number;
-  maxChapters: number;
-  minRating: number;
-  genreOperator: LogicalOperator;
-  genresState: Record<string, TriState>;
-  tagOperator: LogicalOperator;
-  tagsState: Record<string, TriState>;
-  sortBy: "NOTA_DESC" | "CAPITULOS_DESC" | "TITULO_ASC" | "TITULO_DESC" | "RECENTES";
+  sortBy: SortOption;
 }

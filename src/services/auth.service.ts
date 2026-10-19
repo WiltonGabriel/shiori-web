@@ -1,5 +1,4 @@
 import { api, setHttpBearerToken } from "./api";
-import { SecureStorage } from "./crypto/secureStorage";
 import type { LoginRequest, RegistroRequest, AuthResponse, AuthenticatedUser } from "../types/auth.types";
 
 const AUTH_USER_STORAGE_KEY = "auth_session_user";
@@ -18,7 +17,11 @@ export class AuthService {
     };
 
     setHttpBearerToken(user.token);
-    await SecureStorage.setItem(AUTH_USER_STORAGE_KEY, user);
+    try {
+      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.warn("Falha ao salvar sessão de usuário no localStorage:", e);
+    }
     return user;
   }
 
@@ -35,20 +38,47 @@ export class AuthService {
     };
 
     setHttpBearerToken(user.token);
-    await SecureStorage.setItem(AUTH_USER_STORAGE_KEY, user);
-    return user;
-  }
-
-  public static async getStoredUser(): Promise<AuthenticatedUser | null> {
-    const user = await SecureStorage.getItem<AuthenticatedUser>(AUTH_USER_STORAGE_KEY);
-    if (user?.token) {
-      setHttpBearerToken(user.token);
+    try {
+      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.warn("Falha ao salvar sessão de usuário no localStorage:", e);
     }
     return user;
   }
 
-  public static async logout(): Promise<void> {
+  public static getStoredUser(): AuthenticatedUser | null {
+    try {
+      const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+      if (!raw) return null;
+      const user = JSON.parse(raw) as AuthenticatedUser;
+      if (user?.token) {
+        setHttpBearerToken(user.token);
+      }
+      return user;
+    } catch (e) {
+      console.warn("Falha ao recuperar sessão do localStorage:", e);
+      return null;
+    }
+  }
+
+  public static updateUserSession(partial: Partial<AuthenticatedUser>): void {
+    const current = AuthService.getStoredUser();
+    if (current) {
+      const updated = { ...current, ...partial };
+      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updated));
+    }
+  }
+
+  public static clearSession(): void {
     setHttpBearerToken(null);
-    SecureStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    try {
+      localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    } catch {
+      // Ignora erro ao limpar
+    }
+  }
+
+  public static async logout(): Promise<void> {
+    AuthService.clearSession();
   }
 }

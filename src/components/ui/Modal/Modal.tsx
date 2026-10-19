@@ -7,6 +7,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  closable?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -14,10 +15,11 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
+  closable = true,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && closable) onClose();
     };
     if (isOpen) {
       window.addEventListener("keydown", handleKeyDown);
@@ -27,7 +29,7 @@ export const Modal: React.FC<ModalProps> = ({
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "auto";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closable]);
 
   if (!isOpen) return null;
 
@@ -35,21 +37,23 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       className={styles.backdrop}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (closable && e.target === e.currentTarget) onClose();
       }}
       role="presentation"
     >
       <div className={styles.dialog} role="dialog" aria-modal="true">
         <header className={styles.header}>
           <h2 className={styles.title}>{title}</h2>
-          <button
-            type="button"
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Fechar"
-          >
-            <X size={20} />
-          </button>
+          {closable && (
+            <button
+              type="button"
+              className={styles.closeButton}
+              onClick={onClose}
+              aria-label="Fechar"
+            >
+              <X size={20} />
+            </button>
+          )}
         </header>
         <div className={styles.body}>{children}</div>
       </div>

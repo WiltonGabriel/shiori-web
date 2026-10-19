@@ -15,6 +15,8 @@ export interface ItemCatalogoResponse {
   obraId: number;
   obraTitulo: string;
   obraCapaUrl?: string;
+  obraTotalCapitulos?: number;
+  obraTotalVolumes?: number;
   progressoAtual: number;
   volumeAtual?: number;
   statusLeitura: StatusLeitura;

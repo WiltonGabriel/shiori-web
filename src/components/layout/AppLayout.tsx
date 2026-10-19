@@ -6,10 +6,15 @@ import { Sidebar } from "./Sidebar/Sidebar";
 import { BottomNav } from "./BottomNav/BottomNav";
 import { BroadcastBanner } from "./BroadcastBanner/BroadcastBanner";
 import { AuthModal } from "../../features/auth/AuthModal";
+import { OnboardingModal } from "../../features/profile/OnboardingModal";
 import { ToastContainer } from "../ui/Toast/ToastContainer";
+import { useAuthStore } from "../../store/authStore";
 
 export const AppLayout: React.FC = () => {
+  const { user, isAuthenticated } = useAuthStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const showOnboarding = Boolean(isAuthenticated && user && !user.onboardingConcluido);
 
   return (
     <div className={styles.layout}>
@@ -26,6 +31,7 @@ export const AppLayout: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+      <OnboardingModal isOpen={showOnboarding} />
       <ToastContainer />
     </div>
   );

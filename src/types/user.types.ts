@@ -20,4 +20,29 @@ export interface UsuarioPerfilPublicoResponse {
   descricao?: string;
   pontosConfianca: number;
   dataCriacao: string;
+  saoConexoes?: boolean;
+}
+
+export interface ConcluirOnboardingRequest {
+  apelido: string;
+  fusoHorario?: string;
+  fotoUrl?: string;
+  descricao?: string;
+}
+
+export interface AtualizarPerfilRequest {
+  apelido?: string;
+  fotoUrl?: string;
+  descricao?: string;
+  fusoHorario?: string;
+}
+
+export interface AlterarEmailRequest {
+  novoEmail: string;
+  senhaAtual: string;
+}
+
+export interface AlterarSenhaRequest {
+  senhaAtual: string;
+  novaSenha: string;
 }

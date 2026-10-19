@@ -23,8 +23,10 @@ export class WorkService {
     return response.data;
   }
 
-  public static async submitToGlobalCatalog(id: number): Promise<ObraResponse> {
-    const response = await api.put<ObraResponse>(`/obras/${id}/submeter`);
+  public static async submitToGlobalCatalog(id: number, usuarioId: number): Promise<ObraResponse> {
+    const response = await api.put<ObraResponse>(`/obras/${id}/submeter`, null, {
+      params: { usuarioId },
+    });
     return response.data;
   }
 }

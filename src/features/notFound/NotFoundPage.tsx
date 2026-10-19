@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styles from "./NotFoundPage.module.css";
 import { Button } from "../../components/ui/Button/Button";
-import { Home, Compass, SlidersHorizontal, BookX } from "lucide-react";
+import { Home, Compass, Bookmark, BookX } from "lucide-react";
 
 export const NotFoundPage: React.FC = () => {
   return (
@@ -29,17 +29,17 @@ export const NotFoundPage: React.FC = () => {
             </Button>
           </Link>
 
-          <Link to="/explorar">
+          <Link to="/catalogo">
             <Button variant="secondary" size="md">
               <Compass size={18} />
-              <span>Explorar Catálogo</span>
+              <span>Catálogo Global</span>
             </Button>
           </Link>
 
-          <Link to="/busca-profunda">
+          <Link to="/meu-catalogo">
             <Button variant="ghost" size="md">
-              <SlidersHorizontal size={18} />
-              <span>Busca Profunda</span>
+              <Bookmark size={18} />
+              <span>Meu Catálogo</span>
             </Button>
           </Link>
         </div>

@@ -5,7 +5,7 @@ import { useAuthStore } from "../../../store/authStore";
 import { useThemeStore } from "../../../store/themeStore";
 import { Avatar } from "../../ui/Avatar/Avatar";
 import { Button } from "../../ui/Button/Button";
-import { LogIn, LogOut, Sun, Moon } from "lucide-react";
+import { LogIn, LogOut, Sun, Moon, Settings } from "lucide-react";
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
           <span className={styles.brandName}>Shiori</span>
         </Link>
         <span className={styles.versionBadge} title="Versão Alpha em desenvolvimento">
-          v0.0.7-alpha
+          v0.0.8-alpha
         </span>
       </div>
 
@@ -39,14 +39,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
         </button>
 
         {isAuthenticated && user ? (
-          <div className={styles.userMenu}>
-            <div className={styles.userMeta}>
-              <span className={styles.username}>@{user.apelido || "leitor"}</span>
-              <span className={styles.userRole}>
-                {user.role === "ROLE_ADMIN" ? "Administrador" : "Leitor"}
-              </span>
-            </div>
-            <Avatar name={user.apelido || user.email} size="sm" />
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Link
+              to="/perfil"
+              className={styles.userMenu}
+              style={{ textDecoration: "none", color: "inherit" }}
+              title="Acessar meu perfil"
+            >
+              <div className={styles.userMeta}>
+                <span className={styles.username}>@{user.apelido || "leitor"}</span>
+                <span className={styles.userRole}>
+                  {user.role === "ROLE_ADMIN" ? "Administrador" : "Leitor"}
+                </span>
+              </div>
+              <Avatar name={user.apelido || user.email} size="sm" />
+            </Link>
+
+            <Link to="/configuracoes">
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Configurações da conta"
+                title="Configurações"
+              >
+                <Settings size={16} />
+              </Button>
+            </Link>
+
             <Button
               variant="ghost"
               size="sm"

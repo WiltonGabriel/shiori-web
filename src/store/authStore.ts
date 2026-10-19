@@ -6,9 +6,10 @@ interface AuthState {
   user: AuthenticatedUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  initAuth: () => Promise<void>;
+  initAuth: () => void;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegistroRequest) => Promise<void>;
+  updateUser: (partial: Partial<AuthenticatedUser>) => void;
   logout: () => Promise<void>;
 }
 
@@ -17,9 +18,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isLoading: true,
 
-  initAuth: async () => {
+  initAuth: () => {
     try {
-      const stored = await AuthService.getStoredUser();
+      const stored = AuthService.getStoredUser();
       if (stored) {
         set({ user: stored, isAuthenticated: true, isLoading: false });
       } else {
@@ -38,6 +39,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data: RegistroRequest) => {
     const user = await AuthService.register(data);
     set({ user, isAuthenticated: true });
+  },
+
+  updateUser: (partial: Partial<AuthenticatedUser>) => {
+    AuthService.updateUserSession(partial);
+    set((state) => ({
+      user: state.user ? { ...state.user, ...partial } : null,
+    }));
   },
 
   logout: async () => {

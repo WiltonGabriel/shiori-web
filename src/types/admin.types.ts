@@ -53,3 +53,51 @@ export interface RegistroAuditoriaResponse {
   ipOrigem?: string;
   dataHora: string;
 }
+
+export interface SugestaoEdicaoResponse {
+  id: number;
+  obraId: number;
+  obraTitulo: string;
+  usuarioSugeridorId?: number;
+  usuarioSugeridorApelido?: string;
+  tituloPrincipalSugerido?: string;
+  tituloOriginalSugerido?: string;
+  capaUrlSugerida?: string;
+  sinopseSugerida?: string;
+  totalCapitulosSugerido?: number;
+  tipoObraSugerido?: string;
+  justificativa?: string;
+  status: "PENDENTE" | "APROVADA" | "REJEITADA";
+  dataCriacao: string;
+  dataAvaliacao?: string;
+  parecerAdmin?: string;
+}
+
+export interface DenunciaComentarioResponse {
+  id: number;
+  comentarioId: number;
+  comentarioTexto?: string;
+  comentarioAutorId?: number;
+  comentarioAutorApelido?: string;
+  denuncianteId?: number;
+  denuncianteApelido?: string;
+  motivo: string;
+  detalhes?: string;
+  status: "ABERTA" | "ACEITA" | "REJEITADA";
+  dataCriacao: string;
+  dataResolucao?: string;
+  parecerModeracao?: string;
+}
+
+export interface MesclarObrasRequest {
+  obraDuplicadaId: number;
+  obraPrincipalId: number;
+}
+
+export interface MesclarObrasResponse {
+  obraPrincipalId: number;
+  obraDuplicadaId: number;
+  totalItensEstanteTransferidos: number;
+  totalHistoricosTransferidos: number;
+  mensagem: string;
+}

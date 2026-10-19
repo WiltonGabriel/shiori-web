@@ -5,11 +5,46 @@ import type {
   FeatureFlagResponse,
   BroadcastResponse,
   RegistroAuditoriaResponse,
+  SugestaoEdicaoResponse,
+  DenunciaComentarioResponse,
+  MesclarObrasRequest,
+  MesclarObrasResponse,
 } from "../types/admin.types";
 
 export class AdminService {
   public static async getDashboard(): Promise<AdminDashboardResponse> {
     const response = await api.get<AdminDashboardResponse>("/api/admin/dashboard");
+    return response.data;
+  }
+
+  public static async listPendingSuggestions(page = 0, size = 20): Promise<{ content: SugestaoEdicaoResponse[]; totalElements: number }> {
+    const response = await api.get("/api/admin/sugestoes/pendentes", { params: { page, size } });
+    return response.data;
+  }
+
+  public static async evaluateSuggestion(sugestaoId: number, aprovado: boolean, parecer?: string): Promise<SugestaoEdicaoResponse> {
+    const response = await api.put<SugestaoEdicaoResponse>(`/api/admin/sugestoes/${sugestaoId}/avaliar`, {
+      aprovado,
+      parecer,
+    });
+    return response.data;
+  }
+
+  public static async listOpenReports(page = 0, size = 20): Promise<{ content: DenunciaComentarioResponse[]; totalElements: number }> {
+    const response = await api.get("/api/admin/denuncias/abertas", { params: { page, size } });
+    return response.data;
+  }
+
+  public static async acceptCommentReport(denunciaId: number, parecerModeracao?: string): Promise<void> {
+    await api.put(`/api/admin/denuncias/comentarios/${denunciaId}/aceitar`, { parecerModeracao });
+  }
+
+  public static async rejectCommentReport(denunciaId: number, parecerModeracao?: string): Promise<void> {
+    await api.put(`/api/admin/denuncias/comentarios/${denunciaId}/rejeitar`, { parecerModeracao });
+  }
+
+  public static async mergeWorks(data: MesclarObrasRequest): Promise<MesclarObrasResponse> {
+    const response = await api.post<MesclarObrasResponse>("/api/admin/obras/mesclar", data);
     return response.data;
   }
 
@@ -24,7 +59,7 @@ export class AdminService {
   }
 
   public static async removeStrike(usuarioId: number, motivo: string): Promise<any> {
-    const response = await api.delete(`/api/admin/usuarios/${usuarioId}/strikes`, { data: { motivo } });
+    const response = await api.delete(`/api/admin/usuarios/${usuarioId}/strikes`, { params: { motivo } });
     return response.data;
   }
 

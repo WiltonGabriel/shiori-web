@@ -1,7 +1,12 @@
 import type { AxiosError } from "axios";
 import { ShioriApiError, type ProblemDetail } from "../../types/error.types";
+import { AuthService } from "../auth.service";
 
 export const errorResponseInterceptor = (error: AxiosError): Promise<never> => {
+  if (error.response?.status === 401) {
+    AuthService.clearSession();
+  }
+
   if (error.response?.data) {
     const data = error.response.data as ProblemDetail;
     if (data.title || data.status || data.detail) {

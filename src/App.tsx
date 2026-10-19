@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppLayout } from "./components/layout/AppLayout";
 import { HomePage } from "./features/home/HomePage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
-import { DeepSearchPage } from "./features/catalog/DeepSearch/DeepSearchPage";
 import { ShelfPage } from "./features/shelf/ShelfPage";
+import { ProfilePage } from "./features/profile/ProfilePage";
+import { SettingsPage } from "./features/profile/SettingsPage";
 import { AdminDashboardPage } from "./features/admin/AdminDashboardPage";
 import { NotFoundPage } from "./features/notFound/NotFoundPage";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
@@ -29,7 +30,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     initAuth();
 
-    // Carregar broadcasts do sistema vigentes
+    // Carregar comunicados ativos do sistema
     BroadcastService.getActiveBroadcasts()
       .then((data) => setBroadcasts(data))
       .catch(() => {});
@@ -42,10 +43,12 @@ export const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<AppLayout />}>
               <Route index element={<HomePage />} />
-              <Route path="explorar" element={<CatalogPage />} />
-              <Route path="explorar/busca-profunda" element={<DeepSearchPage />} />
-              <Route path="busca-profunda" element={<DeepSearchPage />} />
-              <Route path="estante" element={<ShelfPage />} />
+              <Route path="catalogo" element={<CatalogPage />} />
+              <Route path="explorar" element={<Navigate to="/catalogo" replace />} />
+              <Route path="meu-catalogo" element={<ShelfPage />} />
+              <Route path="estante" element={<Navigate to="/meu-catalogo" replace />} />
+              <Route path="perfil" element={<ProfilePage />} />
+              <Route path="configuracoes" element={<SettingsPage />} />
               <Route path="admin" element={<AdminDashboardPage />} />
               {/* Página 404 para qualquer rota não mapeada */}
               <Route path="*" element={<NotFoundPage />} />
