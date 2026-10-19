@@ -44,6 +44,23 @@ services:
       - "${PORT:-3000}:80"
     environment:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+    networks:
+      - proxy_network
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy_network"
+      - "traefik.http.routers.shiori-web.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web.entrypoints=websecure"
+      - "traefik.http.routers.shiori-web.tls=true"
+      - "traefik.http.routers.shiori-web.tls.certresolver=leresolver"
+      - "traefik.http.routers.shiori-web-http.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web-http.entrypoints=web"
+      - "traefik.http.services.shiori-web.loadbalancer.server.port=80"
+
+networks:
+  proxy_network:
+    external: true
 ```
 
 ---
