@@ -273,6 +273,15 @@
   color: #fff;
 }
 
+.quickPlusBtn:active {
+  transform: scale(0.92);
+}
+
+.quickPlusBtn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
 .cycleBtn {
   display: inline-flex;
   align-items: center;
@@ -291,6 +300,15 @@
 .cycleBtn:hover {
   border-color: var(--brand-primary);
   color: var(--brand-light);
+}
+
+.cycleBtn:active {
+  transform: scale(0.96);
+}
+
+.cycleBtn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
 }
 
 /* ===================================================================

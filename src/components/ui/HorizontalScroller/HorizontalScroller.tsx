@@ -85,8 +85,9 @@ export const HorizontalScroller: React.FC<HorizontalScrollerProps> = ({
     const el = containerRef.current;
     if (!el || !hasOverflow) return;
 
-    // Se houver deltaX (tilt horizontal de mouses como Logitech G502), o browser já cuida ou reforçamos
+    // Suporte explícito a tilt horizontal (mouses Logitech MX Master, G502, Razer, etc.)
     if (Math.abs(e.deltaX) > 0) {
+      el.scrollLeft += e.deltaX;
       return;
     }
 
