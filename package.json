@@ -1,7 +1,7 @@
 {
   "name": "shiori-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.2-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -29,5 +29,5 @@
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   },
-  "description": "Front-end oficial da rede social liter\u00e1ria Shiori"
+  "description": "Cat\u00e1logo de leituras e acervo pessoal oficial Shiori (Alpha v0.0.2)"
 }

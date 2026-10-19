@@ -2,9 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styles from "./Navbar.module.css";
 import { useAuthStore } from "../../../store/authStore";
+import { useThemeStore } from "../../../store/themeStore";
 import { Avatar } from "../../ui/Avatar/Avatar";
 import { Button } from "../../ui/Button/Button";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Sun, Moon } from "lucide-react";
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
@@ -12,17 +13,31 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <header className={styles.navbar}>
       <div className={styles.left}>
-        <Link to="/" className={styles.logoLink} aria-label="Shiori Home">
+        <Link to="/" className={styles.logoLink} aria-label="Shiori Catálogo Home">
           <img src="/shiori-logo.svg" alt="Shiori Logo" className={styles.logoImg} />
           <span className={styles.brandName}>Shiori</span>
         </Link>
+        <span className={styles.versionBadge} title="Versão Alpha em desenvolvimento">
+          v0.0.2-alpha
+        </span>
       </div>
 
       <div className={styles.right}>
+        <button
+          type="button"
+          className={styles.themeButton}
+          onClick={toggleTheme}
+          aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+          title={theme === "dark" ? "Ativar Tema Claro" : "Ativar Tema Escuro"}
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
         {isAuthenticated && user ? (
           <div className={styles.userMenu}>
             <div className={styles.userMeta}>

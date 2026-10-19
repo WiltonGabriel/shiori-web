@@ -44,10 +44,10 @@ export const HomePage: React.FC = () => {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.badgeHighlight}>
-            <Badge variant="brand">Shiori v2.0 • Acervo & Comunidade</Badge>
+            <Badge variant="brand">Shiori v0.0.2-alpha • Catálogo & Acervo Pessoal</Badge>
           </div>
           <h1 className={styles.title}>
-            A sua estante definitiva para <span className={styles.titleGradient}>Mangás, Novels e Livros</span>.
+            O seu catálogo definitivo para <span className={styles.titleGradient}>Mangás, Novels e Livros</span>.
           </h1>
           <p className={styles.subtitle}>
             Acompanhe cada capítulo lido, registre notas pessoais criptografadas,
@@ -120,7 +120,7 @@ export const HomePage: React.FC = () => {
 
       {feed.length > 0 && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: "1rem" }}>Atividades Recentes da Comunidade</h2>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: "1rem" }}>Atualizações Recentes no Catálogo</h2>
           <div className={styles.feedList}>
             {feed.slice(0, 5).map((item) => (
               <Card key={item.id} className={styles.feedItem}>

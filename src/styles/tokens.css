@@ -73,3 +73,29 @@
   --bottom-nav-height: 64px;
   --sidebar-width: 250px;
 }
+
+
+/* ===================================================================
+ * TEMA CLARO MODERNO (Clean Slate & Editorial Glass)
+ * =================================================================== */
+html.light,
+[data-theme="light"] {
+  --bg-app: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-glass-card: rgba(255, 255, 255, 0.92);
+  --bg-glass-input: rgba(248, 250, 252, 0.95);
+
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-light: rgba(15, 23, 42, 0.16);
+  --border-focus: rgba(99, 102, 241, 0.65);
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --text-on-brand: #FFFFFF;
+
+  --shadow-card: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+  --brand-glow: rgba(99, 102, 241, 0.16);
+}

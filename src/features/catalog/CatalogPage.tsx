@@ -3,30 +3,28 @@ import styles from "./CatalogPage.module.css";
 import { WorkService } from "../../services/work.service";
 import { CatalogService } from "../../services/catalog.service";
 import { Card } from "../../components/ui/Card/Card";
-import { Input } from "../../components/ui/Input/Input";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Modal } from "../../components/ui/Modal/Modal";
+import { Input } from "../../components/ui/Input/Input";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
 import { useAuthStore } from "../../store/authStore";
-import type { ObraResponse, TipoObra } from "../../types/work.types";
-import { Search, Plus, Star, Check } from "lucide-react";
-
-const TYPES: (TipoObra | "TODOS")[] = ["TODOS", "MANGA", "NOVEL", "MANHWA", "COMIC", "LIVRO"];
+import { AdvancedSearchFilter } from "./AdvancedSearchFilter/AdvancedSearchFilter";
+import { type SearchFiltersState, DEFAULT_FILTERS } from "../../types/filter.types";
+import type { ObraResponse } from "../../types/work.types";
+import { Plus, Star, Check } from "lucide-react";
 
 export const CatalogPage: React.FC = () => {
+  const { isAuthenticated } = useAuthStore();
   const [works, setWorks] = useState<ObraResponse[]>([]);
-  const [search, setSearch] = useState("");
-  const [activeType, setActiveType] = useState<TipoObra | "TODOS">("TODOS");
   const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState<SearchFiltersState>(DEFAULT_FILTERS);
 
   // Modal para adicionar obra à estante
   const [selectedWork, setSelectedWork] = useState<ObraResponse | null>(null);
   const [readingUrl, setReadingUrl] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
-
-  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     let isMounted = true;
@@ -44,16 +42,86 @@ export const CatalogPage: React.FC = () => {
     };
   }, []);
 
+  // Lógica de Filtragem e Ordenação Estilo NovelUpdates
   const filteredWorks = useMemo(() => {
-    return works.filter((w) => {
-      const matchSearch =
-        !search ||
-        w.tituloPrincipal.toLowerCase().includes(search.toLowerCase()) ||
-        w.tituloOriginal?.toLowerCase().includes(search.toLowerCase());
-      const matchType = activeType === "TODOS" || w.tipoObra === activeType;
-      return matchSearch && matchType;
+    const includedGenres = Object.entries(filters.genresState)
+      .filter(([, state]) => state === 1)
+      .map(([genre]) => genre.toLowerCase());
+
+    const excludedGenres = Object.entries(filters.genresState)
+      .filter(([, state]) => state === -1)
+      .map(([genre]) => genre.toLowerCase());
+
+    const includedTags = Object.entries(filters.tagsState)
+      .filter(([, state]) => state === 1)
+      .map(([tag]) => tag.toLowerCase());
+
+    const excludedTags = Object.entries(filters.tagsState)
+      .filter(([, state]) => state === -1)
+      .map(([tag]) => tag.toLowerCase());
+
+    const result = works.filter((w) => {
+      // 1. Busca por texto
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        const matchTitle = w.tituloPrincipal.toLowerCase().includes(q);
+        const matchOriginal = w.tituloOriginal?.toLowerCase().includes(q);
+        if (!matchTitle && !matchOriginal) return false;
+      }
+
+      // 2. Formato literário
+      if (filters.selectedTypes.length > 0) {
+        if (!filters.selectedTypes.includes(w.tipoObra)) return false;
+      }
+
+      // 3. Mínimo de capítulos
+      if (filters.minChapters > 0) {
+        if ((w.totalCapitulosLancados || 0) < filters.minChapters) return false;
+      }
+
+      // 4. Gêneros: DEVE conter todos os inclusos (+)
+      const obraGeneros = (w.generos || []).map((g) => g.toLowerCase());
+      if (includedGenres.length > 0) {
+        const hasAllIncluded = includedGenres.every((g) => obraGeneros.includes(g));
+        if (!hasAllIncluded) return false;
+      }
+
+      // 5. Gêneros: NÃO PODE conter nenhum dos excluídos (-)
+      if (excludedGenres.length > 0) {
+        const hasAnyExcluded = excludedGenres.some((g) => obraGeneros.includes(g));
+        if (hasAnyExcluded) return false;
+      }
+
+      // 6. Tags: DEVE conter todas as inclusas (+)
+      const obraTags = (w.tags || []).map((t) => t.toLowerCase());
+      if (includedTags.length > 0) {
+        const hasAllTags = includedTags.every((t) => obraTags.includes(t));
+        if (!hasAllTags) return false;
+      }
+
+      // 7. Tags: NÃO PODE conter nenhuma das excluídas (-)
+      if (excludedTags.length > 0) {
+        const hasAnyExcludedTag = excludedTags.some((t) => obraTags.includes(t));
+        if (hasAnyExcludedTag) return false;
+      }
+
+      return true;
     });
-  }, [works, search, activeType]);
+
+    // Ordenação
+    return result.sort((a, b) => {
+      if (filters.sortBy === "NOTA_DESC") {
+        return (b.notaGeral || 0) - (a.notaGeral || 0);
+      }
+      if (filters.sortBy === "CAPITULOS_DESC") {
+        return (b.totalCapitulosLancados || 0) - (a.totalCapitulosLancados || 0);
+      }
+      if (filters.sortBy === "TITULO_ASC") {
+        return a.tituloPrincipal.localeCompare(b.tituloPrincipal);
+      }
+      return b.id - a.id;
+    });
+  }, [works, filters]);
 
   const handleAddToShelf = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,34 +151,16 @@ export const CatalogPage: React.FC = () => {
   return (
     <div>
       <div className={styles.header}>
-        <h1 className={styles.title}>Explorar Catálogo</h1>
+        <h1 className={styles.title}>Catálogo de Leituras</h1>
         <p className={styles.subtitle}>
-          Encontre títulos da literatura asiática e ocidental, filtre por formato e adicione à sua estante pessoal.
+          Consulte o acervo de literatura asiática e ocidental com filtros avançados de inclusão e exclusão estilo NovelUpdates.
         </p>
 
-        <div className={styles.filterBar}>
-          <div className={styles.searchWrapper}>
-            <Input
-              placeholder="Buscar por título ou original..."
-              leadingIcon={<Search size={16} />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.chips}>
-            {TYPES.map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={`${styles.chip} ${activeType === t ? styles.chipActive : ""}`}
-                onClick={() => setActiveType(t)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
+        <AdvancedSearchFilter
+          filters={filters}
+          onChange={setFilters}
+          onReset={() => setFilters(DEFAULT_FILTERS)}
+        />
       </div>
 
       {isLoading ? (
@@ -119,7 +169,7 @@ export const CatalogPage: React.FC = () => {
         </div>
       ) : filteredWorks.length === 0 ? (
         <Card style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-          Nenhuma obra encontrada para os critérios selecionados.
+          Nenhuma obra encontrada para a combinação de filtros selecionada.
         </Card>
       ) : (
         <div className={styles.grid}>
@@ -172,7 +222,7 @@ export const CatalogPage: React.FC = () => {
                 {obra.tituloPrincipal}
               </h2>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                 <Badge variant="neutral">{obra.tipoObra}</Badge>
                 {obra.notaGeral !== undefined && (
                   <span style={{ display: "flex", alignItems: "center", gap: "0.2rem", color: "var(--accent-amber)", fontSize: "var(--text-xs)", fontWeight: 700 }}>
@@ -181,6 +231,12 @@ export const CatalogPage: React.FC = () => {
                   </span>
                 )}
               </div>
+
+              {obra.totalCapitulosLancados !== undefined && (
+                <div style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
+                  {obra.totalCapitulosLancados} capítulos lançados
+                </div>
+              )}
 
               {isAuthenticated && (
                 <Button
@@ -212,18 +268,18 @@ export const CatalogPage: React.FC = () => {
           ) : (
             <form onSubmit={handleAddToShelf} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-                A obra entrará na sua estante como <strong>LENDO</strong>.
+                A obra entrará na sua estante com status <strong>LENDO</strong>.
               </p>
 
               <Input
-                label="Link Privado de Leitura (Opcional & Criptografado)"
+                label="Link Privado de Leitura (Criptografado)"
                 placeholder="https://exemplo.com/manga/meu-capitulo"
                 value={readingUrl}
                 onChange={(e) => setReadingUrl(e.target.value)}
               />
 
               <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                Seu link privado nunca é exposto publicamente para proteger a sua privacidade.
+                Seu link privado de leitura é armazenado com criptografia client-side AES-GCM e nunca é exposto publicamente.
               </p>
 
               <Button type="submit" variant="primary" size="md" isLoading={isAdding} style={{ marginTop: "0.5rem" }}>
