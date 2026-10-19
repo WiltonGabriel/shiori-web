@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import styles from "./AdminDashboardPage.module.css";
 import { AdminService } from "../../services/admin.service";
 import { Card } from "../../components/ui/Card/Card";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
+import { Modal } from "../../components/ui/Modal/Modal";
+import { Avatar } from "../../components/ui/Avatar/Avatar";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
+import { HorizontalScroller } from "../../components/ui/HorizontalScroller/HorizontalScroller";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
 import type {
@@ -15,6 +18,9 @@ import type {
   SugestaoEdicaoResponse,
   DenunciaComentarioResponse,
   MesclarObrasResponse,
+  GeneroResponse,
+  AdminUsuarioResponse,
+  RegistroAuditoriaResponse,
 } from "../../types/admin.types";
 import {
   Users,
@@ -29,15 +35,31 @@ import {
   Server,
   ToggleLeft,
   RotateCcw,
+  Tags,
+  History,
+  Plus,
+  Search,
+  AlertTriangle,
+  Ban,
+  ExternalLink,
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
-type AdminTab = "DASHBOARD" | "SUGESTOES" | "DENUNCIAS" | "MESCLAR" | "INTEGRACOES" | "FLAGS";
+type AdminTab =
+  | "DASHBOARD"
+  | "SUGESTOES"
+  | "DENUNCIAS"
+  | "USUARIOS"
+  | "GENEROS"
+  | "INTEGRACOES"
+  | "FLAGS"
+  | "AUDITORIA"
+  | "MESCLAR";
 
 export const AdminDashboardPage: React.FC = () => {
   useDocumentTitle(
     "Painel Administrativo | Shiori",
-    "Gestão e curadoria do acervo, fila de denúncias, métricas do dashboard e feature flags."
+    "Gestão do acervo, curadoria de gêneros, moderação, strikes e auditoria do sistema."
   );
 
   const { user } = useAuthStore();
@@ -48,7 +70,26 @@ export const AdminDashboardPage: React.FC = () => {
   const [denuncias, setDenuncias] = useState<DenunciaComentarioResponse[]>([]);
   const [integrations, setIntegrations] = useState<ProvedorIntegracaoResponse[]>([]);
   const [flags, setFlags] = useState<FeatureFlagResponse[]>([]);
+  const [generos, setGeneros] = useState<GeneroResponse[]>([]);
+  const [usuarios, setUsuarios] = useState<AdminUsuarioResponse[]>([]);
+  const [auditorias, setAuditorias] = useState<RegistroAuditoriaResponse[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [isTabLoading, setIsTabLoading] = useState(false);
+
+  // Busca e Filtros da aba Usuários
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+
+  // Modal de Criação de Gênero
+  const [isNewGenreModalOpen, setIsNewGenreModalOpen] = useState(false);
+  const [newGenreName, setNewGenreName] = useState("");
+  const [newGenreDescription, setNewGenreDescription] = useState("");
+  const [isCreatingGenre, setIsCreatingGenre] = useState(false);
+
+  // Modal de Aplicação de Strike
+  const [strikeTargetUser, setStrikeTargetUser] = useState<{ id: number; apelido: string } | null>(null);
+  const [strikeReason, setStrikeReason] = useState("");
+  const [isApplyingStrike, setIsApplyingStrike] = useState(false);
 
   // Formulário de Mesclagem de Obras
   const [obraDuplicadaId, setObraDuplicadaId] = useState<string>("");
@@ -56,6 +97,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [isMerging, setIsMerging] = useState(false);
   const [mergeResult, setMergeResult] = useState<MesclarObrasResponse | null>(null);
 
+  // Carregamento inicial de métricas e filas
   const loadAdminData = async () => {
     if (user?.role !== "ROLE_ADMIN") {
       setIsLoading(false);
@@ -84,10 +126,60 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const loadGenres = async () => {
+    try {
+      setIsTabLoading(true);
+      const data = await AdminService.listGenres();
+      setGeneros(data);
+    } catch (err: any) {
+      toast.error(err, "Falha ao Carregar Gêneros");
+    } finally {
+      setIsTabLoading(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      setIsTabLoading(true);
+      const res = await AdminService.listUsers(0, 50);
+      setUsuarios(res.content || []);
+    } catch (err: any) {
+      toast.error(err, "Falha ao Carregar Usuários");
+    } finally {
+      setIsTabLoading(false);
+    }
+  };
+
+  const loadAudits = async () => {
+    try {
+      setIsTabLoading(true);
+      const res = await AdminService.listAuditLogs(0, 50);
+      setAuditorias(res.content || []);
+    } catch (err: any) {
+      toast.error(err, "Falha ao Carregar Auditoria");
+    } finally {
+      setIsTabLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadAdminData();
   }, [user]);
 
+  // Carregamento sob demanda das abas específicas
+  useEffect(() => {
+    if (user?.role !== "ROLE_ADMIN") return;
+
+    if (activeTab === "GENEROS" && generos.length === 0) {
+      loadGenres();
+    } else if (activeTab === "USUARIOS" && usuarios.length === 0) {
+      loadUsers();
+    } else if (activeTab === "AUDITORIA" && auditorias.length === 0) {
+      loadAudits();
+    }
+  }, [activeTab, user]);
+
+  // Handlers de Sugestão e Denúncia
   const handleEvaluateSuggestion = async (sugestaoId: number, aprovado: boolean) => {
     const parecer = prompt(
       aprovado
@@ -101,8 +193,8 @@ export const AdminDashboardPage: React.FC = () => {
 
     try {
       await AdminService.evaluateSuggestion(sugestaoId, aprovado, parecer?.trim() || undefined);
+      toast.success(aprovado ? "Sugestão aprovada e incorporada ao catálogo!" : "Sugestão rejeitada com sucesso.");
       setSugestoes((prev) => prev.filter((s) => s.id !== sugestaoId));
-      toast.success(aprovado ? "Sugestão aprovada e incorporada!" : "Sugestão rejeitada.");
     } catch (err: any) {
       toast.error(err, "Falha ao Avaliar Sugestão");
     }
@@ -129,6 +221,96 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  // Handler de Gêneros
+  const handleCreateGenreSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGenreName.trim()) {
+      toast.warning("O nome do gênero é obrigatório.");
+      return;
+    }
+
+    try {
+      setIsCreatingGenre(true);
+      const created = await AdminService.createGenre({
+        nome: newGenreName.trim(),
+        descricao: newGenreDescription.trim() || undefined,
+      });
+
+      setGeneros((prev) => [...prev, created].sort((a, b) => a.nome.localeCompare(b.nome)));
+      toast.success(`Gênero oficial '${created.nome}' cadastrado com sucesso!`);
+      setIsNewGenreModalOpen(false);
+      setNewGenreName("");
+      setNewGenreDescription("");
+    } catch (err: any) {
+      toast.error(err, "Falha ao Cadastrar Gênero");
+    } finally {
+      setIsCreatingGenre(false);
+    }
+  };
+
+  // Handlers de Moderação de Usuários (Strikes & Ban)
+  const handleOpenStrikeModal = (userId: number, apelido: string, defaultReason = "") => {
+    setStrikeTargetUser({ id: userId, apelido });
+    setStrikeReason(defaultReason);
+  };
+
+  const handleConfirmStrike = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!strikeTargetUser) return;
+    if (!strikeReason.trim()) {
+      toast.warning("Informe a justificativa do strike.");
+      return;
+    }
+
+    try {
+      setIsApplyingStrike(true);
+      const updatedUser = await AdminService.applyStrike(strikeTargetUser.id, strikeReason.trim());
+      setUsuarios((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+
+      if (!updatedUser.ativo || updatedUser.strikes >= 3) {
+        toast.error(`Strike aplicado! O usuário @${updatedUser.apelido} atingiu 3 strikes e foi banido automaticamente.`);
+      } else {
+        toast.warning(`Strike aplicado ao usuário @${updatedUser.apelido} (${updatedUser.strikes}/3 strikes).`);
+      }
+
+      setStrikeTargetUser(null);
+      setStrikeReason("");
+    } catch (err: any) {
+      toast.error(err, "Falha ao Aplicar Strike");
+    } finally {
+      setIsApplyingStrike(false);
+    }
+  };
+
+  const handleRemoveStrike = async (userId: number, apelido: string) => {
+    const motivo = prompt(`Motivo do perdão / remoção de strike de @${apelido}:`);
+    if (!motivo?.trim()) return;
+
+    try {
+      const updatedUser = await AdminService.removeStrike(userId, motivo.trim());
+      setUsuarios((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      toast.info(`Strike removido com sucesso de @${apelido} (${updatedUser.strikes}/3 strikes).`);
+    } catch (err: any) {
+      toast.error(err, "Falha ao Remover Strike");
+    }
+  };
+
+  const handleBanUser = async (userId: number, apelido: string) => {
+    const motivo = prompt(`ATENÇÃO: Justificativa para banir permanentemente o usuário @${apelido}:`);
+    if (!motivo?.trim()) return;
+
+    try {
+      await AdminService.banUser(userId, motivo.trim());
+      setUsuarios((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, ativo: false } : u))
+      );
+      toast.error(`Usuário @${apelido} banido do sistema.`);
+    } catch (err: any) {
+      toast.error(err, "Falha ao Banir Usuário");
+    }
+  };
+
+  // Handler de Mesclagem
   const handleMergeWorks = async (e: React.FormEvent) => {
     e.preventDefault();
     const dupId = parseInt(obraDuplicadaId, 10);
@@ -166,6 +348,7 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  // Handlers de Integração e Flags
   const handleToggleIntegration = async (id: number, currentStatus: boolean) => {
     try {
       const updated = await AdminService.toggleIntegrationStatus(id, !currentStatus);
@@ -180,40 +363,56 @@ export const AdminDashboardPage: React.FC = () => {
     try {
       const updated = await AdminService.toggleFeatureFlag(chave, !currentStatus);
       setFlags((prev) => prev.map((f) => (f.chave === chave ? updated : f)));
-      toast.success(`Feature Flag '${chave}' atualizada.`);
+      toast.info(`Flag '${updated.nome}' definida como ${updated.ativado ? "habilitada" : "desabilitada"}.`);
     } catch (err: any) {
       toast.error(err, "Falha ao Alterar Feature Flag");
     }
   };
 
+  // Filtro de Usuários
+  const filteredUsers = useMemo(() => {
+    if (!userSearchTerm.trim()) return usuarios;
+    const term = userSearchTerm.toLowerCase();
+    return usuarios.filter(
+      (u) =>
+        u.apelido?.toLowerCase().includes(term) ||
+        u.email?.toLowerCase().includes(term) ||
+        String(u.id) === term
+    );
+  }, [usuarios, userSearchTerm]);
+
   if (user?.role !== "ROLE_ADMIN") {
     return (
-      <Card style={{ textAlign: "center", padding: "4rem 2rem", maxWidth: 500, margin: "2rem auto" }}>
-        <ShieldAlert size={40} style={{ color: "var(--accent-rose)", margin: "0 auto 1rem auto" }} />
-        <h2 style={{ marginBottom: "0.5rem" }}>Acesso Restrito</h2>
-        <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)" }}>
-          Esta área é restrita a administradores autorizados do Shiori.
+      <div className="container" style={{ padding: "4rem 1rem", textAlign: "center" }}>
+        <ShieldAlert size={48} style={{ color: "var(--accent-rose)", margin: "0 auto 1.5rem" }} />
+        <h1 style={{ fontSize: "var(--text-xl)", fontWeight: 800 }}>Acesso Restrito ao SysOverseer</h1>
+        <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem" }}>
+          Esta página é destinada exclusivamente à governança de alto nível do Shiori.
         </p>
-      </Card>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
+      <div className="container" style={{ padding: "5rem 1rem", textAlign: "center" }}>
         <Spinner size="lg" />
+        <p style={{ marginTop: "1rem", color: "var(--text-secondary)", fontSize: "var(--text-sm)" }}>
+          Carregando métricas e subsistemas administrativos...
+        </p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="container" style={{ padding: "2rem 1rem 5rem" }}>
+      {/* Cabeçalho */}
       <div className={styles.header}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
           <div>
-            <h1 className={styles.title}>Painel de Controle Administrativo</h1>
+            <h1 className={styles.title}>Painel de Administração</h1>
             <p className={styles.subtitle}>
-              Supervisão geral, governança de integrações, moderação e curadoria do catálogo oficial.
+              Supervisão geral, governança de integrações, moderação de membros, curadoria de vocabulário e auditoria.
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={loadAdminData}>
@@ -222,63 +421,99 @@ export const AdminDashboardPage: React.FC = () => {
           </Button>
         </div>
 
-        {/* Abas Administrativas */}
-        <div className={styles.adminTabs}>
-          <button
-            type="button"
-            className={`${styles.adminTab} ${activeTab === "DASHBOARD" ? styles.adminTabActive : ""}`}
-            onClick={() => setActiveTab("DASHBOARD")}
+        {/* Abas Administrativas com Rolagem Horizontal Fluida */}
+        <div className={styles.tabsContainer}>
+          <HorizontalScroller
+            step={220}
+            showArrows={true}
+            showFade={true}
+            ariaLabel="Navegação das abas do painel administrativo"
+            className={styles.adminTabsScroller}
+            contentClassName={styles.adminTabs}
           >
-            <Layers size={14} />
-            <span>Métricas Gerais</span>
-          </button>
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "DASHBOARD" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("DASHBOARD")}
+            >
+              <Layers size={14} />
+              <span>Métricas Gerais</span>
+            </button>
 
-          <button
-            type="button"
-            className={`${styles.adminTab} ${activeTab === "SUGESTOES" ? styles.adminTabActive : ""}`}
-            onClick={() => setActiveTab("SUGESTOES")}
-          >
-            <FileQuestion size={14} />
-            <span>Sugestões Pendentes</span>
-            {sugestoes.length > 0 && <span className={styles.badgeCount}>{sugestoes.length}</span>}
-          </button>
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "SUGESTOES" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("SUGESTOES")}
+            >
+              <FileQuestion size={14} />
+              <span>Sugestões Pendentes</span>
+              {sugestoes.length > 0 && <span className={styles.badgeCount}>{sugestoes.length}</span>}
+            </button>
 
-          <button
-            type="button"
-            className={`${styles.adminTab} ${activeTab === "DENUNCIAS" ? styles.adminTabActive : ""}`}
-            onClick={() => setActiveTab("DENUNCIAS")}
-          >
-            <AlertOctagon size={14} />
-            <span>Denúncias Abertas</span>
-            {denuncias.length > 0 && <span className={styles.badgeCount}>{denuncias.length}</span>}
-          </button>
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "DENUNCIAS" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("DENUNCIAS")}
+            >
+              <AlertOctagon size={14} />
+              <span>Denúncias Abertas</span>
+              {denuncias.length > 0 && <span className={styles.badgeCount}>{denuncias.length}</span>}
+            </button>
 
-          <button
-            type="button"
-            className={`${styles.adminTab} ${activeTab === "MESCLAR" ? styles.adminTabActive : ""}`}
-            onClick={() => setActiveTab("MESCLAR")}
-          >
-            <GitMerge size={14} />
-            <span>Mesclar Obras</span>
-          </button>
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "USUARIOS" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("USUARIOS")}
+            >
+              <Users size={14} />
+              <span>Usuários & Strikes</span>
+            </button>
 
-          <button
-            type="button"
-            className={`${styles.adminTab} ${activeTab === "INTEGRACOES" ? styles.adminTabActive : ""}`}
-            onClick={() => setActiveTab("INTEGRACOES")}
-          >
-            <Server size={14} />
-            <span>Provedores ({integrations.length})</span>
-          </button>
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "GENEROS" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("GENEROS")}
+            >
+              <Tags size={14} />
+              <span>Gêneros Oficiais</span>
+            </button>
 
-          <button
-            type="button"
-            className={`${styles.adminTab} ${activeTab === "FLAGS" ? styles.adminTabActive : ""}`}
-            onClick={() => setActiveTab("FLAGS")}
-          >
-            <ToggleLeft size={14} />
-            <span>Feature Flags ({flags.length})</span>
-          </button>
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "INTEGRACOES" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("INTEGRACOES")}
+            >
+              <Server size={14} />
+              <span>Provedores Externos ({integrations.length})</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "FLAGS" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("FLAGS")}
+            >
+              <ToggleLeft size={14} />
+              <span>Feature Flags ({flags.length})</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "AUDITORIA" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("AUDITORIA")}
+            >
+              <History size={14} />
+              <span>Log de Auditoria</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.adminTab} ${activeTab === "MESCLAR" ? styles.adminTabActive : ""}`}
+              onClick={() => setActiveTab("MESCLAR")}
+            >
+              <GitMerge size={14} />
+              <span>Mesclar Obras</span>
+            </button>
+          </HorizontalScroller>
         </div>
       </div>
 
@@ -320,10 +555,8 @@ export const AdminDashboardPage: React.FC = () => {
               <AlertOctagon size={22} />
             </div>
             <div>
-              <div className={styles.metricValue}>
-                {dashboard.totalDenunciasComentariosPendentes + dashboard.totalDenunciasObrasPendentes}
-              </div>
-              <div className={styles.metricLabel}>Denúncias aguardando moderação</div>
+              <div className={styles.metricValue}>{dashboard.totalDenunciasComentariosPendentes}</div>
+              <div className={styles.metricLabel}>Denúncias de comentários abertas</div>
             </div>
           </Card>
         </div>
@@ -398,12 +631,12 @@ export const AdminDashboardPage: React.FC = () => {
         </section>
       )}
 
-      {/* 3. Denúncias Abertas */}
+      {/* 3. Denúncias Abertas com Ação de Strike */}
       {activeTab === "DENUNCIAS" && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
             <AlertOctagon size={18} style={{ color: "var(--accent-rose)" }} />
-            <span>Denúncias Abertas</span>
+            <span>Denúncias Abertas da Comunidade</span>
           </h2>
 
           {denuncias.length === 0 ? (
@@ -436,7 +669,25 @@ export const AdminDashboardPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                    {d.comentarioAutorId && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        style={{ color: "var(--accent-amber-light)", borderColor: "rgba(245, 158, 11, 0.3)" }}
+                        onClick={() =>
+                          handleOpenStrikeModal(
+                            d.comentarioAutorId!,
+                            d.comentarioAutorApelido || "Infrator",
+                            `Infração em comentário (Denúncia #${d.id}: ${d.motivo})`
+                          )
+                        }
+                      >
+                        <AlertTriangle size={14} />
+                        <span>Aplicar Strike ao Autor</span>
+                      </Button>
+                    )}
+
                     <Button
                       variant="danger"
                       size="sm"
@@ -445,6 +696,7 @@ export const AdminDashboardPage: React.FC = () => {
                       <CheckCircle2 size={14} />
                       <span>Aceitar Denúncia (Remover Comentário)</span>
                     </Button>
+
                     <Button
                       variant="secondary"
                       size="sm"
@@ -461,24 +713,469 @@ export const AdminDashboardPage: React.FC = () => {
         </section>
       )}
 
-      {/* 4. Ferramenta de Mesclagem */}
+      {/* 4. Gestão de Usuários & Moderação (Strikes) */}
+      {activeTab === "USUARIOS" && (
+        <section className={styles.section}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
+                <Users size={18} />
+                <span>Gestão de Membros, Níveis de Acesso e Moderação</span>
+              </h2>
+              <p className={styles.sectionSubtitle} style={{ marginTop: "0.25rem" }}>
+                Controle de strikes punitivos. Ao atingir o 3º strike, o sistema bloqueia e bane a conta automaticamente.
+              </p>
+            </div>
+
+            <div style={{ width: 280, maxWidth: "100%" }}>
+              <Input
+                placeholder="Filtrar por apelido ou e-mail..."
+                leadingIcon={<Search size={14} />}
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {isTabLoading ? (
+            <div style={{ textAlign: "center", padding: "3rem" }}>
+              <Spinner size="md" />
+            </div>
+          ) : (
+            <Card className={styles.tableCard}>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>Leitor</th>
+                      <th className={styles.th}>Nível (Role)</th>
+                      <th className={styles.th}>Status</th>
+                      <th className={styles.th}>Confiança</th>
+                      <th className={styles.th}>Strikes</th>
+                      <th className={styles.th} style={{ textAlign: "right" }}>Ações de Moderação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                          Nenhum usuário encontrado com os filtros atuais.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredUsers.map((u) => {
+                        const strikesCount = u.strikes || 0;
+                        return (
+                          <tr key={u.id} className={styles.tr}>
+                            <td className={styles.td}>
+                              <div className={styles.userCell}>
+                                <Avatar src={u.fotoUrl} name={u.apelido || "U"} size="sm" />
+                                <div className={styles.userMeta}>
+                                  <span className={styles.userName}>@{u.apelido || "sem_apelido"}</span>
+                                  <span className={styles.userEmail}>{u.email}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className={styles.td}>
+                              {u.role === "ROLE_ADMIN" ? (
+                                <Badge variant="brand">Admin</Badge>
+                              ) : u.role === "ROLE_CURADOR" ? (
+                                <Badge variant="warning">Curador</Badge>
+                              ) : (
+                                <Badge variant="neutral">Leitor</Badge>
+                              )}
+                            </td>
+                            <td className={styles.td}>
+                              <Badge variant={u.ativo ? "success" : "danger"}>
+                                {u.ativo ? "Ativo" : "Bloqueado / Banido"}
+                              </Badge>
+                            </td>
+                            <td className={styles.td}>
+                              <span style={{ fontWeight: 600 }}>{u.pontosConfianca ?? 0}</span> pts
+                            </td>
+                            <td className={styles.td}>
+                              <div className={styles.strikeMeter}>
+                                <div className={styles.strikeDots}>
+                                  <div className={`${styles.strikeDot} ${strikesCount >= 1 ? styles.strikeDotActive : ""}`} />
+                                  <div className={`${styles.strikeDot} ${strikesCount >= 2 ? styles.strikeDotActive : ""}`} />
+                                  <div className={`${styles.strikeDot} ${strikesCount >= 3 ? styles.strikeDotActive : ""}`} />
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: "var(--text-xs)",
+                                    fontWeight: 700,
+                                    color:
+                                      strikesCount >= 3
+                                        ? "var(--accent-rose)"
+                                        : strikesCount > 0
+                                        ? "var(--accent-amber-light)"
+                                        : "var(--text-muted)",
+                                  }}
+                                >
+                                  {strikesCount}/3
+                                </span>
+                              </div>
+                            </td>
+                            <td className={styles.td} style={{ textAlign: "right" }}>
+                              <div style={{ display: "inline-flex", gap: "0.35rem" }}>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  style={{ color: "var(--accent-amber-light)", padding: "0.35rem 0.65rem" }}
+                                  title="Aplicar Strike Punitivo"
+                                  onClick={() => handleOpenStrikeModal(u.id, u.apelido || u.email)}
+                                >
+                                  <AlertTriangle size={14} />
+                                  <span>Strike</span>
+                                </Button>
+
+                                {strikesCount > 0 && (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    style={{ padding: "0.35rem 0.65rem" }}
+                                    title="Remover 1 Strike"
+                                    onClick={() => handleRemoveStrike(u.id, u.apelido || u.email)}
+                                  >
+                                    <CheckCircle2 size={14} />
+                                    <span>Perdoar</span>
+                                  </Button>
+                                )}
+
+                                {u.ativo && (
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    style={{ padding: "0.35rem 0.65rem" }}
+                                    title="Banir Imediatamente"
+                                    onClick={() => handleBanUser(u.id, u.apelido || u.email)}
+                                  >
+                                    <Ban size={14} />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </section>
+      )}
+
+      {/* 5. CRUD de Gêneros Oficiais */}
+      {activeTab === "GENEROS" && (
+        <section className={styles.section}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
+                <Tags size={18} />
+                <span>Catálogo de Gêneros Oficiais Controlados</span>
+              </h2>
+              <p className={styles.sectionSubtitle} style={{ marginTop: "0.25rem" }}>
+                Vocabulário controlado oficial do Shiori utilizado para classificação canônica e filtros avançados.
+              </p>
+            </div>
+
+            <Button variant="primary" size="sm" onClick={() => setIsNewGenreModalOpen(true)}>
+              <Plus size={14} />
+              <span>Novo Gênero Oficial</span>
+            </Button>
+          </div>
+
+          {isTabLoading ? (
+            <div style={{ textAlign: "center", padding: "3rem" }}>
+              <Spinner size="md" />
+            </div>
+          ) : (
+            <Card className={styles.tableCard}>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>Nome Oficial</th>
+                      <th className={styles.th}>Slug Canônico</th>
+                      <th className={styles.th}>Descrição / Diretrizes</th>
+                      <th className={styles.th} style={{ textAlign: "right" }}>Identificador</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {generos.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+                          Nenhum gênero oficial cadastrado ainda. Clique em "Novo Gênero Oficial" para adicionar o primeiro.
+                        </td>
+                      </tr>
+                    ) : (
+                      generos.map((g) => (
+                        <tr key={g.id} className={styles.tr}>
+                          <td className={styles.td}>
+                            <strong style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>{g.nome}</strong>
+                          </td>
+                          <td className={styles.td}>
+                            <code style={{ color: "var(--brand-light)", background: "var(--bg-elevated)", padding: "0.2rem 0.4rem", borderRadius: "var(--radius-sm)" }}>
+                              {g.slug}
+                            </code>
+                          </td>
+                          <td className={styles.td} style={{ color: "var(--text-secondary)", maxWidth: 360 }}>
+                            {g.descricao || <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Sem descrição informada</span>}
+                          </td>
+                          <td className={styles.td} style={{ textAlign: "right", color: "var(--text-muted)" }}>
+                            #{g.id}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </section>
+      )}
+
+      {/* 6. Gestão de Provedores de Integração */}
+      {activeTab === "INTEGRACOES" && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            <Server size={18} />
+            <span>Gestão de Provedores de Integração Externa (MangaDex, AniList)</span>
+          </h2>
+          <p className={styles.sectionSubtitle}>
+            Supervisão de clientes externos, consumo de cotas diárias de requisições e alternância de tráfego.
+          </p>
+
+          <Card className={styles.tableCard}>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Provedor / Cliente</th>
+                    <th className={styles.th}>URL Base da API</th>
+                    <th className={styles.th}>Status de Conexão</th>
+                    <th className={styles.th}>Consumo de Cota Diária</th>
+                    <th className={styles.th} style={{ textAlign: "right" }}>Ação de Governança</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {integrations.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                        Nenhum provedor de integração cadastrado no banco.
+                      </td>
+                    </tr>
+                  ) : (
+                    integrations.map((p) => {
+                      const consumptionPct = Math.min(
+                        100,
+                        Math.round((p.requisicoesHoje / Math.max(1, p.limiteDiario)) * 100)
+                      );
+                      const isHigh = consumptionPct >= 90;
+                      const isMedium = consumptionPct >= 70;
+
+                      return (
+                        <tr key={p.id} className={styles.tr}>
+                          <td className={styles.td}>
+                            <div>
+                              <strong style={{ fontSize: "var(--text-sm)" }}>{p.nomeExibicao}</strong>
+                              <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                                Código: <code>{p.codigo}</code>
+                              </div>
+                            </div>
+                          </td>
+                          <td className={styles.td}>
+                            <a
+                              href={p.urlBase}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: "var(--brand-light)" }}
+                            >
+                              <code>{p.urlBase}</code>
+                              <ExternalLink size={12} />
+                            </a>
+                          </td>
+                          <td className={styles.td}>
+                            <Badge variant={p.ativo ? "success" : "danger"}>
+                              {p.ativo ? "Ativo / Operante" : "Inativo / Desativado"}
+                            </Badge>
+                          </td>
+                          <td className={styles.td}>
+                            <div className={styles.quotaBar}>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-secondary)" }}>
+                                <span>{p.requisicoesHoje} / {p.limiteDiario}</span>
+                                <span style={{ fontWeight: 700, color: isHigh ? "var(--accent-rose)" : isMedium ? "var(--accent-amber-light)" : "#34D399" }}>
+                                  {consumptionPct}%
+                                </span>
+                              </div>
+                              <div className={styles.quotaProgressBg}>
+                                <div
+                                  className={styles.quotaProgressFill}
+                                  style={{
+                                    width: `${consumptionPct}%`,
+                                    background: isHigh
+                                      ? "var(--accent-rose)"
+                                      : isMedium
+                                      ? "var(--accent-amber-light)"
+                                      : "#34D399",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className={styles.td} style={{ textAlign: "right" }}>
+                            <Button
+                              variant={p.ativo ? "outline" : "primary"}
+                              size="sm"
+                              onClick={() => handleToggleIntegration(p.id, p.ativo)}
+                            >
+                              {p.ativo ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
+                              <span>{p.ativo ? "Desativar" : "Ativar"}</span>
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* 7. Feature Flags Globais */}
+      {activeTab === "FLAGS" && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            <ToggleLeft size={18} />
+            <span>Feature Flags Globais em Tempo de Execução</span>
+          </h2>
+          <p className={styles.sectionSubtitle}>
+            Habilite ou restrinja recursos da plataforma instantaneamente sem necessidade de redeploy.
+          </p>
+
+          <div className={styles.flagsList}>
+            {flags.map((flag) => (
+              <Card key={flag.chave} className={styles.flagRow}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>{flag.nome}</div>
+                  <div style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+                    Chave: <code>{flag.chave}</code> • {flag.descricao}
+                  </div>
+                </div>
+                <Button
+                  variant={flag.ativado ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => handleToggleFlag(flag.chave, flag.ativado)}
+                >
+                  {flag.ativado ? "Habilitado" : "Desabilitado"}
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 8. Log de Auditoria Visual */}
+      {activeTab === "AUDITORIA" && (
+        <section className={styles.section}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
+                <History size={18} />
+                <span>Trilha de Auditoria e Governança do Sistema</span>
+              </h2>
+              <p className={styles.sectionSubtitle} style={{ marginTop: "0.25rem" }}>
+                Registro cronológico e imutável de todas as ações administrativas, punições, mesclagens e alterações de sistema.
+              </p>
+            </div>
+
+            <Button variant="secondary" size="sm" onClick={loadAudits}>
+              <RotateCcw size={14} />
+              <span>Atualizar Logs</span>
+            </Button>
+          </div>
+
+          {isTabLoading ? (
+            <div style={{ textAlign: "center", padding: "3rem" }}>
+              <Spinner size="md" />
+            </div>
+          ) : (
+            <Card className={styles.tableCard}>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>Data / Horário</th>
+                      <th className={styles.th}>Operador</th>
+                      <th className={styles.th}>Ação Executada</th>
+                      <th className={styles.th}>Entidade Afetada</th>
+                      <th className={styles.th}>Justificativa / Detalhes</th>
+                      <th className={styles.th} style={{ textAlign: "right" }}>IP Origem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditorias.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+                          Nenhum registro de auditoria encontrado.
+                        </td>
+                      </tr>
+                    ) : (
+                      auditorias.map((a) => (
+                        <tr key={a.id} className={styles.tr}>
+                          <td className={styles.td} style={{ whiteSpace: "nowrap", color: "var(--text-secondary)" }}>
+                            {new Date(a.dataHora).toLocaleString("pt-BR")}
+                          </td>
+                          <td className={styles.td}>
+                            <strong style={{ color: "var(--brand-light)" }}>@{a.adminApelido || `Admin #${a.adminId || "?"}`}</strong>
+                          </td>
+                          <td className={styles.td}>
+                            <span className={styles.actionBadge}>{a.acao}</span>
+                          </td>
+                          <td className={styles.td}>
+                            <span style={{ color: "var(--text-secondary)" }}>
+                              {a.entidadeAfetada} #{a.entidadeId}
+                            </span>
+                          </td>
+                          <td className={styles.td} style={{ maxWidth: 360, color: "var(--text-primary)" }}>
+                            {a.detalhes}
+                          </td>
+                          <td className={styles.td} style={{ textAlign: "right", color: "var(--text-muted)", fontFamily: "monospace" }}>
+                            {a.ipOrigem || "-"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </section>
+      )}
+
+      {/* 9. Ferramenta de Mesclagem */}
       {activeTab === "MESCLAR" && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
             <GitMerge size={18} />
             <span>Ferramenta de Mesclagem Canônica de Obras</span>
           </h2>
+          <p className={styles.sectionSubtitle}>
+            Transfere itens de estantes, ciclos de releitura e históricos de uma obra duplicada/secundária para a obra principal canônica.
+          </p>
 
           <Card style={{ padding: "1.5rem", maxWidth: 650 }}>
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: "1.25rem" }}>
-              Transfere itens de estantes, ciclos de releitura e históricos de uma obra duplicada/secundária para a obra principal canônica. A obra duplicada terá seus itens absorvidos sem perda de progresso dos leitores.
-            </p>
-
             <form onSubmit={handleMergeWorks} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <Input
                 label="ID da Obra Duplicada (Origem que será absorvida)"
                 type="number"
-                placeholder="Ex: 42"
+                placeholder="Digite o ID da obra duplicada..."
                 value={obraDuplicadaId}
                 onChange={(e) => setObraDuplicadaId(e.target.value)}
                 required
@@ -487,7 +1184,7 @@ export const AdminDashboardPage: React.FC = () => {
               <Input
                 label="ID da Obra Principal Canônica (Destino final)"
                 type="number"
-                placeholder="Ex: 7"
+                placeholder="Digite o ID da obra canônica de destino..."
                 value={obraPrincipalId}
                 onChange={(e) => setObraPrincipalId(e.target.value)}
                 required
@@ -517,71 +1214,131 @@ export const AdminDashboardPage: React.FC = () => {
         </section>
       )}
 
-      {/* 5. Gestão de Provedores */}
-      {activeTab === "INTEGRACOES" && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            <Server size={18} />
-            <span>Gestão de Provedores de Integração (MangaDex, AniList, etc.)</span>
-          </h2>
+      {/* ===================================================================
+       * MODAL 1: CADASTRAR NOVO GÊNERO OFICIAL
+       * =================================================================== */}
+      {isNewGenreModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsNewGenreModalOpen(false)}
+          title="Cadastrar Novo Gênero Oficial"
+        >
+          <form onSubmit={handleCreateGenreSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              Adicione um novo gênero oficial ao vocabulário controlado do catálogo. O identificador slug será derivado automaticamente pelo sistema.
+            </p>
 
-          <div className={styles.integrationsGrid}>
-            {integrations.map((p) => (
-              <Card key={p.id} className={styles.integrationCard}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 700, fontSize: "var(--text-base)" }}>{p.nomeExibicao}</span>
-                  <Badge variant={p.ativo ? "success" : "danger"}>
-                    {p.ativo ? "Ativo" : "Inativo"}
-                  </Badge>
-                </div>
+            <Input
+              label="Nome do Gênero *"
+              placeholder="Digite o nome do gênero..."
+              value={newGenreName}
+              onChange={(e) => setNewGenreName(e.target.value)}
+              required
+            />
 
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
-                  <div>URL Base: <code>{p.urlBase}</code></div>
-                  <div style={{ marginTop: "0.25rem" }}>
-                    Requisições hoje: <strong>{p.requisicoesHoje}</strong> / {p.limiteDiario}
-                  </div>
-                </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                Descrição / Diretrizes (Opcional)
+              </label>
+              <textarea
+                placeholder="Orientações e características que definem este gênero literário..."
+                value={newGenreDescription}
+                onChange={(e) => setNewGenreDescription(e.target.value)}
+                rows={3}
+                style={{
+                  padding: "0.65rem 0.95rem",
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border-light)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--text-primary)",
+                  fontFamily: "inherit",
+                  fontSize: "var(--text-sm)",
+                  resize: "vertical",
+                  outline: "none",
+                }}
+              />
+            </div>
 
-                <Button
-                  variant={p.ativo ? "outline" : "primary"}
-                  size="sm"
-                  onClick={() => handleToggleIntegration(p.id, p.ativo)}
-                >
-                  {p.ativo ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
-                  <span>{p.ativo ? "Desativar Provedor" : "Ativar Provedor"}</span>
-                </Button>
-              </Card>
-            ))}
-          </div>
-        </section>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={() => setIsNewGenreModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" variant="primary" size="md" isLoading={isCreatingGenre}>
+                <Plus size={16} />
+                <span>Salvar Gênero Oficial</span>
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
-      {/* 6. Feature Flags */}
-      {activeTab === "FLAGS" && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            <ToggleLeft size={18} />
-            <span>Feature Flags Globais em Tempo de Execução</span>
-          </h2>
+      {/* ===================================================================
+       * MODAL 2: APLICAR STRIKE PUNITIVO
+       * =================================================================== */}
+      {strikeTargetUser && (
+        <Modal
+          isOpen={true}
+          onClose={() => setStrikeTargetUser(null)}
+          title={`Aplicar Strike Punitivo a @${strikeTargetUser.apelido}`}
+        >
+          <form onSubmit={handleConfirmStrike} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(244, 63, 94, 0.1)", border: "1px solid rgba(244, 63, 94, 0.3)", borderRadius: "var(--radius-md)" }}>
+              <AlertTriangle size={24} style={{ color: "var(--accent-rose)", flexShrink: 0 }} />
+              <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                Esta penalidade será registrada permanentemente na trilha de auditoria. Lembre-se: <strong>ao atingir 3 strikes</strong>, o usuário perde o acesso à plataforma imediatamente.
+              </p>
+            </div>
 
-          <div className={styles.flagsList}>
-            {flags.map((flag) => (
-              <Card key={flag.chave} className={styles.flagRow}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>{flag.nome}</div>
-                  <div style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>{flag.descricao}</div>
-                </div>
-                <Button
-                  variant={flag.ativado ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => handleToggleFlag(flag.chave, flag.ativado)}
-                >
-                  {flag.ativado ? "Habilitado" : "Desabilitado"}
-                </Button>
-              </Card>
-            ))}
-          </div>
-        </section>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                Motivo / Justificativa do Strike *
+              </label>
+              <textarea
+                placeholder="Descreva detalhadamente a infração cometida pelo usuário..."
+                value={strikeReason}
+                onChange={(e) => setStrikeReason(e.target.value)}
+                rows={3}
+                required
+                style={{
+                  padding: "0.65rem 0.95rem",
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border-light)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--text-primary)",
+                  fontFamily: "inherit",
+                  fontSize: "var(--text-sm)",
+                  resize: "vertical",
+                  outline: "none",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={() => setStrikeTargetUser(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="danger"
+                size="md"
+                isLoading={isApplyingStrike}
+              >
+                <AlertTriangle size={16} />
+                <span>Confirmar e Aplicar Strike</span>
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

@@ -12,7 +12,7 @@ import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Avatar } from "../../components/ui/Avatar/Avatar";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
-import type { ObraResponse } from "../../types/work.types";
+import { TIPO_OBRA_LABELS, type ObraResponse } from "../../types/work.types";
 import type { AtividadeFeedResponse } from "../../types/social.types";
 import type { ItemCatalogoResponse } from "../../types/catalog.types";
 import {
@@ -219,7 +219,7 @@ export const HomePage: React.FC = () => {
                   <Sparkles size={12} />
                   Destaque da Curadoria
                 </span>
-                <Badge variant="brand">{currentHighlight.tipoObra}</Badge>
+                <Badge variant="brand">{TIPO_OBRA_LABELS[currentHighlight.tipoObra] || currentHighlight.tipoObra}</Badge>
                 {currentHighlight.notaGeral !== undefined && (
                   <span className={styles.heroRatingBadge}>
                     <Star size={12} fill="currentColor" />

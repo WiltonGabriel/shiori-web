@@ -28,6 +28,13 @@ export class UserService {
     return response.data;
   }
 
+  public static async updatePreferredFormats(formatosPreferidos: string[]): Promise<UsuarioPerfilResponse> {
+    const response = await api.put<UsuarioPerfilResponse>("/api/usuarios/me/preferencias-formatos", {
+      formatosPreferidos,
+    });
+    return response.data;
+  }
+
   public static async updateProfile(data: AtualizarPerfilRequest): Promise<UsuarioPerfilResponse> {
     const response = await api.put<UsuarioPerfilResponse>("/api/usuarios/me/perfil", data);
     return response.data;

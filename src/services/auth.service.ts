@@ -13,6 +13,7 @@ export class AuthService {
       apelido: data.apelido,
       role: data.role,
       onboardingConcluido: data.onboardingConcluido,
+      formatosPreferidos: data.formatosPreferidos,
       token: data.token,
     };
 
@@ -34,6 +35,7 @@ export class AuthService {
       apelido: resData.apelido,
       role: resData.role,
       onboardingConcluido: resData.onboardingConcluido,
+      formatosPreferidos: resData.formatosPreferidos,
       token: resData.token,
     };
 

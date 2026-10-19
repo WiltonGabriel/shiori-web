@@ -1,4 +1,32 @@
-export type TipoObra = "MANGA" | "NOVEL" | "MANHWA" | "MANHUA" | "COMIC" | "LIVRO";
+export type TipoObra =
+  | "MANGA"
+  | "MANHWA"
+  | "MANHUA"
+  | "LIGHT_NOVEL"
+  | "WEB_NOVEL"
+  | "COMIC"
+  | "LIVRO";
+
+export const TIPO_OBRA_LABELS: Record<TipoObra, string> = {
+  MANGA: "Mangá",
+  MANHWA: "Manhwa",
+  MANHUA: "Manhua",
+  LIGHT_NOVEL: "Light Novel",
+  WEB_NOVEL: "Web Novel",
+  COMIC: "Comic / HQ",
+  LIVRO: "Livro Tradicional",
+};
+
+export const TODOS_FORMATOS: TipoObra[] = [
+  "MANGA",
+  "MANHWA",
+  "MANHUA",
+  "LIGHT_NOVEL",
+  "WEB_NOVEL",
+  "COMIC",
+  "LIVRO",
+];
+
 export type StatusCatalogo = "PRIVADO" | "COMUNITARIO" | "OFICIAL";
 export type StatusPublicacao = "EM_LANCAMENTO" | "CONCLUIDO" | "EM_HIATO" | "CANCELADO" | "NAO_LANCADO";
 
@@ -27,6 +55,27 @@ export interface ObraCadastroRequest {
   sinopse?: string;
   totalCapitulosLancados?: number;
   tipoObra: TipoObra;
+}
+
+export interface ResultadoBuscaObrasResponse {
+  obras: ObraResponse[];
+  correspondenciasEmOutrosFormatos: boolean;
+  formatosDetectadosNaoPermitidos: TipoObra[];
+  mensagemContextual?: string | null;
+}
+
+export interface IntegracaoMetadadosObra {
+  provedorCodigo?: string;
+  idExterno: string;
+  tituloPrincipal: string;
+  tituloOriginal?: string;
+  sinopse?: string;
+  capaUrl?: string;
+  totalCapitulosLancados?: number;
+  totalVolumes?: number;
+  tipoObra: TipoObra | string;
+  generos: string[];
+  tags: string[];
 }
 
 export type TriState = 0 | 1 | -1;

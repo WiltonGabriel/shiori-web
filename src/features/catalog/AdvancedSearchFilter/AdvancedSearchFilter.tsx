@@ -3,6 +3,7 @@ import styles from "./AdvancedSearchFilter.module.css";
 import { TriStateChip } from "../../../components/ui/TriStateChip/TriStateChip";
 import { Input } from "../../../components/ui/Input/Input";
 import type { TipoObra, StatusPublicacao, TriState, SortOption } from "../../../types/work.types";
+import { TIPO_OBRA_LABELS, TODOS_FORMATOS } from "../../../types/work.types";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 export interface FilterState {
@@ -20,7 +21,7 @@ interface AdvancedSearchFilterProps {
   onReset: () => void;
 }
 
-const ALL_TYPES: TipoObra[] = ["MANGA", "NOVEL", "MANHWA", "MANHUA", "COMIC", "LIVRO"];
+const ALL_TYPES: TipoObra[] = TODOS_FORMATOS;
 
 const ALL_STATUSES: { value: StatusPublicacao; label: string }[] = [
   { value: "EM_LANCAMENTO", label: "Em Lançamento" },
@@ -88,7 +89,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
       <div className={styles.searchBarRow}>
         <div className={styles.searchInputWrapper}>
           <Input
-            placeholder="Buscar por título em português, inglês ou original..."
+            placeholder="Buscar por título, autor ou gênero..."
             leadingIcon={<Search size={16} />}
             value={filters.searchQuery}
             onChange={(e) => onChange({ ...filters, searchQuery: e.target.value })}
@@ -136,7 +137,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
                     className={`${styles.typeBtn} ${isSelected ? styles.typeBtnActive : ""}`}
                     onClick={() => handleTypeToggle(type)}
                   >
-                    {type}
+                    {TIPO_OBRA_LABELS[type] || type}
                   </button>
                 );
               })}

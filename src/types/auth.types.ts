@@ -1,3 +1,5 @@
+import type { TipoObra } from "./work.types";
+
 export type UserRole = "ROLE_USER" | "ROLE_ADMIN" | "ROLE_CURADOR";
 
 export interface LoginRequest {
@@ -19,6 +21,7 @@ export interface AuthResponse {
   apelido: string;
   role: UserRole;
   onboardingConcluido: boolean;
+  formatosPreferidos?: TipoObra[];
 }
 
 export interface AuthenticatedUser {
@@ -27,5 +30,6 @@ export interface AuthenticatedUser {
   apelido: string;
   role: UserRole;
   onboardingConcluido: boolean;
+  formatosPreferidos?: TipoObra[];
   token: string;
 }

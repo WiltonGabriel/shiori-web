@@ -17,9 +17,12 @@ import {
   AlertTriangle,
   Lock,
   Eye,
+  BookOpen,
+  Check,
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import type { Visibilidade } from "../../types/catalog.types";
+import { TODOS_FORMATOS, TIPO_OBRA_LABELS, type TipoObra } from "../../types/work.types";
 
 function maskEmail(email: string): string {
   if (!email || !email.includes("@")) return email;
@@ -46,6 +49,42 @@ export const SettingsPage: React.FC = () => {
     setDefaultPrivacy(val);
     localStorage.setItem("shiori_default_privacy", val);
     toast.success(`Privacidade padrão para novas leituras definida como: ${val}`);
+  };
+
+  // Formatos Literários Preferidos (Filtro Global Estrito - Objetivo 3)
+  const [preferredFormats, setPreferredFormats] = useState<TipoObra[]>(() => {
+    return user?.formatosPreferidos && user.formatosPreferidos.length > 0
+      ? user.formatosPreferidos
+      : TODOS_FORMATOS;
+  });
+  const [isSavingFormats, setIsSavingFormats] = useState(false);
+
+  const handleToggleFormat = (format: TipoObra) => {
+    setPreferredFormats((prev) =>
+      prev.includes(format)
+        ? prev.filter((f) => f !== format)
+        : [...prev, format]
+    );
+  };
+
+  const handleSelectAllFormats = () => setPreferredFormats(TODOS_FORMATOS);
+  const handleClearFormats = () => setPreferredFormats([]);
+
+  const handleSaveFormats = async () => {
+    if (preferredFormats.length === 0) {
+      toast.warning("Selecione ao menos um formato literário.");
+      return;
+    }
+    try {
+      setIsSavingFormats(true);
+      const res = await UserService.updatePreferredFormats(preferredFormats);
+      updateUser({ formatosPreferidos: res.formatosPreferidos || preferredFormats });
+      toast.success("Suas preferências de formatos foram salvas e aplicadas a todo o catálogo!");
+    } catch (err: any) {
+      toast.error(err, "Falha ao Salvar Preferências de Formatos");
+    } finally {
+      setIsSavingFormats(false);
+    }
   };
 
   // Modais de Alteração
@@ -225,7 +264,96 @@ export const SettingsPage: React.FC = () => {
         </Card>
       </section>
 
-      {/* 2. Preferências de Leitura e Privacidade Padrão */}
+      {/* 2. Preferências de Formatos Literários (Filtro Global Estrito - Objetivo 3) */}
+      <section className={styles.section}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
+            <BookOpen size={18} style={{ color: "var(--brand-primary)" }} />
+            <span>Preferências de Formatos Literários</span>
+          </h2>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              type="button"
+              onClick={handleSelectAllFormats}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--brand-light)",
+                fontSize: "var(--text-xs)",
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Marcar Todos
+            </button>
+            <span style={{ color: "var(--text-tertiary)", fontSize: "var(--text-xs)" }}>|</span>
+            <button
+              type="button"
+              onClick={handleClearFormats}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-secondary)",
+                fontSize: "var(--text-xs)",
+                cursor: "pointer",
+              }}
+            >
+              Desmarcar Todos
+            </button>
+          </div>
+        </div>
+
+        <Card className={styles.card}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              Selecione quais formatos de leitura você deseja acompanhar. O catálogo público, destaques e listagens exibirão exclusivamente obras dos formatos ativados.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.6rem" }}>
+              {TODOS_FORMATOS.map((format) => {
+                const isSelected = preferredFormats.includes(format);
+                return (
+                  <button
+                    key={format}
+                    type="button"
+                    onClick={() => handleToggleFormat(format)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "0.65rem 0.85rem",
+                      borderRadius: "var(--radius-md)",
+                      border: `1px solid ${isSelected ? "var(--brand)" : "var(--border-light)"}`,
+                      background: isSelected ? "var(--brand-glow)" : "var(--bg-surface)",
+                      color: isSelected ? "var(--brand-light)" : "var(--text-secondary)",
+                      cursor: "pointer",
+                      fontSize: "var(--text-xs)",
+                      fontWeight: isSelected ? 600 : 500,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span>{TIPO_OBRA_LABELS[format]}</span>
+                    {isSelected && <Check size={14} style={{ color: "var(--brand-light)" }} />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveFormats}
+                isLoading={isSavingFormats}
+              >
+                <span>Salvar Preferências de Formatos</span>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* 3. Preferências de Leitura e Privacidade Padrão */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>
           <Eye size={18} style={{ color: "var(--brand-primary)" }} />

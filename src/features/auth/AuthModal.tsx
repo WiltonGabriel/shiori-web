@@ -70,7 +70,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         {isRegister && (
           <Input
             label="Apelido / Usuário"
-            placeholder="ex: leitor_noturno"
+            placeholder="Digite seu nome de usuário ou apelido..."
             leadingIcon={<User size={16} />}
             value={apelido}
             onChange={(e) => setApelido(e.target.value)}
@@ -81,7 +81,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <Input
           label="E-mail"
           type="email"
-          placeholder="seu@email.com"
+          placeholder="Digite seu endereço de e-mail..."
           leadingIcon={<Mail size={16} />}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -91,7 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <Input
           label="Senha"
           type="password"
-          placeholder="••••••••"
+          placeholder="Digite sua senha..."
           leadingIcon={<Lock size={16} />}
           value={senha}
           onChange={(e) => setSenha(e.target.value)}

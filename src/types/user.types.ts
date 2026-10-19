@@ -1,3 +1,5 @@
+import type { TipoObra } from "./work.types";
+
 export interface UsuarioPerfilResponse {
   id: number;
   email: string;
@@ -9,6 +11,7 @@ export interface UsuarioPerfilResponse {
   pontosConfianca: number;
   onboardingConcluido: boolean;
   ativo: boolean;
+  formatosPreferidos?: TipoObra[];
   dataCriacao: string;
   ultimaAtualizacao: string;
 }
@@ -28,6 +31,7 @@ export interface ConcluirOnboardingRequest {
   fusoHorario?: string;
   fotoUrl?: string;
   descricao?: string;
+  formatosPreferidos: TipoObra[];
 }
 
 export interface AtualizarPerfilRequest {
@@ -35,6 +39,10 @@ export interface AtualizarPerfilRequest {
   fotoUrl?: string;
   descricao?: string;
   fusoHorario?: string;
+}
+
+export interface AtualizarPreferenciasFormatosRequest {
+  formatosPreferidos: TipoObra[];
 }
 
 export interface AlterarEmailRequest {

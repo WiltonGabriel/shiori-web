@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./CatalogPage.module.css";
 import { WorkService } from "../../services/work.service";
 import { CatalogService } from "../../services/catalog.service";
@@ -12,7 +13,15 @@ import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { Modal } from "../../components/ui/Modal/Modal";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
-import type { ObraResponse, TipoObra, StatusPublicacao, SortOption } from "../../types/work.types";
+import {
+  TODOS_FORMATOS,
+  TIPO_OBRA_LABELS,
+  type ObraResponse,
+  type TipoObra,
+  type StatusPublicacao,
+  type SortOption,
+  type IntegracaoMetadadosObra,
+} from "../../types/work.types";
 import type { StatusLeitura, Visibilidade } from "../../types/catalog.types";
 import {
   Search,
@@ -24,15 +33,19 @@ import {
   Star,
   Check,
   BookOpen,
+  EyeOff,
+  Sparkles,
 } from "lucide-react";
 
 const QUICK_TYPES: { value: TipoObra | "TODOS"; label: string }[] = [
   { value: "TODOS", label: "Todos os Tipos" },
   { value: "MANGA", label: "Mangá" },
-  { value: "NOVEL", label: "Novel" },
   { value: "MANHWA", label: "Manhwa" },
   { value: "MANHUA", label: "Manhua" },
-  { value: "LIVRO", label: "Livro" },
+  { value: "LIGHT_NOVEL", label: "Light Novel" },
+  { value: "WEB_NOVEL", label: "Web Novel" },
+  { value: "COMIC", label: "Comic / HQ" },
+  { value: "LIVRO", label: "Livro Tradicional" },
 ];
 
 const QUICK_STATUSES: { value: StatusPublicacao | "TODOS"; label: string }[] = [
@@ -44,15 +57,22 @@ const QUICK_STATUSES: { value: StatusPublicacao | "TODOS"; label: string }[] = [
 
 const PAGE_SIZE = 15;
 
+interface AssistedNotice {
+  formatos: TipoObra[];
+  mensagem?: string | null;
+}
+
 export const CatalogPage: React.FC = () => {
   useDocumentTitle(
     "Catálogo | Shiori",
-    "Explore e descubra mangás, novels, manhwas e livros no catálogo do Shiori. Filtre por gênero, formato literário e status de publicação."
+    "Explore e descubra mangás, novels, manhwas, comics e livros no catálogo do Shiori. Filtre por gênero, formato literário e status de publicação."
   );
 
+  const navigate = useNavigate();
   const { user, isAuthenticated, openAuthModal } = useAuthStore();
   const [works, setWorks] = useState<ObraResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [assistedNotice, setAssistedNotice] = useState<AssistedNotice | null>(null);
 
   // Filtros
   const [searchInput, setSearchInput] = useState("");
@@ -81,11 +101,30 @@ export const CatalogPage: React.FC = () => {
   const [sinopse, setSinopse] = useState("");
   const [isSubmittingWork, setIsSubmittingWork] = useState(false);
 
+  // Integração com Provedores Externos no Modal
+  const [externalSearchTerm, setExternalSearchTerm] = useState("");
+  const [isSearchingExternal, setIsSearchingExternal] = useState(false);
+  const [externalResults, setExternalResults] = useState<IntegracaoMetadadosObra[]>([]);
+
   const fetchWorks = async () => {
     try {
       setIsLoading(true);
-      const data = await WorkService.listWorks();
-      setWorks(data || []);
+      if (debouncedSearch.trim()) {
+        const result = await WorkService.searchWorksAssisted(debouncedSearch.trim());
+        setWorks(result.obras || []);
+        if (result.correspondenciasEmOutrosFormatos && (!result.obras || result.obras.length === 0)) {
+          setAssistedNotice({
+            formatos: result.formatosDetectadosNaoPermitidos,
+            mensagem: result.mensagemContextual,
+          });
+        } else {
+          setAssistedNotice(null);
+        }
+      } else {
+        setAssistedNotice(null);
+        const data = await WorkService.listWorks();
+        setWorks(data || []);
+      }
     } catch (err: any) {
       console.error("Falha ao buscar catálogo:", err);
       toast.error(err, "Falha ao Carregar Catálogo");
@@ -96,7 +135,40 @@ export const CatalogPage: React.FC = () => {
 
   useEffect(() => {
     fetchWorks();
-  }, []);
+  }, [debouncedSearch, selectedType, selectedStatus]);
+
+  const handleSearchExternal = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!externalSearchTerm.trim()) {
+      toast.warning("Digite um termo para pesquisar nos provedores.");
+      return;
+    }
+    try {
+      setIsSearchingExternal(true);
+      const results = await WorkService.searchExternalWorks(externalSearchTerm.trim());
+      setExternalResults(results || []);
+      if (!results || results.length === 0) {
+        toast.info("Nenhuma obra encontrada nos provedores externos (AniList, MangaDex, Open Library).");
+      }
+    } catch (err: any) {
+      toast.error(err, "Falha na busca externa");
+    } finally {
+      setIsSearchingExternal(false);
+    }
+  };
+
+  const handleSelectExternalResult = (item: IntegracaoMetadadosObra) => {
+    setTituloPrincipal(item.tituloPrincipal);
+    if (item.tituloOriginal) setTituloOriginal(item.tituloOriginal);
+    if (item.capaUrl) setCapaUrl(item.capaUrl);
+    if (item.totalCapitulosLancados) setTotalCapitulos(item.totalCapitulosLancados);
+    if (item.sinopse) setSinopse(item.sinopse);
+    if (item.tipoObra && TODOS_FORMATOS.includes(item.tipoObra as TipoObra)) {
+      setTipoObra(item.tipoObra as TipoObra);
+    }
+    setExternalResults([]);
+    toast.success(`Metadados de "${item.tituloPrincipal}" importados com sucesso! Revise os campos e envie.`);
+  };
 
   // Lógica de Filtragem e Busca
   const filteredWorks = useMemo(() => {
@@ -267,7 +339,7 @@ export const CatalogPage: React.FC = () => {
           <div className={styles.searchBarWrapper}>
             <div className={styles.searchInputArea}>
               <Input
-                placeholder="Buscar por título em português, original ou alternativo..."
+                placeholder="Buscar por título, autor ou gênero..."
                 leadingIcon={<Search size={16} />}
                 value={searchInput}
                 onChange={(e) => {
@@ -360,6 +432,46 @@ export const CatalogPage: React.FC = () => {
         <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
           <Spinner size="lg" />
         </div>
+      ) : assistedNotice ? (
+        <div className={styles.assistedNoticeCard}>
+          <div className={styles.noticeIconArea}>
+            <EyeOff size={28} />
+          </div>
+          <div>
+            <h3 className={styles.noticeTitle}>
+              Obras encontradas em formatos não ativados
+            </h3>
+            <p className={styles.noticeDescription}>
+              Encontramos obras correspondentes ao termo de busca, mas exclusivamente em formatos que estão desativados nas suas preferências de leitura.
+            </p>
+          </div>
+          <div className={styles.detectedFormatsList}>
+            {assistedNotice.formatos.map((fmt) => (
+              <span key={fmt} className={styles.detectedFormatChip}>
+                {TIPO_OBRA_LABELS[fmt] || fmt}
+              </span>
+            ))}
+          </div>
+          <p className={styles.noticeDescription} style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+            Para preservar a sua escolha de leitura, as capas e dados dessas obras não foram exibidos. Deseja visualizar esses formatos? Ajuste suas preferências de leitura.
+          </p>
+          <div className={styles.noticeActions}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate("/configuracoes")}
+            >
+              Ajustar Preferências de Formatos
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleResetFilters}
+            >
+              Limpar Filtros
+            </Button>
+          </div>
+        </div>
       ) : paginatedWorks.length === 0 ? (
         <div className={styles.emptyCard}>
           <BookOpen size={42} style={{ color: "var(--border-light)" }} />
@@ -416,7 +528,7 @@ export const CatalogPage: React.FC = () => {
 
                 <div className={styles.cardBody}>
                   <div className={styles.cardBadges}>
-                    <Badge variant="neutral">{work.tipoObra}</Badge>
+                    <Badge variant="neutral">{TIPO_OBRA_LABELS[work.tipoObra] || work.tipoObra}</Badge>
                     {work.notaGeral !== undefined && work.notaGeral > 0 && (
                       <span className={styles.ratingBadge}>
                         <Star size={11} fill="currentColor" />
@@ -557,7 +669,7 @@ export const CatalogPage: React.FC = () => {
               <Input
                 label="Link de Leitura Privado (Opcional)"
                 type="url"
-                placeholder="https://meu-leitor-favorito.com/obra/123"
+                placeholder="Insira a URL do seu leitor ou site de acompanhamento..."
                 value={readingUrl}
                 onChange={(e) => setReadingUrl(e.target.value)}
                 helperText="Fica gravado apenas para você e nunca é exposto publicamente."
@@ -577,22 +689,86 @@ export const CatalogPage: React.FC = () => {
       )}
 
       {/* ===================================================================
-       * MODAL 2: SUGERIR OBRA MANUAL
+       * MODAL 2: SUGERIR OBRA MANUAL COM PROVEDORES EXTERNOS
        * =================================================================== */}
       {isSuggestModalOpen && (
         <Modal
           isOpen={true}
-          onClose={() => setIsSuggestModalOpen(false)}
+          onClose={() => {
+            setIsSuggestModalOpen(false);
+            setExternalResults([]);
+          }}
           title="Sugerir Obra Manual ao Catálogo"
         >
           <form onSubmit={handleCreateWork} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              Não encontrou sua obra no catálogo? Cadastre os metadados abaixo. Sua sugestão será enviada para a curadoria comunitária do Shiori.
+              Não encontrou sua obra no catálogo? Pesquise em nossos provedores parceiros para auto-preencher ou cadastre manualmente abaixo.
             </p>
+
+            {/* Bloco de Busca em Provedores Externos */}
+            <div className={styles.externalSearchSection}>
+              <div className={styles.externalSearchHeader}>
+                <span className={styles.externalSearchTitle}>
+                  Preenchimento Automático via Provedores (AniList, MangaDex, Open Library)
+                </span>
+                <Sparkles size={15} style={{ color: "var(--brand-light)" }} />
+              </div>
+              <div className={styles.externalSearchInputRow}>
+                <Input
+                  placeholder="Pesquisar título nos provedores externos..."
+                  value={externalSearchTerm}
+                  onChange={(e) => setExternalSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearchExternal();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleSearchExternal()}
+                  isLoading={isSearchingExternal}
+                >
+                  Pesquisar
+                </Button>
+              </div>
+
+              {externalResults.length > 0 && (
+                <div className={styles.externalResultsList}>
+                  {externalResults.map((item, idx) => (
+                    <div key={`${item.idExterno}-${idx}`} className={styles.externalResultItem}>
+                      <div className={styles.externalResultInfo}>
+                        <span className={styles.externalResultTitle} title={item.tituloPrincipal}>
+                          {item.tituloPrincipal}
+                        </span>
+                        <div className={styles.externalResultMeta}>
+                          {item.provedorCodigo && (
+                            <Badge variant="brand">{item.provedorCodigo}</Badge>
+                          )}
+                          <span>{TIPO_OBRA_LABELS[item.tipoObra as TipoObra] || item.tipoObra}</span>
+                          {item.totalCapitulosLancados ? <span>• {item.totalCapitulosLancados} caps</span> : null}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleSelectExternalResult(item)}
+                      >
+                        Importar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Input
               label="Título Principal *"
-              placeholder="Ex: Solo Leveling, Omniscient Reader..."
+              placeholder="Digite o título principal da obra..."
               value={tituloPrincipal}
               onChange={(e) => setTituloPrincipal(e.target.value)}
               required
@@ -601,7 +777,7 @@ export const CatalogPage: React.FC = () => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <Input
                 label="Título Original (Opcional)"
-                placeholder="Ex: 나 혼자만 레벨업"
+                placeholder="Digite o título original ou alternativo..."
                 value={tituloOriginal}
                 onChange={(e) => setTituloOriginal(e.target.value)}
               />
@@ -624,9 +800,11 @@ export const CatalogPage: React.FC = () => {
                   }}
                 >
                   <option value="MANGA">Mangá</option>
-                  <option value="NOVEL">Light Novel</option>
                   <option value="MANHWA">Manhwa</option>
                   <option value="MANHUA">Manhua</option>
+                  <option value="LIGHT_NOVEL">Light Novel</option>
+                  <option value="WEB_NOVEL">Web Novel</option>
+                  <option value="COMIC">Comic / HQ</option>
                   <option value="LIVRO">Livro Tradicional</option>
                 </select>
               </div>
@@ -644,7 +822,7 @@ export const CatalogPage: React.FC = () => {
               <Input
                 label="URL da Imagem de Capa"
                 type="url"
-                placeholder="https://exemplo.com/capa.jpg"
+                placeholder="Insira a URL direta da imagem de capa..."
                 value={capaUrl}
                 onChange={(e) => setCapaUrl(e.target.value)}
               />
@@ -655,7 +833,7 @@ export const CatalogPage: React.FC = () => {
                 Sinopse / Descrição
               </label>
               <textarea
-                placeholder="Breve resumo da premissa ou enredo da obra..."
+                placeholder="Digite uma breve sinopse ou resumo da obra..."
                 value={sinopse}
                 onChange={(e) => setSinopse(e.target.value)}
                 rows={3}
@@ -677,7 +855,10 @@ export const CatalogPage: React.FC = () => {
               <Button
                 variant="secondary"
                 size="md"
-                onClick={() => setIsSuggestModalOpen(false)}
+                onClick={() => {
+                  setIsSuggestModalOpen(false);
+                  setExternalResults([]);
+                }}
                 disabled={isSubmittingWork}
               >
                 Cancelar

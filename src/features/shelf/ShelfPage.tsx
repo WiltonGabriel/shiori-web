@@ -776,7 +776,7 @@ export const ShelfPage: React.FC = () => {
                 Anotações e Reflexões Pessoais (Opcional)
               </label>
               <textarea
-                placeholder="O que você achou do desfecho, personagens e narrativa desta obra?"
+                placeholder="Escreva suas impressões sobre o desfecho, personagens e narrativa..."
                 value={cycleNote}
                 onChange={(e) => setCycleNote(e.target.value)}
                 rows={3}
@@ -969,7 +969,7 @@ export const ShelfPage: React.FC = () => {
                 Anotação / Registro
               </label>
               <textarea
-                placeholder="Ex: Começando o arco da ilha de Jeju..."
+                placeholder="Adicione uma anotação ou reflexão sobre este momento da leitura..."
                 value={anotacao}
                 onChange={(e) => setAnotacao(e.target.value)}
                 rows={2}

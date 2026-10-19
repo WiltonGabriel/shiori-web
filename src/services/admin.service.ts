@@ -9,6 +9,9 @@ import type {
   DenunciaComentarioResponse,
   MesclarObrasRequest,
   MesclarObrasResponse,
+  GeneroResponse,
+  CriarGeneroRequest,
+  AdminUsuarioResponse,
 } from "../types/admin.types";
 
 export class AdminService {
@@ -48,18 +51,28 @@ export class AdminService {
     return response.data;
   }
 
-  public static async listUsers(page = 0, size = 20): Promise<{ content: any[]; totalElements: number }> {
-    const response = await api.get("/api/admin/usuarios", { params: { page, size } });
+  public static async listGenres(): Promise<GeneroResponse[]> {
+    const response = await api.get<GeneroResponse[]>("/api/admin/generos");
     return response.data;
   }
 
-  public static async applyStrike(usuarioId: number, motivo: string): Promise<any> {
-    const response = await api.post(`/api/admin/usuarios/${usuarioId}/strikes`, { motivo });
+  public static async createGenre(data: CriarGeneroRequest): Promise<GeneroResponse> {
+    const response = await api.post<GeneroResponse>("/api/admin/generos", data);
     return response.data;
   }
 
-  public static async removeStrike(usuarioId: number, motivo: string): Promise<any> {
-    const response = await api.delete(`/api/admin/usuarios/${usuarioId}/strikes`, { params: { motivo } });
+  public static async listUsers(page = 0, size = 20): Promise<{ content: AdminUsuarioResponse[]; totalElements: number }> {
+    const response = await api.get<{ content: AdminUsuarioResponse[]; totalElements: number }>("/api/admin/usuarios", { params: { page, size } });
+    return response.data;
+  }
+
+  public static async applyStrike(usuarioId: number, motivo: string): Promise<AdminUsuarioResponse> {
+    const response = await api.post<AdminUsuarioResponse>(`/api/admin/usuarios/${usuarioId}/strikes`, { motivo });
+    return response.data;
+  }
+
+  public static async removeStrike(usuarioId: number, motivo: string): Promise<AdminUsuarioResponse> {
+    const response = await api.delete<AdminUsuarioResponse>(`/api/admin/usuarios/${usuarioId}/strikes`, { params: { motivo } });
     return response.data;
   }
 

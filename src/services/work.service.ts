@@ -1,5 +1,11 @@
 import { api } from "./api";
-import type { ObraResponse, ObraCadastroRequest, StatusCatalogo } from "../types/work.types";
+import type {
+  ObraResponse,
+  ObraCadastroRequest,
+  StatusCatalogo,
+  ResultadoBuscaObrasResponse,
+  IntegracaoMetadadosObra,
+} from "../types/work.types";
 
 export class WorkService {
   public static async listWorks(status?: StatusCatalogo): Promise<ObraResponse[]> {
@@ -27,6 +33,25 @@ export class WorkService {
     const response = await api.put<ObraResponse>(`/obras/${id}/submeter`, null, {
       params: { usuarioId },
     });
+    return response.data;
+  }
+
+  public static async searchWorksAssisted(termo: string): Promise<ResultadoBuscaObrasResponse> {
+    const response = await api.get<ResultadoBuscaObrasResponse>("/obras/busca", {
+      params: { termo },
+    });
+    return response.data;
+  }
+
+  public static async searchExternalWorks(termo: string, limite: number = 10): Promise<IntegracaoMetadadosObra[]> {
+    const response = await api.get<IntegracaoMetadadosObra[]>("/obras/externas/pesquisar", {
+      params: { termo, limite },
+    });
+    return response.data;
+  }
+
+  public static async getExternalWorkDetails(provedor: string, idExterno: string): Promise<IntegracaoMetadadosObra> {
+    const response = await api.get<IntegracaoMetadadosObra>(`/obras/externas/${provedor}/obras/${idExterno}`);
     return response.data;
   }
 }

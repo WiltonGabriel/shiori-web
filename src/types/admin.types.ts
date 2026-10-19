@@ -101,3 +101,33 @@ export interface MesclarObrasResponse {
   totalHistoricosTransferidos: number;
   mensagem: string;
 }
+
+export interface GeneroResponse {
+  id: number;
+  nome: string;
+  slug: string;
+  descricao?: string;
+}
+
+export interface CriarGeneroRequest {
+  nome: string;
+  descricao?: string;
+}
+
+export interface AdminUsuarioResponse {
+  id: number;
+  email: string;
+  apelido: string;
+  fotoUrl?: string;
+  role: "ROLE_USER" | "ROLE_CURADOR" | "ROLE_ADMIN";
+  ativo: boolean;
+  pontosConfianca: number;
+  strikes: number;
+  dataCriacao: string;
+  ultimaAtualizacao: string;
+}
+
+export interface AplicarStrikeRequest {
+  motivo: string;
+}
+
