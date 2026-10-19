@@ -21,9 +21,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-type FilterTab = "TODOS" | "LENDO" | "TERMINOU" | "FADIGOU" | "PLANEJADO" | "ABDICOU";
+type FilterTab = "TODOS" | "LENDO" | "TERMINOU" | "ENGAVETADO" | "PLANEJADO" | "ABDICOU";
 
-const STATUS_TABS: FilterTab[] = ["TODOS", "LENDO", "TERMINOU", "FADIGOU", "PLANEJADO", "ABDICOU"];
+const STATUS_TABS: FilterTab[] = ["TODOS", "LENDO", "TERMINOU", "ENGAVETADO", "PLANEJADO", "ABDICOU"];
 
 export const ShelfPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
@@ -224,7 +224,7 @@ export const ShelfPage: React.FC = () => {
               className={`${styles.tab} ${activeTab === status ? styles.tabActive : ""}`}
               onClick={() => setActiveTab(status)}
             >
-              {status === "ABDICOU" ? "Abdicou" : status}
+              {status === "ENGAVETADO" ? "Engavetado" : status === "ABDICOU" ? "Abdicou" : status}
             </button>
           ))}
         </div>
@@ -260,7 +260,11 @@ export const ShelfPage: React.FC = () => {
               : 0;
 
             const badgeStatus =
-              item.statusLeitura === "DROPOU" ? "Abdicou" : item.statusLeitura;
+              item.statusLeitura === "DROPOU"
+                ? "Abdicou"
+                : item.statusLeitura === "ENGAVETADO"
+                ? "Engavetado"
+                : item.statusLeitura;
 
             return (
               <Card key={item.id} className={styles.itemCard}>
@@ -280,7 +284,7 @@ export const ShelfPage: React.FC = () => {
                   </h3>
 
                   <div className={styles.progressRow}>
-                    <Badge variant={item.statusLeitura === "FADIGOU" ? "warning" : item.statusLeitura === "TERMINOU" ? "success" : "brand"}>
+                    <Badge variant={item.statusLeitura === "ENGAVETADO" ? "warning" : item.statusLeitura === "TERMINOU" ? "success" : "brand"}>
                       {badgeStatus}
                     </Badge>
                     <span className={styles.progressText}>
@@ -410,7 +414,7 @@ export const ShelfPage: React.FC = () => {
               >
                 <option value="LENDO">LENDO</option>
                 <option value="TERMINOU">TERMINOU</option>
-                <option value="FADIGOU">FADIGOU</option>
+                <option value="ENGAVETADO">Engavetado</option>
                 <option value="PLANEJADO">PLANEJADO</option>
                 <option value="DROPOU">ABDICOU</option>
               </select>

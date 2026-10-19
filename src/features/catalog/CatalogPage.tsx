@@ -416,7 +416,7 @@ export const CatalogPage: React.FC = () => {
                   <option value="LENDO">Lendo</option>
                   <option value="PLANEJADO">Planejo Ler</option>
                   <option value="PAUSADO">Pausado</option>
-                  <option value="FADIGOU">Fadigou</option>
+                  <option value="ENGAVETADO">Engavetado</option>
                   <option value="TERMINOU">Terminou</option>
                   <option value="DROPOU">Abdicou</option>
                 </select>

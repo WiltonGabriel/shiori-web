@@ -1,4 +1,4 @@
-export type StatusLeitura = "LENDO" | "FADIGOU" | "TERMINOU" | "PLANEJADO" | "PAUSADO" | "DROPOU";
+export type StatusLeitura = "LENDO" | "ENGAVETADO" | "TERMINOU" | "PLANEJADO" | "PAUSADO" | "DROPOU";
 export type Visibilidade = "PRIVADO" | "RESTRITO" | "PUBLICO";
 
 export interface HistoricoLeituraResponse {

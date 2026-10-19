@@ -49,7 +49,7 @@ export const HomePage: React.FC = () => {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            Shiori v0.0.8-alpha • Catálogo e Rastreador de Leituras
+            Shiori v0.0.9-alpha • Catálogo e Rastreador de Leituras
           </div>
           <h1 className={styles.title}>
             Seu Catálogo Pessoal de <span className={styles.titleGradient}>Mangás, Novels, Manhwas e Livros</span>.

@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
           <span className={styles.brandName}>Shiori</span>
         </Link>
         <span className={styles.versionBadge} title="Versão Alpha em desenvolvimento">
-          v0.0.8-alpha
+          v0.0.9-alpha
         </span>
       </div>
 
