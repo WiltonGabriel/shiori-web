@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar/Sidebar";
 import { BottomNav } from "./BottomNav/BottomNav";
 import { BroadcastBanner } from "./BroadcastBanner/BroadcastBanner";
 import { AuthModal } from "../../features/auth/AuthModal";
+import { ToastContainer } from "../ui/Toast/ToastContainer";
 
 export const AppLayout: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -25,6 +26,7 @@ export const AppLayout: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+      <ToastContainer />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Modal } from "../../components/ui/Modal/Modal";
 import { Input } from "../../components/ui/Input/Input";
 import { Button } from "../../components/ui/Button/Button";
 import { useAuthStore } from "../../store/authStore";
+import { toast } from "../../store/toastStore";
 import { Mail, Lock, User } from "lucide-react";
 
 interface AuthModalProps {
@@ -28,12 +29,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     try {
       if (isRegister) {
         await register({ email, senha, apelido });
+        toast.success("Conta criada com sucesso!", `Bem-vindo, @${apelido}!`);
       } else {
         await login({ email, senha });
+        toast.success("Login efetuado com sucesso!", "Sessão Iniciada");
       }
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || "Falha na autenticação. Verifique os dados.");
+      const msg = err.message || "Falha na autenticação. Verifique os dados.";
+      setErrorMsg(msg);
+      toast.error(err, isRegister ? "Erro no Cadastro" : "Falha na Autenticação");
     } finally {
       setIsLoading(false);
     }
@@ -49,12 +54,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         {errorMsg && (
           <div
             style={{
-              padding: "0.75rem",
-              background: "rgba(244, 63, 94, 0.15)",
-              border: "1px solid rgba(244, 63, 94, 0.3)",
+              padding: "0.75rem 1rem",
+              background: "var(--accent-rose-glow)",
+              border: "1px solid rgba(244, 63, 94, 0.35)",
               borderRadius: "var(--radius-md)",
-              color: "#FDA4AF",
+              color: "var(--accent-rose)",
               fontSize: "var(--text-xs)",
+              fontWeight: 600,
             }}
           >
             {errorMsg}
@@ -105,8 +111,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           style={{
             background: "transparent",
             border: "none",
-            color: "var(--brand-light)",
+            color: "var(--brand-primary)",
             fontSize: "var(--text-xs)",
+            fontWeight: 600,
             cursor: "pointer",
             textAlign: "center",
             marginTop: "0.5rem",

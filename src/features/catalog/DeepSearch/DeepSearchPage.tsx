@@ -4,6 +4,7 @@ import styles from "./DeepSearchPage.module.css";
 import { WorkService } from "../../../services/work.service";
 import { CatalogService } from "../../../services/catalog.service";
 import { useAuthStore } from "../../../store/authStore";
+import { toast } from "../../../store/toastStore";
 import { TriStateChip } from "../../../components/ui/TriStateChip/TriStateChip";
 import { Card } from "../../../components/ui/Card/Card";
 import { Badge } from "../../../components/ui/Badge/Badge";
@@ -350,7 +351,7 @@ export const DeepSearchPage: React.FC = () => {
         setReadingUrl("");
       }, 1200);
     } catch (err: any) {
-      alert(err.message || "Falha ao adicionar obra.");
+      toast.error(err, "Falha ao Adicionar Obra");
     } finally {
       setIsAdding(false);
     }

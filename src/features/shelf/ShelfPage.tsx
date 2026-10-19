@@ -8,8 +8,9 @@ import { Modal } from "../../components/ui/Modal/Modal";
 import { Input } from "../../components/ui/Input/Input";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
 import { useAuthStore } from "../../store/authStore";
+import { toast } from "../../store/toastStore";
 import type { ItemCatalogoResponse, StatusLeitura } from "../../types/catalog.types";
-import { Plus, ExternalLink, Edit3, Trash2, BookOpen } from "lucide-react";
+import { Plus, ExternalLink, Edit3, Trash2, BookOpen, RotateCcw, LogIn } from "lucide-react";
 
 const STATUS_TABS: (StatusLeitura | "TODOS")[] = [
   "TODOS",
@@ -26,6 +27,7 @@ export const ShelfPage: React.FC = () => {
   const [items, setItems] = useState<ItemCatalogoResponse[]>([]);
   const [activeTab, setActiveTab] = useState<StatusLeitura | "TODOS">("TODOS");
   const [isLoading, setIsLoading] = useState(() => isAuthenticated);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal para atualizar progresso detalhado
   const [editingItem, setEditingItem] = useState<ItemCatalogoResponse | null>(null);
@@ -36,12 +38,16 @@ export const ShelfPage: React.FC = () => {
   const [anotacao, setAnotacao] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-
   const loadShelf = async () => {
     try {
       setIsLoading(true);
+      setLoadError(null);
       const data = await CatalogService.getMyShelf();
-      setItems(data);
+      setItems(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      const errMsg = err?.message || "Não foi possível carregar as obras da estante.";
+      setLoadError(errMsg);
+      toast.error(err, "Falha ao Carregar Estante");
     } finally {
       setIsLoading(false);
     }
@@ -50,12 +56,15 @@ export const ShelfPage: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadShelf();
+    } else {
+      setIsLoading(false);
     }
   }, [isAuthenticated]);
 
   const filteredItems = useMemo(() => {
-    if (activeTab === "TODOS") return items;
-    return items.filter((i) => i.statusLeitura === activeTab);
+    const list = Array.isArray(items) ? items : [];
+    if (activeTab === "TODOS") return list;
+    return list.filter((i) => i.statusLeitura === activeTab);
   }, [items, activeTab]);
 
   const handleQuickIncrement = async (item: ItemCatalogoResponse) => {
@@ -66,9 +75,10 @@ export const ShelfPage: React.FC = () => {
         volumeAtual: item.volumeAtual,
         statusLeitura: item.statusLeitura,
       });
-      setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
+      setItems((prev) => (Array.isArray(prev) ? prev.map((i) => (i.id === item.id ? updated : i)) : []));
+      toast.success(`Avançado para o capítulo ${nextChapter}!`, item.obraTitulo);
     } catch (err: any) {
-      alert(err.message || "Falha ao avançar capítulo.");
+      toast.error(err, "Falha ao Avançar Capítulo");
     }
   };
 
@@ -78,7 +88,8 @@ export const ShelfPage: React.FC = () => {
     setVolumeAtual(item.volumeAtual || 0);
     setStatusLeitura(item.statusLeitura);
     setNota(item.avaliacaoPessoal || 0);
-    setAnotacao("");
+    const lastHist = item.historicosLeitura && item.historicosLeitura.length > 0 ? item.historicosLeitura[item.historicosLeitura.length - 1] : null;
+    setAnotacao(lastHist?.anotacao || "");
   };
 
   const handleSaveProgress = async (e: React.FormEvent) => {
@@ -94,10 +105,11 @@ export const ShelfPage: React.FC = () => {
         nota: nota > 0 ? nota : undefined,
         anotacao: anotacao.trim() || undefined,
       });
-      setItems((prev) => prev.map((i) => (i.id === editingItem.id ? updated : i)));
+      setItems((prev) => (Array.isArray(prev) ? prev.map((i) => (i.id === editingItem.id ? updated : i)) : []));
       setEditingItem(null);
+      toast.success("Progresso salvo com sucesso!", editingItem.obraTitulo);
     } catch (err: any) {
-      alert(err.message || "Erro ao salvar progresso.");
+      toast.error(err, "Erro ao Salvar Progresso");
     } finally {
       setIsSaving(false);
     }
@@ -107,21 +119,41 @@ export const ShelfPage: React.FC = () => {
     if (!window.confirm("Deseja realmente remover esta obra da sua estante?")) return;
     try {
       await CatalogService.removeItemFromShelf(itemId);
-      setItems((prev) => prev.filter((i) => i.id !== itemId));
+      setItems((prev) => (Array.isArray(prev) ? prev.filter((i) => i.id !== itemId) : []));
+      toast.success("Obra removida da estante.");
     } catch (err: any) {
-      alert(err.message || "Falha ao remover item.");
+      toast.error(err, "Falha ao Remover Item");
     }
   };
 
   if (!isAuthenticated) {
     return (
-      <Card style={{ textAlign: "center", padding: "4rem 2rem", maxWidth: 500, margin: "2rem auto" }}>
-        <BookOpen size={48} style={{ margin: "0 auto 1rem", color: "var(--brand-light)" }} />
-        <h2 style={{ marginBottom: "0.5rem" }}>Sua Estante Pessoal</h2>
-        <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", marginBottom: "1.5rem" }}>
-          Faça login para acompanhar o progresso das suas leituras e salvar links privados.
-        </p>
-      </Card>
+      <div style={{ padding: "3rem 1rem", display: "flex", justifyContent: "center" }}>
+        <Card style={{ textAlign: "center", padding: "4rem 2rem", maxWidth: 520, width: "100%" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "var(--radius-full)", background: "var(--hero-badge-bg)", color: "var(--brand-primary)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem" }}>
+            <BookOpen size={28} />
+          </div>
+          <h2 style={{ fontSize: "var(--text-xl)", fontWeight: 800, marginBottom: "0.5rem", color: "var(--text-primary)" }}>
+            Sua Estante de Leituras
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", marginBottom: "1.75rem", lineHeight: 1.6 }}>
+            Faça login na sua conta para acompanhar o progresso de cada capítulo, registrar notas privadas e acessar seus links seguros.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                const enterBtn = document.querySelector('header button[type="button"]') as HTMLButtonElement | null;
+                enterBtn?.click();
+              }}
+            >
+              <LogIn size={16} />
+              <span>Entrar com Minha Conta</span>
+            </Button>
+          </div>
+        </Card>
+      </div>
     );
   }
 
@@ -130,7 +162,7 @@ export const ShelfPage: React.FC = () => {
       <div className={styles.header}>
         <h1 className={styles.title}>Minha Estante</h1>
         <p className={styles.subtitle}>
-          Gerencie seu ritmo de leitura, ciclos de releitura e acesse rapidamente seus links de leitura.
+          Gerencie seu ritmo de leitura, ciclos de releitura e acesse rapidamente seus links privados de leitura.
         </p>
 
         <div className={styles.tabs}>
@@ -151,6 +183,19 @@ export const ShelfPage: React.FC = () => {
         <div style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
           <Spinner size="lg" />
         </div>
+      ) : loadError ? (
+        <Card style={{ textAlign: "center", padding: "3rem 2rem", maxWidth: 480, margin: "2rem auto" }}>
+          <div style={{ color: "var(--accent-rose)", fontWeight: 700, marginBottom: "0.5rem" }}>
+            {loadError}
+          </div>
+          <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+            Não conseguimos sincronizar a sua estante com o servidor no momento.
+          </p>
+          <Button variant="secondary" size="sm" onClick={loadShelf} style={{ margin: "0 auto" }}>
+            <RotateCcw size={14} />
+            <span>Tentar Novamente</span>
+          </Button>
+        </Card>
       ) : filteredItems.length === 0 ? (
         <Card style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
           Nenhum item na estante para o filtro <strong>{activeTab}</strong>.
@@ -258,17 +303,24 @@ export const ShelfPage: React.FC = () => {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 500 }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
                 Status de Leitura
               </label>
               <select
-                className="glass-input"
-                style={{ padding: "0.65rem 0.95rem", minHeight: "var(--touch-target-min)" }}
+                style={{
+                  padding: "0.65rem 0.95rem",
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border-light)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--text-primary)",
+                  minHeight: "var(--touch-target-min)",
+                  outline: "none",
+                }}
                 value={statusLeitura}
                 onChange={(e) => setStatusLeitura(e.target.value as StatusLeitura)}
               >
                 {STATUS_TABS.filter((t) => t !== "TODOS").map((s) => (
-                  <option key={s} value={s} style={{ background: "#0E1017", color: "#FFF" }}>
+                  <option key={s} value={s}>
                     {s}
                   </option>
                 ))}

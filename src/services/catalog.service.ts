@@ -7,9 +7,21 @@ import type {
 } from "../types/catalog.types";
 
 export class CatalogService {
-  public static async getMyShelf(): Promise<ItemCatalogoResponse[]> {
-    const response = await api.get<ItemCatalogoResponse[]>("/api/catalogo/minha-estante");
-    return response.data;
+  /**
+   * Obtém as obras na estante do usuário autenticado.
+   * Suporta o formato Spring Data Page<ItemCatalogoResponse> ({ content: [...] }) e Array direto.
+   */
+  public static async getMyShelf(page = 0, size = 100): Promise<ItemCatalogoResponse[]> {
+    const response = await api.get<any>("/api/catalogo/minha-estante", {
+      params: { page, size },
+    });
+    if (response.data && Array.isArray(response.data.content)) {
+      return response.data.content;
+    }
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return [];
   }
 
   public static async getCatalogItem(id: number): Promise<ItemCatalogoResponse> {

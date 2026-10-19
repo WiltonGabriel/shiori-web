@@ -3,6 +3,7 @@ import styles from "./CatalogPage.module.css";
 import { WorkService } from "../../services/work.service";
 import { CatalogService } from "../../services/catalog.service";
 import { useAuthStore } from "../../store/authStore";
+import { toast } from "../../store/toastStore";
 import { AdvancedSearchFilter, type FilterState } from "./AdvancedSearchFilter/AdvancedSearchFilter";
 import { Card } from "../../components/ui/Card/Card";
 import { Badge } from "../../components/ui/Badge/Badge";
@@ -131,7 +132,7 @@ export const CatalogPage: React.FC = () => {
         setReadingUrl("");
       }, 1200);
     } catch (err: any) {
-      alert(err.message || "Falha ao adicionar obra.");
+      toast.error(err, "Falha ao Adicionar Obra");
     } finally {
       setIsAdding(false);
     }

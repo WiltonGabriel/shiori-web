@@ -6,6 +6,7 @@ import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
 import { useAuthStore } from "../../store/authStore";
+import { toast } from "../../store/toastStore";
 import type {
   AdminDashboardResponse,
   ProvedorIntegracaoResponse,
@@ -48,7 +49,7 @@ export const AdminDashboardPage: React.FC = () => {
       const updated = await AdminService.toggleIntegrationStatus(id, !currentStatus);
       setIntegrations((prev) => prev.map((p) => (p.id === id ? updated : p)));
     } catch (err: any) {
-      alert(err.message || "Erro ao alterar status do provedor.");
+      toast.error(err, "Falha ao Alterar Integração");
     }
   };
 
@@ -57,7 +58,7 @@ export const AdminDashboardPage: React.FC = () => {
       const updated = await AdminService.toggleFeatureFlag(chave, !currentStatus);
       setFlags((prev) => prev.map((f) => (f.chave === chave ? updated : f)));
     } catch (err: any) {
-      alert(err.message || "Erro ao alterar feature flag.");
+      toast.error(err, "Falha ao Alterar Feature Flag");
     }
   };
 

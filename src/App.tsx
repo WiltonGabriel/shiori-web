@@ -7,6 +7,8 @@ import { CatalogPage } from "./features/catalog/CatalogPage";
 import { DeepSearchPage } from "./features/catalog/DeepSearch/DeepSearchPage";
 import { ShelfPage } from "./features/shelf/ShelfPage";
 import { AdminDashboardPage } from "./features/admin/AdminDashboardPage";
+import { NotFoundPage } from "./features/notFound/NotFoundPage";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { useAuthStore } from "./store/authStore";
 import { useBroadcastStore } from "./store/broadcastStore";
 import { BroadcastService } from "./services/broadcast.service";
@@ -34,20 +36,24 @@ export const App: React.FC = () => {
   }, [initAuth, setBroadcasts]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<AppLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="explorar" element={<CatalogPage />} />
-            <Route path="explorar/busca-profunda" element={<DeepSearchPage />} />
-            <Route path="busca-profunda" element={<DeepSearchPage />} />
-            <Route path="estante" element={<ShelfPage />} />
-            <Route path="admin" element={<AdminDashboardPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<AppLayout />}>
+              <Route index element={<HomePage />} />
+              <Route path="explorar" element={<CatalogPage />} />
+              <Route path="explorar/busca-profunda" element={<DeepSearchPage />} />
+              <Route path="busca-profunda" element={<DeepSearchPage />} />
+              <Route path="estante" element={<ShelfPage />} />
+              <Route path="admin" element={<AdminDashboardPage />} />
+              {/* Página 404 para qualquer rota não mapeada */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
