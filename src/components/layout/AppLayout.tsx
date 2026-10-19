@@ -8,10 +8,17 @@ import { BroadcastBanner } from "./BroadcastBanner/BroadcastBanner";
 import { AuthModal } from "../../features/auth/AuthModal";
 import { OnboardingModal } from "../../features/profile/OnboardingModal";
 import { ToastContainer } from "../ui/Toast/ToastContainer";
+import { ApiEndpointSetupModal } from "./ApiEndpointSetupModal/ApiEndpointSetupModal";
 import { useAuthStore } from "../../store/authStore";
+import { useApiEndpointStore } from "../../store/apiEndpointStore";
 
 export const AppLayout: React.FC = () => {
   const { user, isAuthenticated, isAuthModalOpen, openAuthModal, closeAuthModal } = useAuthStore();
+  const { checkInitialSetup } = useApiEndpointStore();
+
+  React.useEffect(() => {
+    checkInitialSetup();
+  }, [checkInitialSetup]);
 
   const showOnboarding = Boolean(isAuthenticated && user && !user.onboardingConcluido);
 
@@ -31,6 +38,7 @@ export const AppLayout: React.FC = () => {
         onClose={closeAuthModal}
       />
       <OnboardingModal isOpen={showOnboarding} />
+      <ApiEndpointSetupModal />
       <ToastContainer />
     </div>
   );

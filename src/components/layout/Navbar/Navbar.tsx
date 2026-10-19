@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import styles from "./Navbar.module.css";
 import { useAuthStore } from "../../../store/authStore";
 import { useThemeStore } from "../../../store/themeStore";
+import { useApiEndpointStore } from "../../../store/apiEndpointStore";
 import { Avatar } from "../../ui/Avatar/Avatar";
 import { Button } from "../../ui/Button/Button";
-import { LogIn, LogOut, Sun, Moon, Settings } from "lucide-react";
+import { LogIn, LogOut, Sun, Moon, Settings, Server } from "lucide-react";
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
@@ -14,6 +15,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
+  const { currentEndpoint, openModal: openApiModal } = useApiEndpointStore();
 
   return (
     <header className={styles.navbar}>
@@ -23,11 +25,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
           <span className={styles.brandName}>Shiori</span>
         </Link>
         <span className={styles.versionBadge} title="Versão Alpha em desenvolvimento">
-          v0.0.11-alpha
+          v0.0.12-alpha
         </span>
       </div>
 
       <div className={styles.right}>
+        <button
+          type="button"
+          className={styles.themeButton}
+          onClick={openApiModal}
+          aria-label="Configurar Hub Shiori (API)"
+          title={`Hub Shiori API: ${currentEndpoint} (Clique para alterar)`}
+        >
+          <Server size={18} />
+        </button>
+
         <button
           type="button"
           className={styles.themeButton}

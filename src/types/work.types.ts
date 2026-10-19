@@ -46,6 +46,11 @@ export interface ObraResponse {
   criadoPorUsuarioId?: number;
   generos: string[];
   tags: string[];
+  origemFonte?: string;
+  mangadexId?: string;
+  anilistId?: string;
+  kitsuId?: string;
+  isbn?: string;
 }
 
 export interface ObraCadastroRequest {

@@ -16,7 +16,18 @@ O Shiori Web é construído como uma Single Page Application (SPA) com React 19,
 
 ---
 
-## 2. Passo a Passo: Criação da Stack no Portainer
+## 2. ⚠️ Diretriz de Segurança e Acesso Operacional
+
+> [!CAUTION]
+> **POLÍTICA ESTRITA DE ACESSO OPERACIONAL AO SERVIDOR DE PRODUÇÃO:**
+>
+> 1. **Ambiente de Produção Gerenciado por GitOps:** O ambiente de produção opera sob automação estrita via **Portainer**.
+> 2. **Acesso SSH Restrito:** O acesso direto via SSH ao servidor (através da malha de rede privada Tailscale no host `ubuntu@100.127.79.49`) é **estritamente restrito a fins de auditoria de infraestrutura, inspeção de logs e gerenciamento de containers** no diretório de serviços `/srv/services/shiori`.
+> 3. **Proibição de Alterações Manuais:** É terminantemente proibido editar código-fonte, alterar assets estáticos ou aplicar correções manuais diretamente no servidor de produção. **Toda e qualquer alteração de código deve ser submetida via commit no repositório GitHub e passar obrigatoriamente pelos testes automatizados e pela esteira do GitHub Actions.**
+
+---
+
+## 3. Passo a Passo: Criação da Stack no Portainer
 
 O Shiori Web roda como uma Stack autônoma no Portainer, consumindo a imagem pública do GitHub Container Registry (`ghcr.io/wiltongabriel/shiori-web:latest`).
 

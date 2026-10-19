@@ -25,6 +25,12 @@ dist-ssr
 
 # Documentacao privada e memoria da IA
 docs/memory/
+docs/memoria/
+
+# Customizações locais do agente IA (Skills e Regras Locais)
+.agents/
+AGENTS.md
+GEMINI.md
 
 # Variaveis de ambiente privadas
 .env

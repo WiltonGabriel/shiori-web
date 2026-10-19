@@ -57,4 +57,32 @@ export class CatalogService {
   public static async removeItemFromShelf(itemId: number): Promise<void> {
     await api.delete(`/api/catalogo/${itemId}`);
   }
+
+  public static async desvincularObra(itemId: number): Promise<ItemCatalogoResponse> {
+    const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/desvincular`);
+    return response.data;
+  }
+
+  public static async vincularObra(itemId: number, obraId: number, sincronizarMetadados = true): Promise<ItemCatalogoResponse> {
+    const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/vincular`, {
+      obraId,
+      sincronizarMetadados,
+    });
+    return response.data;
+  }
+
+  public static async atualizarMetaCapitulos(itemId: number): Promise<ItemCatalogoResponse> {
+    const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/atualizar-meta`);
+    return response.data;
+  }
+
+  public static async exportarEstante(): Promise<import("../types/catalog.types").EstanteExportDTO> {
+    const response = await api.get<import("../types/catalog.types").EstanteExportDTO>("/api/catalogo/exportar");
+    return response.data;
+  }
+
+  public static async importarEstante(data: import("../types/catalog.types").EstanteImportRequest): Promise<{ mensagem: string; totalImportados: number }> {
+    const response = await api.post<{ mensagem: string; totalImportados: number }>("/api/catalogo/importar", data);
+    return response.data;
+  }
 }

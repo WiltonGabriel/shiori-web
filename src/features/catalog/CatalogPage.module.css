@@ -299,6 +299,72 @@
   width: 100%;
 }
 
+.sourceBadgeShiori {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.sourceBadgeMangaDex {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ff6740;
+  background: rgba(255, 103, 64, 0.12);
+  border: 1px solid rgba(255, 103, 64, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.sourceBadgeKitsu {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fd755c;
+  background: rgba(253, 117, 92, 0.12);
+  border: 1px solid rgba(253, 117, 92, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.sourceBadgeOpenLib {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.sourceBadgeAniList {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #3db4f2;
+  background: rgba(61, 180, 242, 0.12);
+  border: 1px solid rgba(61, 180, 242, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.sourceBadgeFederacao {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
 .pagination {
   display: flex;
   align-items: center;

@@ -23,6 +23,7 @@ import {
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import type { Visibilidade } from "../../types/catalog.types";
 import { TODOS_FORMATOS, TIPO_OBRA_LABELS, type TipoObra } from "../../types/work.types";
+import { HubPairingSection } from "./components/HubPairingSection";
 
 function maskEmail(email: string): string {
   if (!email || !email.includes("@")) return email;
@@ -421,7 +422,10 @@ export const SettingsPage: React.FC = () => {
         </Card>
       </section>
 
-      {/* 3. Zona de Perigo / Exclusão de Conta */}
+      {/* 3. Conexão e Pareamento com o Hub Shiori */}
+      <HubPairingSection />
+
+      {/* 4. Zona de Perigo / Exclusão de Conta */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle} style={{ color: "var(--accent-rose)" }}>
           <AlertTriangle size={18} />
