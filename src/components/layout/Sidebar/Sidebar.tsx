@@ -37,7 +37,7 @@ export const Sidebar: React.FC = () => {
         }
       >
         <Bookmark size={18} />
-        <span>Meu Catálogo</span>
+        <span>Minha Estante</span>
       </NavLink>
 
       {isAuthenticated && (

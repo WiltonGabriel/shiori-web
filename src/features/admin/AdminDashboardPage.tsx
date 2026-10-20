@@ -395,7 +395,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="container" style={{ padding: "2rem 1rem 5rem" }}>
-      {/* Cabeçalho Dedicado SysOverseer com Navegação das 9 Abas de Governança */}
+      {/* Cabeçalho Dedicado com Navegação das 9 Abas de Governança e Administração */}
       <AdminHeader
         activeTab={activeTab}
         setActiveTab={setActiveTab}

@@ -79,7 +79,7 @@ export const ShelfPage: React.FC = () => {
         <EmptyState
           icon={<BookOpen size={32} />}
           title={`Nenhum item na estante para o filtro "${activeTab}"`}
-          description="Sua estante é o seu santuário pessoal e autônomo. Adicione obras através do catálogo global para acompanhar seus capítulos e ciclos de releitura!"
+          description="Sua estante é o seu espaço pessoal e autônomo. Adicione obras através do catálogo global para acompanhar seus capítulos e ciclos de releitura!"
           action={{
             label: "Explorar Catálogo Global",
             href: "/catalogo",

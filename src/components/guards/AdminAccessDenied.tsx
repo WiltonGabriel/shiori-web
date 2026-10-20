@@ -12,15 +12,15 @@ export const AdminAccessDenied: React.FC = () => {
         <div className={`${styles.iconWrapper} ${styles.iconRestricted}`}>
           <ShieldAlert size={32} />
         </div>
-        <h2 className={styles.title}>Acesso Restrito ao SysOverseer</h2>
+        <h2 className={styles.title}>Acesso Restrito à Administração</h2>
         <p className={styles.description}>
-          Esta área é restrita à governança de alto nível do Shiori. Apenas administradores com papel <code>ROLE_ADMIN</code> possuem autorização de acesso.
+          Esta área é restrita à governança do Shiori. Apenas administradores com papel <code>ROLE_ADMIN</code> possuem autorização de acesso.
         </p>
         <div className={styles.actions}>
-          <Link to="/catalogo">
+          <Link to="/meu-catalogo">
             <Button variant="secondary" size="md">
               <ArrowLeft size={16} />
-              <span>Voltar ao Santuário</span>
+              <span>Voltar à Minha Estante</span>
             </Button>
           </Link>
         </div>

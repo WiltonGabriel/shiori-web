@@ -41,3 +41,57 @@
   color: var(--text-secondary);
   border: 1px solid var(--border-light);
 }
+
+.mangadex {
+  background: var(--provider-mangadex-bg);
+  color: var(--provider-mangadex);
+  border: 1px solid rgba(255, 103, 64, 0.3);
+}
+
+.kitsu {
+  background: var(--provider-kitsu-bg);
+  color: var(--provider-kitsu);
+  border: 1px solid rgba(253, 117, 92, 0.3);
+}
+
+.openlibrary {
+  background: var(--provider-openlibrary-bg);
+  color: var(--provider-openlibrary);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.anilist {
+  background: var(--provider-anilist-bg);
+  color: var(--provider-anilist);
+  border: 1px solid rgba(61, 180, 242, 0.3);
+}
+
+.lendo {
+  background: var(--status-lendo-bg);
+  color: var(--brand-light);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.planejado {
+  background: var(--status-planejado-bg);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.engavetado {
+  background: var(--status-engavetado-bg);
+  color: var(--accent-amber);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.terminou {
+  background: var(--status-terminou-bg);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.abdicou {
+  background: var(--status-abdicou-bg);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+}

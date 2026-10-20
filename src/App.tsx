@@ -4,7 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppLayout } from "./components/layout/AppLayout";
 import { HomePage } from "./features/home/HomePage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
+import { WorkDetailsPage } from "./features/catalog/WorkDetailsPage";
 import { ShelfPage } from "./features/shelf/ShelfPage";
+import { PersonalWorkDetailsPage } from "./features/shelf/PersonalWorkDetailsPage";
 import { ProfilePage } from "./features/profile/ProfilePage";
 import { SettingsPage } from "./features/profile/SettingsPage";
 import { AdminDashboardPage } from "./features/admin/AdminDashboardPage";
@@ -47,17 +49,19 @@ export const App: React.FC = () => {
             <Route path="/" element={<AppLayout />}>
               <Route index element={<HomePage />} />
               <Route path="catalogo" element={<CatalogPage />} />
+              <Route path="catalogo/:id" element={<WorkDetailsPage />} />
               <Route path="explorar" element={<Navigate to="/catalogo" replace />} />
 
               {/* Rotas Protegidas de Leitor */}
               <Route element={<ProtectedRoute />}>
                 <Route path="meu-catalogo" element={<ShelfPage />} />
+                <Route path="meu-catalogo/:id" element={<PersonalWorkDetailsPage />} />
                 <Route path="estante" element={<Navigate to="/meu-catalogo" replace />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="configuracoes" element={<SettingsPage />} />
               </Route>
 
-              {/* Rota Protegida de Governança SysOverseer */}
+              {/* Rota Protegida de Governança e Administração */}
               <Route element={<AdminRoleRoute />}>
                 <Route path="admin" element={<AdminDashboardPage />} />
               </Route>

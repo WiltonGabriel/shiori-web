@@ -28,6 +28,7 @@ docs/memory/
 docs/memoria/
 
 # Customizações locais do agente IA (Skills e Regras Locais)
+.agents
 .agents/
 AGENTS.md
 GEMINI.md

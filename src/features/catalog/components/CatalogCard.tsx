@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import styles from "../CatalogPage.module.css";
 import { Badge } from "../../../components/ui/Badge/Badge";
 import { Button } from "../../../components/ui/Button/Button";
@@ -34,7 +35,7 @@ export const CatalogCard: React.FC<CatalogCardProps> = ({ work, onSelectWork }) 
 
   return (
     <article className={styles.workCard}>
-      <div className={styles.coverWrapper}>
+      <Link to={`/catalogo/${work.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
         {work.capaUrl ? (
           <img
             src={work.capaUrl}
@@ -50,7 +51,7 @@ export const CatalogCard: React.FC<CatalogCardProps> = ({ work, onSelectWork }) 
             <Badge variant="brand">Oficial</Badge>
           </div>
         )}
-      </div>
+      </Link>
 
       <div className={styles.cardBody}>
         <div className={styles.cardBadges}>
@@ -65,7 +66,9 @@ export const CatalogCard: React.FC<CatalogCardProps> = ({ work, onSelectWork }) 
         </div>
 
         <h3 className={styles.workTitle} title={work.tituloPrincipal}>
-          {work.tituloPrincipal}
+          <Link to={`/catalogo/${work.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            {work.tituloPrincipal}
+          </Link>
         </h3>
 
         <div className={styles.workMeta}>
@@ -84,7 +87,7 @@ export const CatalogCard: React.FC<CatalogCardProps> = ({ work, onSelectWork }) 
             onClick={() => onSelectWork(work)}
           >
             <Plus size={14} />
-            <span>Adicionar ao Meu Catálogo</span>
+            <span>Incorporar à Minha Estante</span>
           </Button>
         </div>
       </div>

@@ -83,7 +83,7 @@ export const CatalogPage: React.FC = () => {
       await CatalogService.addItemToShelf(payload);
       toast.success(
         `"${payload.titulo || selectedWork?.tituloPrincipal}" incorporado com sucesso à sua estante pessoal!`,
-        "Santuário Atualizado"
+        "Estante Atualizada"
       );
       setSelectedWork(null);
     } catch (err: any) {

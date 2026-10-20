@@ -34,6 +34,30 @@
   --accent-rose: #F43F5E;
   --accent-rose-glow: rgba(244, 63, 94, 0.25);
 
+  /* Status de Leitura Oficiais */
+  --status-lendo: #6366F1;
+  --status-lendo-bg: rgba(99, 102, 241, 0.16);
+  --status-planejado: #3B82F6;
+  --status-planejado-bg: rgba(59, 130, 246, 0.16);
+  --status-engavetado: #F59E0B;
+  --status-engavetado-bg: rgba(245, 158, 11, 0.16);
+  --status-terminou: #10B981;
+  --status-terminou-bg: rgba(16, 185, 129, 0.16);
+  --status-abdicou: #F43F5E;
+  --status-abdicou-bg: rgba(244, 63, 94, 0.16);
+
+  /* Provedores de Metadados Federados */
+  --provider-mangadex: #FF6740;
+  --provider-mangadex-bg: rgba(255, 103, 64, 0.12);
+  --provider-kitsu: #FD755C;
+  --provider-kitsu-bg: rgba(253, 117, 92, 0.12);
+  --provider-openlibrary: #0284C7;
+  --provider-openlibrary-bg: rgba(2, 132, 199, 0.12);
+  --provider-anilist: #3DB4F2;
+  --provider-anilist-bg: rgba(61, 180, 242, 0.12);
+  --provider-hub: #6366F1;
+  --provider-hub-bg: rgba(99, 102, 241, 0.16);
+
   /* Elementos de Destaque do Hero & Navegação (Dark) */
   --hero-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.20) 0%, rgba(18, 22, 34, 0.95) 100%);
   --hero-border: rgba(99, 102, 241, 0.30);

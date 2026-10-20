@@ -6,13 +6,14 @@ import { useThemeStore } from "../../../store/themeStore";
 import { useApiEndpointStore } from "../../../store/apiEndpointStore";
 import { Avatar } from "../../ui/Avatar/Avatar";
 import { Button } from "../../ui/Button/Button";
-import { LogIn, LogOut, Sun, Moon, Settings, Server } from "lucide-react";
+import { LogIn, LogOut, Sun, Moon, Settings, Server, Search } from "lucide-react";
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
+  onOpenQuickSearch?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal, onOpenQuickSearch }) => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { currentEndpoint, openModal: openApiModal } = useApiEndpointStore();
@@ -30,6 +31,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
       </div>
 
       <div className={styles.right}>
+        {onOpenQuickSearch && (
+          <button
+            type="button"
+            className={styles.searchTrigger}
+            onClick={onOpenQuickSearch}
+            title="Busca Rápida de Obras (Ctrl + K)"
+            aria-label="Abrir busca rápida"
+          >
+            <Search size={14} />
+            <span style={{ display: "none", "@media (min-width: 640px)": { display: "inline" } } as any}>
+              Buscar...
+            </span>
+            <span className={styles.kbdSmall}>Ctrl K</span>
+          </button>
+        )}
+
         <button
           type="button"
           className={styles.themeButton}

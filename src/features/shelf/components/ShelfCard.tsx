@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import styles from "../ShelfPage.module.css";
 import { Button } from "../../../components/ui/Button/Button";
 import {
@@ -48,7 +49,7 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
 
   return (
     <div className={styles.shelfCard}>
-      <div className={styles.coverWrapper}>
+      <Link to={`/meu-catalogo/${item.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
         {capaExibida ? (
           <img
             src={capaExibida}
@@ -59,12 +60,14 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
         ) : (
           <BookOpen size={24} style={{ color: "var(--text-muted)" }} />
         )}
-      </div>
+      </Link>
 
       <div className={styles.cardBody}>
         <div className={styles.cardHeaderRow}>
           <h3 className={styles.cardTitle} title={tituloExibido}>
-            {tituloExibido}
+            <Link to={`/meu-catalogo/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+              {tituloExibido}
+            </Link>
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
             {item.desvinculado && <UnlinkedBadge />}

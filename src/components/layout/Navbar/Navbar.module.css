@@ -59,6 +59,37 @@
   gap: 0.75rem;
 }
 
+.searchTrigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-glass-input);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.75rem;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 36px;
+}
+
+.searchTrigger:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+}
+
+.kbdSmall {
+  font-family: monospace;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.35rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+
 .themeButton {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);

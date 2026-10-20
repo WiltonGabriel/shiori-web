@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./BottomNav.module.css";
-import { Home, Search, Bookmark, User } from "lucide-react";
+import { Home, Compass, Bookmark, User } from "lucide-react";
 
 export const BottomNav: React.FC = () => {
   return (
@@ -18,8 +18,8 @@ export const BottomNav: React.FC = () => {
         to="/catalogo"
         className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ""}`}
       >
-        <Search size={20} />
-        <span>Pesquisa</span>
+        <Compass size={20} />
+        <span>Explorar</span>
       </NavLink>
 
       <NavLink

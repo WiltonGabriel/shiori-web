@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import styles from "../ShelfPage.module.css";
 import { Button } from "../../../components/ui/Button/Button";
 import {
@@ -63,33 +64,37 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
             return (
               <tr key={item.id}>
                 <td>
-                  {capaExibida ? (
-                    <img
-                      src={capaExibida}
-                      alt={tituloExibido}
-                      className={styles.tableCover}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 48,
-                        borderRadius: "var(--radius-sm)",
-                        background: "var(--bg-surface)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <BookOpen size={16} style={{ color: "var(--text-muted)" }} />
-                    </div>
-                  )}
+                  <Link to={`/meu-catalogo/${item.id}`} style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
+                    {capaExibida ? (
+                      <img
+                        src={capaExibida}
+                        alt={tituloExibido}
+                        className={styles.tableCover}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 36,
+                          height: 48,
+                          borderRadius: "var(--radius-sm)",
+                          background: "var(--bg-surface)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <BookOpen size={16} style={{ color: "var(--text-muted)" }} />
+                      </div>
+                    )}
+                  </Link>
                 </td>
                 <td>
                   <div className={styles.tableObraCell}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                        <span className={styles.tableTitle}>{tituloExibido}</span>
+                        <Link to={`/meu-catalogo/${item.id}`} className={styles.tableTitle} style={{ textDecoration: "none", color: "inherit" }}>
+                          {tituloExibido}
+                        </Link>
                         {item.desvinculado && <UnlinkedBadge />}
                       </div>
                       {item.avaliacaoPessoal !== undefined && item.avaliacaoPessoal > 0 && (
