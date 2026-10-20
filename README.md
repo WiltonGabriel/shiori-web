@@ -7,7 +7,7 @@
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> Front-end oficial do **Catálogo de Leituras Shiori**, uma Single Page Application (SPA) moderna, responsiva e de alta performance voltada ao acompanhamento soberano e curadoria de obras literárias (mangás, web novels, light novels, manhwas, manhuas e quadrinhos).
+> Front-end oficial do **Catálogo de Leituras Shiori**, uma Single Page Application (SPA) moderna, responsiva e de alta performance voltada ao acompanhamento privado, descentralizado e curadoria de obras literárias (mangás, web novels, light novels, manhwas, manhuas e quadrinhos).
 
 Exposto publicamente em: **[shiori.wnzk.dev.br](https://shiori.wnzk.dev.br)**
 

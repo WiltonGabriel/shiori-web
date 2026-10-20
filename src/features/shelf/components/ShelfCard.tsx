@@ -154,7 +154,7 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => onUnlink(item.id)}
-              title="Desvincular do Catálogo Global (Tornar 100% local e soberano)"
+              title="Desvincular do Catálogo Global (Tornar registro 100% local e independente)"
               aria-label="Desvincular obra"
             >
               <Unlink size={13} />

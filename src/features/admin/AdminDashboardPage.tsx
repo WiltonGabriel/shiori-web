@@ -164,20 +164,73 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadAdminData();
+    let isMounted = true;
+    Promise.allSettled([
+      AdminService.getDashboard(),
+      AdminService.listPendingSuggestions(),
+      AdminService.listOpenReports(),
+      AdminService.listIntegrations(),
+      AdminService.listFeatureFlags(),
+      AdminService.listBroadcasts(),
+    ]).then(([dashRes, sugRes, denRes, intRes, flagRes, broadRes]) => {
+      if (!isMounted) return;
+      if (dashRes.status === "fulfilled") setDashboard(dashRes.value);
+      if (sugRes.status === "fulfilled") setSugestoes(sugRes.value.content || []);
+      if (denRes.status === "fulfilled") setDenuncias(denRes.value.content || []);
+      if (intRes.status === "fulfilled") setIntegrations(intRes.value || []);
+      if (flagRes.status === "fulfilled") setFlags(flagRes.value || []);
+      if (broadRes.status === "fulfilled") setBroadcasts(broadRes.value.content || []);
+      setIsLoading(false);
+    }).catch((err) => {
+      if (!isMounted) return;
+      toast.error(err, "Falha ao Carregar Dados Administrativos");
+      setIsLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   // Carregamento sob demanda das abas específicas
   useEffect(() => {
+    let isMounted = true;
     if (activeTab === "GENEROS" && generos.length === 0) {
-      loadGenres();
+      AdminService.listGenres()
+        .then((data) => {
+          if (isMounted) setGeneros(data);
+        })
+        .catch((err) => {
+          if (isMounted) toast.error(err, "Falha ao Carregar Gêneros");
+        });
     } else if (activeTab === "USUARIOS" && usuarios.length === 0) {
-      loadUsers();
+      AdminService.listUsers(0, 50)
+        .then((res) => {
+          if (isMounted) setUsuarios(res.content || []);
+        })
+        .catch((err) => {
+          if (isMounted) toast.error(err, "Falha ao Carregar Usuários");
+        });
     } else if (activeTab === "AUDITORIA" && auditorias.length === 0) {
-      loadAudits();
+      AdminService.listAuditLogs(0, 50)
+        .then((res) => {
+          if (isMounted) setAuditorias(res.content || []);
+        })
+        .catch((err) => {
+          if (isMounted) toast.error(err, "Falha ao Carregar Auditoria");
+        });
     } else if (activeTab === "BROADCASTS" && broadcasts.length === 0) {
-      loadBroadcasts();
+      AdminService.listBroadcasts()
+        .then((res) => {
+          if (isMounted) setBroadcasts(res.content || []);
+        })
+        .catch((err) => {
+          if (isMounted) toast.error(err, "Falha ao Carregar Comunicados");
+        });
     }
+    return () => {
+      isMounted = false;
+    };
   }, [activeTab, generos.length, usuarios.length, auditorias.length, broadcasts.length]);
 
   // Handlers de Sugestão e Denúncia
@@ -624,13 +677,24 @@ export const AdminDashboardPage: React.FC = () => {
               </p>
             </div>
 
-            <div style={{ width: 280, maxWidth: "100%" }}>
-              <Input
-                placeholder="Filtrar por apelido ou e-mail..."
-                leadingIcon={<Search size={14} />}
-                value={userSearchTerm}
-                onChange={(e) => setUserSearchTerm(e.target.value)}
-              />
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <div style={{ width: 280, maxWidth: "100%" }}>
+                <Input
+                  placeholder="Filtrar por apelido ou e-mail..."
+                  leadingIcon={<Search size={14} />}
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={loadUsers}
+                title="Recarregar Usuários"
+                disabled={isTabLoading}
+              >
+                <RotateCcw size={14} />
+              </Button>
             </div>
           </div>
 
@@ -778,10 +842,21 @@ export const AdminDashboardPage: React.FC = () => {
               </p>
             </div>
 
-            <Button variant="primary" size="sm" onClick={() => setIsNewGenreModalOpen(true)}>
-              <Plus size={14} />
-              <span>Novo Gênero Oficial</span>
-            </Button>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={loadGenres}
+                title="Recarregar Gêneros"
+                disabled={isTabLoading}
+              >
+                <RotateCcw size={14} />
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => setIsNewGenreModalOpen(true)}>
+                <Plus size={14} />
+                <span>Novo Gênero Oficial</span>
+              </Button>
+            </div>
           </div>
 
           {isTabLoading ? (

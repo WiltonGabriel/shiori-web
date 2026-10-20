@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import styles from "./PersonalWorkDetailsPage.module.css";
 import { Button } from "../../components/ui/Button/Button";
@@ -34,7 +34,11 @@ import {
   Check,
   Edit,
   Sparkles,
+  GitPullRequest,
 } from "lucide-react";
+import { WorkService } from "../../services/work.service";
+import { SuggestEditModal } from "../catalog/components/SuggestEditModal";
+import type { ObraResponse } from "../../types/work.types";
 
 export const PersonalWorkDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -62,25 +66,44 @@ export const PersonalWorkDetailsPage: React.FC = () => {
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [tempUrl, setTempUrl] = useState("");
 
-  const loadItem = useCallback(async () => {
-    if (!id) return;
+  // Suggest Edit modal
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  const [globalWorkData, setGlobalWorkData] = useState<ObraResponse | null>(null);
+
+  const handleOpenSuggestModal = async () => {
+    if (!item?.obraId) return;
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await CatalogService.getCatalogItem(Number(id));
-      setItem(data);
-      setChapterInput(data.progressoAtual || 0);
-      setTempUrl(data.urlLeitura || "");
-    } catch (err: any) {
-      setError(err?.message || "Não foi possível carregar os detalhes desta obra na sua estante.");
-    } finally {
-      setIsLoading(false);
+      const w = await WorkService.getWorkById(item.obraId);
+      setGlobalWorkData(w);
+      setIsSuggestModalOpen(true);
+    } catch {
+      toast.error("Não foi possível carregar os metadados canônicos da obra.");
     }
-  }, [id]);
+  };
+
 
   useEffect(() => {
-    loadItem();
-  }, [loadItem]);
+    let isMounted = true;
+    if (!id) return;
+
+    CatalogService.getCatalogItem(Number(id))
+      .then((data) => {
+        if (!isMounted) return;
+        setItem(data);
+        setChapterInput(data.progressoAtual || 0);
+        setTempUrl(data.urlLeitura || "");
+        setIsLoading(false);
+      })
+      .catch((err: any) => {
+        if (!isMounted) return;
+        setError(err?.message || "Não foi possível carregar os detalhes desta obra na sua estante.");
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -351,6 +374,18 @@ export const PersonalWorkDetailsPage: React.FC = () => {
               <Unlink size={14} />
               <span>{item.desvinculado ? "Vincular Global" : "Desvincular"}</span>
             </Button>
+
+            {item.obraId && !item.desvinculado && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleOpenSuggestModal}
+                title="Propor alteração nos metadados globais da obra (estilo Git PR)"
+              >
+                <GitPullRequest size={14} />
+                <span>Propor Sugestão Global</span>
+              </Button>
+            )}
 
             <Button
               variant="danger"
@@ -842,6 +877,14 @@ export const PersonalWorkDetailsPage: React.FC = () => {
             setItem(updatedItem);
             setIsEditModalOpen(false);
           }}
+        />
+      )}
+
+      {isSuggestModalOpen && globalWorkData && (
+        <SuggestEditModal
+          work={globalWorkData}
+          isOpen={isSuggestModalOpen}
+          onClose={() => setIsSuggestModalOpen(false)}
         />
       )}
     </div>

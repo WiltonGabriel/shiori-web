@@ -65,7 +65,7 @@ const IncorporationForm: React.FC<IncorporationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-      {/* Banner de Soberania do Leitor */}
+      {/* Banner de Isolamento da Estante Pessoal */}
       <div
         style={{
           display: "flex",
@@ -79,7 +79,7 @@ const IncorporationForm: React.FC<IncorporationFormProps> = ({
       >
         <Sparkles size={18} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
         <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>
-          <strong style={{ color: "var(--text-primary)" }}>Soberania Absoluta da Estante:</strong>{" "}
+          <strong style={{ color: "var(--text-primary)" }}>Isolamento da Estante Pessoal:</strong>{" "}
           Uma cópia própria (Snapshot) será criada na sua estante. Você tem total controle sobre título, capa e progresso.
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Modal } from "../../ui/Modal/Modal";
 import { Button } from "../../ui/Button/Button";
 import { useApiEndpointStore } from "../../../store/apiEndpointStore";
@@ -9,6 +9,12 @@ import styles from "./ApiEndpointSetupModal.module.css";
 type SetupStep = "CHOICE" | "CONFIG_SERVER" | "CONFIRM_LOCAL";
 
 export const ApiEndpointSetupModal: React.FC = () => {
+  const { isModalOpen } = useApiEndpointStore();
+  if (!isModalOpen) return null;
+  return <ApiEndpointSetupModalContent />;
+};
+
+const ApiEndpointSetupModalContent: React.FC = () => {
   const {
     currentEndpoint,
     isModalOpen,
@@ -22,13 +28,6 @@ export const ApiEndpointSetupModal: React.FC = () => {
 
   const [step, setStep] = useState<SetupStep>("CHOICE");
   const [inputUrl, setInputUrl] = useState(currentEndpoint);
-
-  useEffect(() => {
-    if (isModalOpen) {
-      setInputUrl(currentEndpoint);
-      setStep("CHOICE");
-    }
-  }, [isModalOpen, currentEndpoint]);
 
   const handleTest = async () => {
     if (!inputUrl.trim()) {
@@ -94,7 +93,7 @@ export const ApiEndpointSetupModal: React.FC = () => {
                 <div className={styles.choiceIcon}>
                   <HardDrive size={22} />
                 </div>
-                <div className={styles.choiceTitle}>Uso Local Soberano</div>
+                <div className={styles.choiceTitle}>Modo 100% Local (Isolado)</div>
                 <div className={styles.choiceDesc}>
                   Totalmente offline e privado. Sua estante e notas são salvas localmente no navegador, sem tráfego de dados para servidores externos.
                 </div>

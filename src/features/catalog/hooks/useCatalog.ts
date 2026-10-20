@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { WorkService } from "../../../services/work.service";
 import { toast } from "../../../store/toastStore";
 import { useDebounce } from "../../../hooks/useDebounce";
@@ -48,7 +48,7 @@ export function useCatalog() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-  const fetchWorks = async () => {
+  const fetchWorks = useCallback(async () => {
     try {
       setIsLoading(true);
       if (debouncedSearch.trim()) {
@@ -73,10 +73,50 @@ export function useCatalog() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [debouncedSearch]);
 
   useEffect(() => {
-    fetchWorks();
+    let isMounted = true;
+    if (debouncedSearch.trim()) {
+      WorkService.searchWorksAssisted(debouncedSearch.trim())
+        .then((result) => {
+          if (!isMounted) return;
+          setWorks(result.obras || []);
+          if (result.correspondenciasEmOutrosFormatos && (!result.obras || result.obras.length === 0)) {
+            setAssistedNotice({
+              formatos: result.formatosDetectadosNaoPermitidos,
+              mensagem: result.mensagemContextual,
+            });
+          } else {
+            setAssistedNotice(null);
+          }
+          setIsLoading(false);
+        })
+        .catch((err: any) => {
+          if (!isMounted) return;
+          console.error("Falha ao buscar catálogo:", err);
+          toast.error(err, "Falha ao Carregar Catálogo");
+          setIsLoading(false);
+        });
+    } else {
+      WorkService.listWorks()
+        .then((data) => {
+          if (!isMounted) return;
+          setAssistedNotice(null);
+          setWorks(data || []);
+          setIsLoading(false);
+        })
+        .catch((err: any) => {
+          if (!isMounted) return;
+          console.error("Falha ao buscar catálogo:", err);
+          toast.error(err, "Falha ao Carregar Catálogo");
+          setIsLoading(false);
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [debouncedSearch, selectedType, selectedStatus]);
 
   // Filtragem e ordenação

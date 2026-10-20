@@ -105,6 +105,7 @@ export const ProfilePage: React.FC = () => {
 
   const apelidoExibicao = perfil?.apelido || user?.apelido || "Leitor";
   const emailExibicao = perfil?.email || user?.email || "";
+  const isAdmin = perfil?.role === "ROLE_ADMIN" || user?.role === "ROLE_ADMIN";
 
   return (
     <div className={styles.container}>
@@ -139,8 +140,8 @@ export const ProfilePage: React.FC = () => {
         <div className={styles.profileDetails}>
           <div className={styles.nameRow}>
             <h1 className={styles.displayName}>@{apelidoExibicao}</h1>
-            <Badge variant={perfil?.role === "ROLE_ADMIN" ? "danger" : "brand"}>
-              {perfil?.role === "ROLE_ADMIN" ? "Administrador" : "Leitor"}
+            <Badge variant={isAdmin ? "danger" : "brand"}>
+              {isAdmin ? "Administrador" : "Leitor"}
             </Badge>
           </div>
 
@@ -162,7 +163,15 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ alignSelf: "flex-start", marginLeft: "auto" }}>
+        <div style={{ alignSelf: "flex-start", marginLeft: "auto", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="danger" size="sm">
+                <Shield size={15} />
+                <span>Painel Admin</span>
+              </Button>
+            </Link>
+          )}
           <Link to="/configuracoes">
             <Button variant="secondary" size="sm">
               <Settings size={15} />

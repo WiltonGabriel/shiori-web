@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styles from "../ShelfPage.module.css";
 import { Modal } from "../../../components/ui/Modal/Modal";
 import { Button } from "../../../components/ui/Button/Button";
@@ -21,22 +21,30 @@ export const ShelfCloseCycleModal: React.FC<ShelfCloseCycleModalProps> = ({
   onClose,
   onCycleClosed,
 }) => {
-  const [cycleRating, setCycleRating] = useState<number>(10);
+  if (!isOpen || !item) return null;
+  return (
+    <ShelfCloseCycleModalContent
+      key={item.id}
+      item={item}
+      isOpen={isOpen}
+      onClose={onClose}
+      onCycleClosed={onCycleClosed}
+    />
+  );
+};
+
+const ShelfCloseCycleModalContent: React.FC<ShelfCloseCycleModalProps & { item: ItemCatalogoResponse }> = ({
+  item,
+  isOpen,
+  onClose,
+  onCycleClosed,
+}) => {
+  const [cycleRating, setCycleRating] = useState<number>(item.avaliacaoPessoal || 10);
   const [cycleNote, setCycleNote] = useState<string>("");
   const [cycleDate, setCycleDate] = useState<string>(
     () => new Date().toISOString().split("T")[0]
   );
   const [isClosingCycle, setIsClosingCycle] = useState(false);
-
-  useEffect(() => {
-    if (item) {
-      setCycleRating(item.avaliacaoPessoal || 10);
-      setCycleNote("");
-      setCycleDate(new Date().toISOString().split("T")[0]);
-    }
-  }, [item]);
-
-  if (!item) return null;
 
   const handleConfirmCloseCycle = async (e: React.FormEvent) => {
     e.preventDefault();

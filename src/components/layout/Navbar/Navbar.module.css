@@ -80,6 +80,16 @@
   color: var(--text-primary);
 }
 
+.searchLabel {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .searchLabel {
+    display: inline;
+  }
+}
+
 .kbdSmall {
   font-family: monospace;
   font-size: 0.65rem;

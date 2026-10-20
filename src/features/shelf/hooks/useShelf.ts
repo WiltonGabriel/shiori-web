@@ -9,16 +9,16 @@ export type FilterTab = "TODOS" | "LENDO" | "ENGAVETADO" | "TERMINOU" | "PLANEJA
 export const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "TODOS", label: "Todos" },
   { value: "LENDO", label: "Lendo" },
+  { value: "PLANEJADO", label: "Planejado" },
   { value: "ENGAVETADO", label: "Engavetado" },
   { value: "TERMINOU", label: "Terminou" },
-  { value: "PLANEJADO", label: "Planejado" },
   { value: "ABDICOU", label: "Abdicou" },
 ];
 
 export function useShelf() {
   const { isAuthenticated } = useAuthStore();
   const [items, setItems] = useState<ItemCatalogoResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => Boolean(isAuthenticated));
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>("TODOS");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -44,8 +44,27 @@ export function useShelf() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    loadShelf();
-  }, [loadShelf]);
+    let isMounted = true;
+    if (!isAuthenticated) return;
+
+    CatalogService.getMyShelf(0, 100)
+      .then((res) => {
+        if (!isMounted) return;
+        setItems(res || []);
+        setIsLoading(false);
+      })
+      .catch((err: any) => {
+        if (!isMounted) return;
+        console.error("Falha ao carregar estante:", err);
+        setLoadError("Não foi possível carregar sua estante no momento.");
+        toast.error(err, "Falha ao Carregar Estante");
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]);
 
   const filteredItems = useMemo(() => {
     if (activeTab === "TODOS") return items;
@@ -126,8 +145,8 @@ export function useShelf() {
     try {
       await CatalogService.desvincularObra(itemId);
       toast.success(
-        "Obra desvinculada com sucesso! Agora é um registro estritamente local e soberano.",
-        "Soberania Ativa"
+        "Obra desvinculada com sucesso! Agora é um registro estritamente local e isolado.",
+        "Isolamento Local Ativo"
       );
       loadShelf();
     } catch (err: any) {

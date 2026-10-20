@@ -12,6 +12,15 @@ interface QuickSearchModalProps {
 }
 
 export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return <QuickSearchModalContent onClose={onClose} />;
+};
+
+interface QuickSearchModalContentProps {
+  onClose: () => void;
+}
+
+const QuickSearchModalContent: React.FC<QuickSearchModalContentProps> = ({ onClose }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ObraResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,46 +29,44 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({ isOpen, onCl
 
   // Foco automático no input ao abrir
   useEffect(() => {
-    if (isOpen) {
-      setQuery("");
-      setResults([]);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [isOpen]);
+    inputRef.current?.focus();
+  }, []);
 
   // Fechar com Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+      if (e.key === "Escape") {
         onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [onClose]);
 
   // Busca assistida com debounce
   useEffect(() => {
-    if (!query.trim() || query.length < 2) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
+    if (query.trim().length < 2) return;
 
+    let isMounted = true;
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
         const data = await WorkService.searchWorksAssisted(query.trim());
-        setResults(data.obras || []);
+        if (isMounted) setResults(data.obras || []);
       } catch {
-        setResults([]);
+        if (isMounted) setResults([]);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     }, 250);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [query]);
+
+  const displayedResults = query.trim().length >= 2 ? results : [];
 
   const handleSelectWork = useCallback(
     (work: ObraResponse) => {
@@ -68,8 +75,6 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({ isOpen, onCl
     },
     [navigate, onClose]
   );
-
-  if (!isOpen) return null;
 
   return (
     <div
@@ -110,7 +115,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({ isOpen, onCl
         </div>
 
         <div className={styles.resultsList}>
-          {query.trim().length >= 2 && results.length === 0 && !isLoading && (
+          {query.trim().length >= 2 && displayedResults.length === 0 && !isLoading && (
             <div className={styles.emptyState}>
               Nenhuma obra encontrada para "{query}". Pressione Enter para buscar nas fontes externas.
             </div>
@@ -122,7 +127,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({ isOpen, onCl
             </div>
           )}
 
-          {results.map((work) => (
+          {displayedResults.map((work) => (
             <button
               key={work.id}
               type="button"

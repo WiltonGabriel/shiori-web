@@ -58,7 +58,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       <div className={styles.topRow}>
         <div className={styles.titleArea}>
           <div className={styles.badgeRow}>
-            <span className={styles.sysBadge}>SYS-OVERSEER // GOVERNANÇA SOBERANA</span>
+            <span className={styles.sysBadge}>GOVERNANÇA DA INSTÂNCIA // SHIORI</span>
             <span className={styles.roleBadge}>ROLE_ADMIN</span>
           </div>
           <h1 className={styles.title}>

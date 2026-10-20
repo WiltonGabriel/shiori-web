@@ -40,9 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal, onOpenQuickSear
             aria-label="Abrir busca rápida"
           >
             <Search size={14} />
-            <span style={{ display: "none", "@media (min-width: 640px)": { display: "inline" } } as any}>
-              Buscar...
-            </span>
+            <span className={styles.searchLabel}>Buscar...</span>
             <span className={styles.kbdSmall}>Ctrl K</span>
           </button>
         )}

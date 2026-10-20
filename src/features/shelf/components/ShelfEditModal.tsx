@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Modal } from "../../../components/ui/Modal/Modal";
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
@@ -19,26 +19,31 @@ export const ShelfEditModal: React.FC<ShelfEditModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const [capituloAtual, setCapituloAtual] = useState<number>(0);
-  const [volumeAtual, setVolumeAtual] = useState<number>(0);
-  const [statusLeitura, setStatusLeitura] = useState<StatusLeitura>("LENDO");
-  const [visibilidade, setVisibilidade] = useState<Visibilidade>("RESTRITO");
-  const [nota, setNota] = useState<number>(0);
+  if (!isOpen || !item) return null;
+  return (
+    <ShelfEditModalContent
+      key={item.id}
+      item={item}
+      isOpen={isOpen}
+      onClose={onClose}
+      onSaved={onSaved}
+    />
+  );
+};
+
+const ShelfEditModalContent: React.FC<ShelfEditModalProps & { item: ItemCatalogoResponse }> = ({
+  item,
+  isOpen,
+  onClose,
+  onSaved,
+}) => {
+  const [capituloAtual, setCapituloAtual] = useState<number>(item.progressoAtual || 0);
+  const [volumeAtual, setVolumeAtual] = useState<number>(item.volumeAtual || 0);
+  const [statusLeitura, setStatusLeitura] = useState<StatusLeitura>(item.statusLeitura);
+  const [visibilidade, setVisibilidade] = useState<Visibilidade>(item.visibilidade || "RESTRITO");
+  const [nota, setNota] = useState<number>(item.avaliacaoPessoal || 0);
   const [anotacao, setAnotacao] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (item) {
-      setCapituloAtual(item.progressoAtual || 0);
-      setVolumeAtual(item.volumeAtual || 0);
-      setStatusLeitura(item.statusLeitura);
-      setVisibilidade(item.visibilidade || "RESTRITO");
-      setNota(item.avaliacaoPessoal || 0);
-      setAnotacao("");
-    }
-  }, [item]);
-
-  if (!item) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

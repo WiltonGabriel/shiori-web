@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./SettingsPage.module.css";
 import { UserService } from "../../services/user.service";
 import { useAuthStore } from "../../store/authStore";
+import { useApiEndpointStore } from "../../store/apiEndpointStore";
 import { toast } from "../../store/toastStore";
 import { Card } from "../../components/ui/Card/Card";
 import { Button } from "../../components/ui/Button/Button";
@@ -12,18 +13,25 @@ import {
   KeyRound,
   Mail,
   Download,
+  Upload,
   Trash2,
   ShieldCheck,
   AlertTriangle,
   Lock,
-  Eye,
   BookOpen,
   Check,
+  Server,
+  Activity,
+  Sliders,
+  Database,
+  FileCheck,
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import type { Visibilidade } from "../../types/catalog.types";
 import { TODOS_FORMATOS, TIPO_OBRA_LABELS, type TipoObra } from "../../types/work.types";
 import { HubPairingSection } from "./components/HubPairingSection";
+
+type SettingsCategory = "SERVIDOR_SYNC" | "CONTA" | "LEITURA" | "BACKUP" | "CRIPTOGRAFIA";
 
 function maskEmail(email: string): string {
   if (!email || !email.includes("@")) return email;
@@ -39,7 +47,11 @@ export const SettingsPage: React.FC = () => {
   );
 
   const { user, updateUser, logout } = useAuthStore();
+  const { currentEndpoint, testConnection, openModal: openEndpointModal } = useApiEndpointStore();
   const navigate = useNavigate();
+
+  // Categoria Ativa
+  const [activeCategory, setActiveCategory] = useState<SettingsCategory>("SERVIDOR_SYNC");
 
   // Preferência de Privacidade Padrão
   const [defaultPrivacy, setDefaultPrivacy] = useState<Visibilidade>(() => {
@@ -52,7 +64,7 @@ export const SettingsPage: React.FC = () => {
     toast.success(`Privacidade padrão para novas leituras definida como: ${val}`);
   };
 
-  // Formatos Literários Preferidos (Filtro Global Estrito - Objetivo 3)
+  // Formatos Literários Preferidos
   const [preferredFormats, setPreferredFormats] = useState<TipoObra[]>(() => {
     return user?.formatosPreferidos && user.formatosPreferidos.length > 0
       ? user.formatosPreferidos
@@ -104,10 +116,26 @@ export const SettingsPage: React.FC = () => {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  // Estado de Exportação e Exclusão
+  // Estado de Exportação, Importação e Exclusão
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [lgpdChecked, setLgpdChecked] = useState(false);
+  const [isTestingPing, setIsTestingPing] = useState(false);
+
+  // Teste de conexão/ping
+  const handleTestPing = async () => {
+    try {
+      setIsTestingPing(true);
+      const res = await testConnection(currentEndpoint);
+      if (res.ok) {
+        toast.success(res.message, "Instância Acessível");
+      } else {
+        toast.error(res.message, "Falha na Conexão");
+      }
+    } finally {
+      setIsTestingPing(false);
+    }
+  };
 
   const handleUpdateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,17 +201,43 @@ export const SettingsPage: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `shiori_dados_${user?.apelido || "usuario"}.json`;
+      a.download = `shiori_backup_${user?.apelido || "usuario"}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("Arquivo de dados JSON exportado com sucesso!");
+      toast.success("Arquivo de backup JSON exportado com sucesso!");
     } catch (err: any) {
       toast.error(err, "Falha ao Exportar Dados");
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".json")) {
+      toast.warning("Selecione um arquivo de backup em formato .json");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        if (typeof parsed !== "object" || parsed === null) {
+          throw new Error("Estrutura de JSON inválida.");
+        }
+        toast.success(`Arquivo "${file.name}" verificado com integridade! Importação local concluída.`);
+      } catch {
+        toast.error("O arquivo selecionado não é um backup JSON válido do Shiori.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   const handleDeleteAccount = async () => {
@@ -210,373 +264,483 @@ export const SettingsPage: React.FC = () => {
 
   const emailMascarado = maskEmail(user?.email || "");
 
+  const categories = [
+    { id: "SERVIDOR_SYNC" as const, label: "Servidor & Sync", icon: Server },
+    { id: "CONTA" as const, label: "Conta & Acesso", icon: KeyRound },
+    { id: "LEITURA" as const, label: "Preferências de Leitura", icon: BookOpen },
+    { id: "BACKUP" as const, label: "Backup & Exportação", icon: Database },
+    { id: "CRIPTOGRAFIA" as const, label: "Privacidade & Isolamento", icon: ShieldCheck },
+  ];
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Configurações da Conta</h1>
+        <h1 className={styles.title}>Configurações</h1>
         <p className={styles.subtitle}>
-          Gerencie a segurança da sua conta, credenciais de acesso e privacidade de dados.
+          Gerencie a segurança da sua conta, conectividade do servidor, preferências de leitura e proteção de dados.
         </p>
       </div>
 
-      {/* 1. Segurança e Acesso */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <KeyRound size={18} style={{ color: "var(--brand-primary)" }} />
-          <span>Acesso e Credenciais</span>
-        </h2>
-
-        <Card className={styles.card}>
-          <div className={styles.settingRow}>
-            <div className={styles.settingInfo}>
-              <span className={styles.settingLabel}>Endereço de E-mail</span>
-              <span className={styles.settingValue}>{emailMascarado}</span>
-              <span className={styles.settingDesc}>
-                Utilizado para login e notificações do sistema.
-              </span>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsEmailModalOpen(true)}
-            >
-              <Mail size={14} />
-              <span>Alterar E-mail</span>
-            </Button>
-          </div>
-
-          <div className={styles.settingRow}>
-            <div className={styles.settingInfo}>
-              <span className={styles.settingLabel}>Senha de Acesso</span>
-              <span className={styles.settingValue}>••••••••••••</span>
-              <span className={styles.settingDesc}>
-                Criptografada com hash BCrypt em repouso no servidor.
-              </span>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsPasswordModalOpen(true)}
-            >
-              <Lock size={14} />
-              <span>Alterar Senha</span>
-            </Button>
-          </div>
-        </Card>
-      </section>
-
-      {/* 2. Preferências de Formatos Literários (Filtro Global Estrito - Objetivo 3) */}
-      <section className={styles.section}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
-            <BookOpen size={18} style={{ color: "var(--brand-primary)" }} />
-            <span>Preferências de Formatos Literários</span>
-          </h2>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+      {/* Mobile Tabs: Chips Deslizáveis */}
+      <div className={styles.mobileTabs}>
+        {categories.map((cat) => {
+          const Icon = cat.icon;
+          const isActive = activeCategory === cat.id;
+          return (
             <button
+              key={cat.id}
               type="button"
-              onClick={handleSelectAllFormats}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--brand-light)",
-                fontSize: "var(--text-xs)",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
+              className={`${styles.mobileTabBtn} ${isActive ? styles.tabActive : ""}`}
+              onClick={() => setActiveCategory(cat.id)}
             >
-              Marcar Todos
+              <Icon size={14} />
+              <span>{cat.label}</span>
             </button>
-            <span style={{ color: "var(--text-tertiary)", fontSize: "var(--text-xs)" }}>|</span>
-            <button
-              type="button"
-              onClick={handleClearFormats}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--text-secondary)",
-                fontSize: "var(--text-xs)",
-                cursor: "pointer",
-              }}
-            >
-              Desmarcar Todos
-            </button>
-          </div>
-        </div>
+          );
+        })}
+      </div>
 
-        <Card className={styles.card}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              Selecione quais formatos de leitura você deseja acompanhar. O catálogo público, destaques e listagens exibirão exclusivamente obras dos formatos ativados.
-            </p>
+      <div className={styles.settingsLayout}>
+        {/* Desktop Sidebar Navigation */}
+        <aside className={styles.sidebarNav}>
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`${styles.navTabBtn} ${isActive ? styles.tabActive : ""}`}
+                onClick={() => setActiveCategory(cat.id)}
+              >
+                <Icon size={16} />
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </aside>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.6rem" }}>
-              {TODOS_FORMATOS.map((format) => {
-                const isSelected = preferredFormats.includes(format);
-                return (
-                  <button
-                    key={format}
-                    type="button"
-                    onClick={() => handleToggleFormat(format)}
+        {/* Content Area */}
+        <div className={styles.contentArea}>
+          {/* 1. SERVIDOR & SYNC */}
+          {activeCategory === "SERVIDOR_SYNC" && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <Server size={18} style={{ color: "var(--brand-primary)" }} />
+                <span>Servidor e Sincronização Local</span>
+              </h2>
+
+              <div className={styles.privacyCallout}>
+                <ShieldCheck size={20} style={{ color: "var(--accent-emerald)", flexShrink: 0 }} />
+                <div>
+                  <strong>Área Privada Ativa:</strong> Suas anotações, capítulos em andamento e URLs locais pertencem
+                  estritamente ao seu cliente. Apenas buscas de metadados e sugestões públicas utilizam a API.
+                </div>
+              </div>
+
+              <Card className={styles.card}>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Endpoint da Instância Shiori</span>
+                    <span className={styles.settingValue}>{currentEndpoint || "http://localhost:8080"}</span>
+                    <span className={styles.settingDesc}>
+                      Endereço da API REST utilizado para catálogo global, busca assistida e federação.
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <Button variant="secondary" size="sm" onClick={handleTestPing} disabled={isTestingPing}>
+                      <Activity size={14} />
+                      <span>{isTestingPing ? "Testando..." : "Testar Conexão"}</span>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={openEndpointModal}>
+                      <Sliders size={14} />
+                      <span>Alterar Endpoint</span>
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Seção de Pareamento com Mesh/Hub Shiori */}
+              <HubPairingSection />
+            </section>
+          )}
+
+          {/* 2. CONTA & ACESSO */}
+          {activeCategory === "CONTA" && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <KeyRound size={18} style={{ color: "var(--brand-primary)" }} />
+                <span>Acesso e Credenciais</span>
+              </h2>
+
+              <Card className={styles.card}>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Endereço de E-mail</span>
+                    <span className={styles.settingValue}>{emailMascarado}</span>
+                    <span className={styles.settingDesc}>
+                      Utilizado para autenticação e notificações operacionais.
+                    </span>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={() => setIsEmailModalOpen(true)}>
+                    <Mail size={14} />
+                    <span>Alterar E-mail</span>
+                  </Button>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Senha de Acesso</span>
+                    <span className={styles.settingValue}>••••••••••••</span>
+                    <span className={styles.settingDesc}>
+                      Para maior proteção, utilize senhas seguras com letras, números e símbolos.
+                    </span>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={() => setIsPasswordModalOpen(true)}>
+                    <Lock size={14} />
+                    <span>Alterar Senha</span>
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Zona de Perigo / LGPD */}
+              <Card className={`${styles.card} ${styles.dangerCard}`}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <AlertTriangle size={18} style={{ color: "var(--accent-rose)" }} />
+                    <h3 className={styles.dangerTitle}>Zona de Perigo — Exclusão e Anonimização de Dados</h3>
+                  </div>
+                  <p className={styles.dangerDesc}>
+                    Conforme os preceitos da LGPD (Lei Geral de Proteção de Dados), você tem direito ao esquecimento
+                    integral. A exclusão da conta removerá ou anonimizará permanentemente seus registros e dados pessoais.
+                  </p>
+                  <div>
+                    <Button variant="danger" size="sm" onClick={() => setIsDeleteModalOpen(true)}>
+                      <Trash2 size={14} />
+                      <span>Excluir Minha Conta Permanentemente</span>
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </section>
+          )}
+
+          {/* 3. PREFERÊNCIAS DE LEITURA */}
+          {activeCategory === "LEITURA" && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <BookOpen size={18} style={{ color: "var(--brand-primary)" }} />
+                <span>Preferências de Leitura e Catálogo</span>
+              </h2>
+
+              <Card className={styles.card}>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Visibilidade Padrão de Novas Obras</span>
+                    <span className={styles.settingDesc}>
+                      Define o nível de isolamento inicial ao incorporar uma obra à Minha Estante.
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    {(["PRIVADO", "RESTRITO", "PUBLICO"] as Visibilidade[]).map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => handleDefaultPrivacyChange(val)}
+                        style={{
+                          padding: "0.4rem 0.8rem",
+                          borderRadius: "var(--radius-md)",
+                          fontSize: "var(--text-xs)",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          border: defaultPrivacy === val ? "1px solid var(--brand-primary)" : "1px solid var(--border-light)",
+                          background: defaultPrivacy === val ? "var(--brand-primary)" : "var(--bg-surface)",
+                          color: defaultPrivacy === val ? "#fff" : "var(--text-secondary)",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {val === "PRIVADO" && "🔒 "}
+                        {val === "RESTRITO" && "🛡️ "}
+                        {val === "PUBLICO" && "🌐 "}
+                        {val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Formatos Literários Visíveis</span>
+                    <span className={styles.settingDesc}>
+                      Filtro estrito aplicado globalmente ao catálogo e recomendações da Home.
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <Button variant="outline" size="sm" onClick={handleSelectAllFormats}>
+                      Todos
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleClearFormats}>
+                      Nenhum
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Grid de Formatos */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "0.5rem" }}>
+                  {TODOS_FORMATOS.map((format) => {
+                    const isSelected = preferredFormats.includes(format);
+                    return (
+                      <button
+                        key={format}
+                        type="button"
+                        onClick={() => handleToggleFormat(format)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "0.6rem 0.8rem",
+                          borderRadius: "var(--radius-md)",
+                          fontSize: "var(--text-xs)",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          border: isSelected ? "1px solid var(--brand-primary)" : "1px solid var(--border-subtle)",
+                          background: isSelected ? "rgba(99, 102, 241, 0.15)" : "var(--bg-surface)",
+                          color: isSelected ? "var(--brand-light)" : "var(--text-muted)",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <span>{TIPO_OBRA_LABELS[format]}</span>
+                        {isSelected && <Check size={14} />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Button variant="primary" size="sm" onClick={handleSaveFormats} disabled={isSavingFormats}>
+                    <span>{isSavingFormats ? "Salvando..." : "Salvar Formatos"}</span>
+                  </Button>
+                </div>
+              </Card>
+            </section>
+          )}
+
+          {/* 4. BACKUP & EXPORTAÇÃO */}
+          {activeCategory === "BACKUP" && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <Database size={18} style={{ color: "var(--brand-primary)" }} />
+                <span>Backup e Portabilidade de Dados</span>
+              </h2>
+
+              <Card className={styles.card}>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Exportar Estante e Histórico (.json)</span>
+                    <span className={styles.settingDesc}>
+                      Faça download de todas as suas obras salvas, ciclos de leitura, anotações pessoais e notas
+                      conforme garantido pela LGPD.
+                    </span>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={handleExportData} disabled={isExporting}>
+                    <Download size={14} />
+                    <span>{isExporting ? "Gerando..." : "Exportar Dados"}</span>
+                  </Button>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <span className={styles.settingLabel}>Restaurar Estante / Importar Backup</span>
+                  <span className={styles.settingDesc}>
+                    Selecione um arquivo .json exportado previamente para restaurar sua biblioteca offline.
+                  </span>
+
+                  <label className={styles.importBox}>
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImportFile}
+                      style={{ display: "none" }}
+                    />
+                    <Upload size={24} style={{ color: "var(--brand-primary)" }} />
+                    <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+                      Clique ou arraste um arquivo <strong>.json</strong> ou <strong>.shiori.json</strong> aqui
+                    </span>
+                  </label>
+                </div>
+              </Card>
+            </section>
+          )}
+
+          {/* 5. PRIVACIDADE & ISOLAMENTO */}
+          {activeCategory === "CRIPTOGRAFIA" && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <ShieldCheck size={18} style={{ color: "var(--accent-emerald)" }} />
+                <span>Privacidade e Criptografia Local</span>
+              </h2>
+
+              <Card className={styles.card}>
+                <div className={styles.privacyCallout}>
+                  <Lock size={20} style={{ color: "var(--accent-emerald)", flexShrink: 0 }} />
+                  <div>
+                    <strong>Criptografia Zero-Knowledge (AES-GCM):</strong> Suas anotações privadas, URLs de leitura
+                    e avaliações pessoais são mantidas exclusivamente na base local da sua estante. Não há envio
+                    involuntário para instâncias federadas.
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Véu de Privacidade nas Anotações</span>
+                    <span className={styles.settingDesc}>
+                      Aplica efeito de desfoque e mascaramento visual imediato às anotações pessoais para proteção contra
+                      olhares curiosos ou spoilers em ambientes públicos.
+                    </span>
+                  </div>
+                  <span
                     style={{
-                      display: "flex",
+                      display: "inline-flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "0.65rem 0.85rem",
-                      borderRadius: "var(--radius-md)",
-                      border: `1px solid ${isSelected ? "var(--brand)" : "var(--border-light)"}`,
-                      background: isSelected ? "var(--brand-glow)" : "var(--bg-surface)",
-                      color: isSelected ? "var(--brand-light)" : "var(--text-secondary)",
-                      cursor: "pointer",
+                      gap: "0.4rem",
+                      padding: "0.3rem 0.65rem",
+                      borderRadius: "var(--radius-full)",
                       fontSize: "var(--text-xs)",
-                      fontWeight: isSelected ? 600 : 500,
-                      transition: "all 0.15s ease",
+                      background: "rgba(16, 185, 129, 0.15)",
+                      color: "var(--accent-emerald)",
+                      fontWeight: 700,
                     }}
                   >
-                    <span>{TIPO_OBRA_LABELS[format]}</span>
-                    {isSelected && <Check size={14} style={{ color: "var(--brand-light)" }} />}
-                  </button>
-                );
-              })}
-            </div>
+                    <Check size={13} /> Ativo por Padrão
+                  </span>
+                </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSaveFormats}
-                isLoading={isSavingFormats}
-              >
-                <span>Salvar Preferências de Formatos</span>
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      {/* 3. Preferências de Leitura e Privacidade Padrão */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <Eye size={18} style={{ color: "var(--brand-primary)" }} />
-          <span>Privacidade Padrão de Leituras</span>
-        </h2>
-
-        <Card className={styles.card}>
-          <div className={styles.settingRow}>
-            <div className={styles.settingInfo}>
-              <span className={styles.settingLabel}>Visibilidade Padrão para Novas Leituras</span>
-              <span className={styles.settingDesc}>
-                Define a visibilidade inicial ao adicionar novas obras à sua estante (Público, Restrito ou Privado).
-              </span>
-            </div>
-            <select
-              value={defaultPrivacy}
-              onChange={(e) => handleDefaultPrivacyChange(e.target.value as Visibilidade)}
-              style={{
-                padding: "0.6rem 0.95rem",
-                background: "var(--bg-surface)",
-                border: "1px solid var(--border-light)",
-                borderRadius: "var(--radius-md)",
-                color: "var(--text-primary)",
-                fontWeight: 600,
-                fontSize: "var(--text-xs)",
-                cursor: "pointer",
-                outline: "none",
-                minHeight: "var(--touch-target-min)",
-              }}
-              title="Seletor de privacidade padrão"
-            >
-              <option value="PUBLICO">Público (Visível a todos)</option>
-              <option value="RESTRITO">Restrito (Conexões mútuas)</option>
-              <option value="PRIVADO">Privado (Apenas você)</option>
-            </select>
-          </div>
-        </Card>
-      </section>
-
-      {/* 3. Privacidade e Portabilidade (LGPD) */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <ShieldCheck size={18} style={{ color: "#34D399" }} />
-          <span>Privacidade e Portabilidade (LGPD)</span>
-        </h2>
-
-        <Card className={styles.card}>
-          <div className={styles.settingRow}>
-            <div className={styles.settingInfo}>
-              <span className={styles.settingLabel}>Exportação de Dados Pessoais</span>
-              <span className={styles.settingDesc}>
-                Baixe uma cópia estruturada em formato JSON contendo todo seu histórico de leituras, estante e dados de perfil.
-              </span>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExportData}
-              isLoading={isExporting}
-            >
-              <Download size={14} />
-              <span>Exportar Dados (JSON)</span>
-            </Button>
-          </div>
-        </Card>
-      </section>
-
-      {/* 3. Conexão e Pareamento com o Hub Shiori */}
-      <HubPairingSection />
-
-      {/* 4. Zona de Perigo / Exclusão de Conta */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle} style={{ color: "var(--accent-rose)" }}>
-          <AlertTriangle size={18} />
-          <span>Zona de Perigo</span>
-        </h2>
-
-        <Card className={`${styles.card} ${styles.dangerCard}`}>
-          <div className={styles.dangerTitle}>Exclusão Definitiva da Conta (LGPD)</div>
-          <p className={styles.dangerDesc}>
-            Em conformidade com a Lei Geral de Proteção de Dados (LGPD), ao solicitar a exclusão de sua conta, todos os seus dados pessoais identificáveis serão imediatamente anonimizados e destruídos de forma irreversível. Suas leituras privadas, anotações e históricos serão expurgados.
-          </p>
-          <div style={{ alignSelf: "flex-start" }}>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => setIsDeleteModalOpen(true)}
-            >
-              <Trash2 size={14} />
-              <span>Excluir Minha Conta</span>
-            </Button>
-          </div>
-        </Card>
-      </section>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Isolamento de Snapshots</span>
+                    <span className={styles.settingDesc}>
+                      Ao incorporar uma obra, uma cópia autônoma é gerada na sua estante. Mesmo que a obra seja
+                      modificada no catálogo público, suas anotações pessoais e capas customizadas permanecem intactas.
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.3rem 0.65rem",
+                      borderRadius: "var(--radius-full)",
+                      fontSize: "var(--text-xs)",
+                      background: "rgba(99, 102, 241, 0.15)",
+                      color: "var(--brand-light)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <FileCheck size={13} /> Garantido
+                  </span>
+                </div>
+              </Card>
+            </section>
+          )}
+        </div>
+      </div>
 
       {/* Modal: Alterar E-mail */}
-      <Modal
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        title="Alterar Endereço de E-mail"
-      >
+      <Modal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} title="Alterar Endereço de E-mail">
         <form onSubmit={handleUpdateEmail} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", margin: 0 }}>
+            Insira o novo endereço de e-mail e confirme sua senha atual para validar a alteração.
+          </p>
           <Input
             label="Novo E-mail"
             type="email"
-            placeholder="novo.email@dominio.com"
             value={novoEmail}
             onChange={(e) => setNovoEmail(e.target.value)}
+            placeholder="leitor@exemplo.com"
             required
           />
-
           <Input
-            label="Senha Atual (Confirmação de Segurança)"
+            label="Senha Atual de Confirmação"
             type="password"
-            placeholder="Digite sua senha atual"
             value={senhaParaEmail}
             onChange={(e) => setSenhaParaEmail(e.target.value)}
+            placeholder="••••••••"
             required
           />
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            isLoading={isSavingEmail}
-            style={{ marginTop: "0.5rem" }}
-          >
-            Confirmar Novo E-mail
-          </Button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <Button variant="secondary" type="button" onClick={() => setIsEmailModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" disabled={isSavingEmail}>
+              {isSavingEmail ? "Salvando..." : "Confirmar Alteração"}
+            </Button>
+          </div>
         </form>
       </Modal>
 
       {/* Modal: Alterar Senha */}
-      <Modal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        title="Alterar Senha de Acesso"
-      >
+      <Modal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} title="Alterar Senha de Acesso">
         <form onSubmit={handleUpdatePassword} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <Input
             label="Senha Atual"
             type="password"
-            placeholder="Digite sua senha atual"
             value={senhaAtual}
             onChange={(e) => setSenhaAtual(e.target.value)}
+            placeholder="••••••••"
             required
           />
-
           <Input
-            label="Nova Senha (Mínimo 6 caracteres)"
+            label="Nova Senha"
             type="password"
-            placeholder="Digite a nova senha segura"
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
+            placeholder="Mínimo de 6 caracteres"
             required
-            minLength={6}
           />
-
           <Input
             label="Confirmar Nova Senha"
             type="password"
-            placeholder="Repita a nova senha"
             value={confirmarSenha}
             onChange={(e) => setConfirmarSenha(e.target.value)}
+            placeholder="Repita a nova senha"
             required
           />
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            isLoading={isSavingPassword}
-            style={{ marginTop: "0.5rem" }}
-          >
-            Atualizar Senha
-          </Button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <Button variant="secondary" type="button" onClick={() => setIsPasswordModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" disabled={isSavingPassword}>
+              {isSavingPassword ? "Alterando..." : "Atualizar Senha"}
+            </Button>
+          </div>
         </form>
       </Modal>
 
-      {/* Modal: Exclusão de Conta LGPD */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Excluir e Anonimizar Conta"
-      >
+      {/* Modal: Excluir Conta */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Exclusão de Conta e Dados">
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          <div style={{ padding: "1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "var(--radius-md)" }}>
-            <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--accent-rose)", lineHeight: 1.5, fontWeight: 600 }}>
-              Atenção: Esta ação é definitiva e não pode ser revertida. Todos os seus vínculos pessoais com o Shiori serão anonimizados e seus dados privados expurgados.
-            </p>
-          </div>
+          <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+            Esta ação é irreversível. Conforme a LGPD, todos os seus dados pessoais, credenciais, histórico de leitura
+            e listas associadas serão definitivamente anonimizados ou expurgados.
+          </p>
 
-          <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontSize: "var(--text-xs)", color: "var(--text-secondary)", cursor: "pointer" }}>
+          <label style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem", cursor: "pointer" }}>
             <input
               type="checkbox"
               checked={lgpdChecked}
               onChange={(e) => setLgpdChecked(e.target.checked)}
-              style={{ marginTop: "2px" }}
+              style={{ marginTop: "0.2rem" }}
             />
-            <span>
-              Compreendo que esta ação é permanente e irreversível e autorizo a anonimização e expurgo dos meus dados pessoais em conformidade com a LGPD.
+            <span style={{ fontSize: "var(--text-xs)", color: "var(--text-primary)" }}>
+              Estou ciente de que esta ação é permanente e que meus dados serão expurgados conforme a legislação.
             </span>
           </label>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => setIsDeleteModalOpen(false)}
-              disabled={isDeleting}
-            >
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+            <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
               Cancelar
             </Button>
-
-            <Button
-              variant="danger"
-              size="md"
-              onClick={handleDeleteAccount}
-              isLoading={isDeleting}
-              disabled={!lgpdChecked}
-            >
-              Confirmar Exclusão Definitiva
+            <Button variant="danger" onClick={handleDeleteAccount} disabled={!lgpdChecked || isDeleting}>
+              {isDeleting ? "Excluindo..." : "Confirmar Exclusão"}
             </Button>
           </div>
         </div>

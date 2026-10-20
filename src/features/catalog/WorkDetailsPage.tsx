@@ -11,7 +11,7 @@ import { Button } from "../../components/ui/Button/Button";
 import { Spinner } from "../../components/ui/Spinner/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
 import { IncorporationModal } from "./components/IncorporationModal";
-import { SuggestWorkModal } from "./components/SuggestWorkModal";
+import { SuggestEditModal } from "./components/SuggestEditModal";
 import type { ObraResponse } from "../../types/work.types";
 import type { ItemCatalogoResponse, AdicionarItemCatalogoRequest } from "../../types/catalog.types";
 import {
@@ -32,10 +32,11 @@ export const WorkDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
 
+  const isInvalidId = !id || isNaN(Number(id));
   const [work, setWork] = useState<ObraResponse | null>(null);
   const [shelfItem, setShelfItem] = useState<ItemCatalogoResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(() => !isInvalidId);
+  const [error, setError] = useState<string | null>(() => (isInvalidId ? "Identificador de obra inválido." : null));
   const [activeTab, setActiveTab] = useState<DetailTab>("SINOPSE");
 
   // Modais
@@ -80,8 +81,36 @@ export const WorkDetailsPage: React.FC = () => {
   }, [id, isAuthenticated]);
 
   useEffect(() => {
-    loadWorkData();
-  }, [loadWorkData]);
+    let isMounted = true;
+    if (!id || isNaN(Number(id))) return;
+
+    WorkService.getWorkById(Number(id))
+      .then(async (workData) => {
+        if (!isMounted) return;
+        setWork(workData);
+        if (isAuthenticated) {
+          try {
+            const myShelf = await CatalogService.getMyShelf(0, 200);
+            if (!isMounted) return;
+            const found = myShelf.find((item) => item.obraId === Number(id));
+            setShelfItem(found || null);
+          } catch {
+            // Falha não bloqueante na verificação da estante
+          }
+        }
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        console.error("Falha ao carregar obra:", err);
+        setError("Obra não encontrada ou inacessível no catálogo global.");
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, isAuthenticated]);
 
   const handleConfirmIncorporation = async (payload: AdicionarItemCatalogoRequest) => {
     try {
@@ -324,7 +353,7 @@ export const WorkDetailsPage: React.FC = () => {
           <div>
             <h2 className={styles.sectionTitle}>Onde Ler</h2>
             <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-              O Shiori é uma plataforma de catálogo e acompanhamento soberano. Utilize os links abaixo para acessar os capítulos nas fontes oficiais ou provedores indexados.
+              O Shiori é uma plataforma de catálogo e acompanhamento privado e descentralizado. Utilize os links abaixo para acessar os capítulos nas fontes oficiais ou provedores indexados.
             </p>
           </div>
 
@@ -372,15 +401,12 @@ export const WorkDetailsPage: React.FC = () => {
         />
       )}
 
-      {/* Modal de Proposta de Sugestão de Edição */}
-      {isSuggestModalOpen && (
-        <SuggestWorkModal
+      {/* Modal de Proposta de Sugestão de Edição (Estilo Git PR) */}
+      {isSuggestModalOpen && work && (
+        <SuggestEditModal
+          work={work}
           isOpen={isSuggestModalOpen}
           onClose={() => setIsSuggestModalOpen(false)}
-          onWorkCreated={() => {
-            setIsSuggestModalOpen(false);
-            loadWorkData();
-          }}
         />
       )}
     </div>

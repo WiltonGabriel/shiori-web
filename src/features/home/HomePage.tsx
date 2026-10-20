@@ -48,6 +48,7 @@ export const HomePage: React.FC = () => {
   // Estados do Bloco Continuar Lendo
   const [readingItems, setReadingItems] = useState<ItemCatalogoResponse[]>([]);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
+  const displayedReadingItems = isAuthenticated ? readingItems : [];
 
   // Estados do Feed Social
   const [feedItems, setFeedItems] = useState<AtividadeFeedResponse[]>([]);
@@ -82,7 +83,6 @@ export const HomePage: React.FC = () => {
   // 2. Carregar Continuar Lendo (quando autenticado)
   useEffect(() => {
     if (!isAuthenticated) {
-      setReadingItems([]);
       return;
     }
 
@@ -322,7 +322,7 @@ export const HomePage: React.FC = () => {
           <div className={styles.sectionHeader}>
             <div className={styles.sectionTitleGroup}>
               <h2 className={styles.sectionTitle}>Continuar Lendo</h2>
-              <Badge variant="neutral">{readingItems.length}</Badge>
+              <Badge variant="neutral">{displayedReadingItems.length}</Badge>
             </div>
             <Link to="/meu-catalogo" className={styles.sectionLink}>
               <span>Ver estante completa</span>
@@ -334,13 +334,13 @@ export const HomePage: React.FC = () => {
             <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
               <Spinner size="md" />
             </div>
-          ) : readingItems.length > 0 ? (
+          ) : displayedReadingItems.length > 0 ? (
             <HorizontalScroller
               step={300}
               ariaLabel="Trilha de obras em andamento"
               enableMouseDrag
             >
-              {readingItems.map((item) => {
+              {displayedReadingItems.map((item) => {
                 const totalCap = item.obraTotalCapitulos || 0;
                 const progresso = item.progressoAtual || 0;
                 const percent =

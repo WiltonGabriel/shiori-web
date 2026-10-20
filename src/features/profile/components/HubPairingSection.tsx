@@ -34,7 +34,17 @@ export const HubPairingSection: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchStatus();
+    let isMounted = true;
+    HubService.consultarStatus()
+      .then((res) => {
+        if (isMounted) setPairingStatus(res);
+      })
+      .catch(() => {
+        if (isMounted) setPairingStatus(null);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSaveNetworkConfig = () => {
@@ -103,7 +113,7 @@ export const HubPairingSection: React.FC = () => {
       <Card className={styles.card}>
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            Configure o endereço do Hub <strong>shiori-api</strong> para obter autocomplete de metadados e submeter obras à enciclopédia global. Em caso de queda, o Shiori continuará operando normalmente em modo soberano e local.
+            Configure o endereço do Hub <strong>shiori-api</strong> para obter autocomplete de metadados e submeter obras à enciclopédia global. Em caso de queda, o Shiori continuará operando normalmente em modo local offline-first.
           </p>
 
           {/* Identificador Pseudônimo da Instância */}
