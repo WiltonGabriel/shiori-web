@@ -3,10 +3,10 @@ import styles from "./SuggestEditModal.module.css";
 import { Modal } from "../../../components/ui/Modal/Modal";
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
-import { toast } from "../../../store/toastStore";
 import {
   GitPullRequest,
   ShieldCheck,
+  Info,
 } from "lucide-react";
 import type { ObraResponse, TipoObra } from "../../../types/work.types";
 import { TODOS_FORMATOS, TIPO_OBRA_LABELS } from "../../../types/work.types";
@@ -29,46 +29,14 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
   const [sinopse, setSinopse] = useState(work.sinopse || "");
   const [commitMessage, setCommitMessage] = useState("");
   const [fonteReferencia, setFonteReferencia] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // A API ainda não expõe endpoint para leitores criarem sugestões de edição
+  // (só existem rotas administrativas em /api/admin/sugestoes). Por isso o envio
+  // permanece indisponível e nenhum sucesso é declarado.
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!commitMessage.trim()) {
-      toast.warning("Por favor, descreva a justificativa da proposta (mensagem de commit).");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      // Simulação consciente e honesta de payload conforme SugestaoEdicaoRequest do domínio
-      // O backend possui a entidade SugestaoEdicaoObra e AdminCuradoriaService.avaliarSugestao,
-      // porém o endpoint público aberto para leitores está em processo de federação na instância.
-      const payload = {
-        obraId: work.id,
-        tituloPrincipal: tituloPrincipal !== work.tituloPrincipal ? tituloPrincipal : undefined,
-        tituloOriginal: tituloOriginal !== work.tituloOriginal ? tituloOriginal : undefined,
-        tipoObra: tipoObra !== work.tipoObra ? tipoObra : undefined,
-        totalCapitulosLancados: totalCapitulos !== (work.totalCapitulosLancados || 0) ? totalCapitulos : undefined,
-        sinopse: sinopse !== work.sinopse ? sinopse : undefined,
-        justificativa: `${commitMessage.trim()}${fonteReferencia ? ` [Fonte: ${fonteReferencia.trim()}]` : ""}`,
-      };
-
-      console.info("Proposta de Sugestão de Edição formulada:", payload);
-
-      toast.success(
-        "Proposta de alteração estruturada no formato canônico! Registrada para envio à mesa de moderação comunitária.",
-        "Proposta Submetida"
-      );
-      onClose();
-    } catch (err: any) {
-      toast.error(err, "Falha ao Registrar Proposta");
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -79,11 +47,19 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
     >
       <form onSubmit={handleSubmit} className={styles.modalContent}>
         {/* Banner de Isolamento da Área Privada */}
+        <div className={styles.warningBanner} role="status">
+          <Info size={20} style={{ color: "var(--accent-amber, #f59e0b)", flexShrink: 0 }} />
+          <div>
+            <strong>Envio indisponível nesta instância:</strong> a API ainda não oferece endpoint para leitores
+            proporem alterações ao Catálogo Global. Nada será enviado ou salvo por este formulário.
+          </div>
+        </div>
+
         <div className={styles.warningBanner}>
           <ShieldCheck size={20} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
           <div>
-            <strong>Revisão Pública Canônica:</strong> Esta proposta será enviada para moderação comunitária do Catálogo Global.
-            Ela <em>não afeta</em> sua <strong>Minha Estante</strong> pessoal e jamais expõe suas anotações privadas ou URLs locais.
+            <strong>Revisão Pública Canônica:</strong> alterações ao Catálogo Global passam por moderação.
+            Uma proposta <em>não afeta</em> sua <strong>Minha Estante</strong> pessoal e jamais expõe suas anotações privadas ou URLs locais.
           </div>
         </div>
 
@@ -283,9 +259,9 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
           <Button variant="secondary" type="button" onClick={onClose}>
             Descartar
           </Button>
-          <Button variant="primary" type="submit" disabled={isSubmitting}>
+          <Button variant="primary" type="submit" disabled>
             <GitPullRequest size={15} />
-            <span>{isSubmitting ? "Enviando Proposta..." : "Criar Proposta de Edição"}</span>
+            <span>Envio indisponível</span>
           </Button>
         </div>
       </form>

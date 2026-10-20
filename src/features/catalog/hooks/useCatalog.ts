@@ -40,11 +40,11 @@ export function useCatalog() {
   const [assistedNotice, setAssistedNotice] = useState<AssistedNotice | null>(null);
 
   // Filtros
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInputState] = useState("");
   const debouncedSearch = useDebounce(searchInput, 300);
-  const [selectedType, setSelectedType] = useState<TipoObra | "TODOS">("TODOS");
-  const [selectedStatus, setSelectedStatus] = useState<StatusPublicacao | "TODOS">("TODOS");
-  const [sortBy, setSortBy] = useState<SortOption>("NOTA_DESC");
+  const [selectedType, setSelectedTypeState] = useState<TipoObra | "TODOS">("TODOS");
+  const [selectedStatus, setSelectedStatusState] = useState<StatusPublicacao | "TODOS">("TODOS");
+  const [sortBy, setSortByState] = useState<SortOption>("NOTA_DESC");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
@@ -164,11 +164,31 @@ export function useCatalog() {
     return filteredWorks.slice(start, start + PAGE_SIZE);
   }, [filteredWorks, currentPage]);
 
+  const setSearchInput = (value: string) => {
+    setSearchInputState(value);
+    setCurrentPage(1);
+  };
+
+  const setSelectedType = (value: TipoObra | "TODOS") => {
+    setSelectedTypeState(value);
+    setCurrentPage(1);
+  };
+
+  const setSelectedStatus = (value: StatusPublicacao | "TODOS") => {
+    setSelectedStatusState(value);
+    setCurrentPage(1);
+  };
+
+  const setSortBy = (value: SortOption) => {
+    setSortByState(value);
+    setCurrentPage(1);
+  };
+
   const handleResetFilters = () => {
-    setSearchInput("");
-    setSelectedType("TODOS");
-    setSelectedStatus("TODOS");
-    setSortBy("NOTA_DESC");
+    setSearchInputState("");
+    setSelectedTypeState("TODOS");
+    setSelectedStatusState("TODOS");
+    setSortByState("NOTA_DESC");
     setCurrentPage(1);
   };
 
