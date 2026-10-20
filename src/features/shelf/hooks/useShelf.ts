@@ -10,10 +10,10 @@ export type { FilterTab };
 export const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "TODOS", label: "Todos" },
   { value: "LENDO", label: "Lendo" },
-  { value: "PLANEJADO", label: "Planejado" },
+  { value: "PLANEJADO", label: "Quero ler" },
   { value: "ENGAVETADO", label: "Engavetado" },
-  { value: "TERMINOU", label: "Terminou" },
-  { value: "ABDICOU", label: "Abdicou" },
+  { value: "TERMINOU", label: "Concluído" },
+  { value: "ABDICOU", label: "Abandonado" },
 ];
 
 export function useShelf() {

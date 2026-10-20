@@ -47,6 +47,81 @@
   }
 }
 
+.welcomeHeroSlide {
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 2rem 1.5rem;
+  gap: 2rem;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .welcomeHeroSlide {
+    grid-template-columns: 1.3fr 0.7fr;
+    padding: 3rem 2.5rem;
+    gap: 2.5rem;
+  }
+}
+
+.welcomeStatsCard {
+  background: var(--bg-surface-elevated, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.4);
+}
+
+.welcomeStatsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  padding-bottom: 0.75rem;
+}
+
+.welcomeStatsTitle {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
+}
+
+.welcomeStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.welcomeStatItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-md, 8px);
+}
+
+.welcomeStatNumber {
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: 800;
+  color: var(--brand-primary, #6366f1);
+}
+
+.welcomeStatLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted, #94a3b8);
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .heroCoverWrapper {
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-lg);

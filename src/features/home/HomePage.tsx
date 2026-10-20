@@ -29,11 +29,11 @@ import {
   MessageSquare,
   Sparkles,
   Users,
+  Server,
 } from "lucide-react";
 
 import { isLocalMode } from "../../services/api/httpClient";
 import { useApiEndpointStore } from "../../store/apiEndpointStore";
-import { HardDrive, Server } from "lucide-react";
 
 export const HomePage: React.FC = () => {
   useDocumentTitle(
@@ -52,6 +52,7 @@ export const HomePage: React.FC = () => {
 
   // Estados do Bloco Continuar Lendo
   const [readingItems, setReadingItems] = useState<ItemCatalogoResponse[]>([]);
+  const [allShelfItems, setAllShelfItems] = useState<ItemCatalogoResponse[]>([]);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
   const displayedReadingItems = isAuthenticated ? readingItems : [];
 
@@ -99,8 +100,9 @@ export const HomePage: React.FC = () => {
     const fetchReading = async () => {
       try {
         setIsLoadingReading(true);
-        const shelf = await CatalogService.getMyShelf(0, 40);
+        const shelf = await CatalogService.getMyShelf(0, 100);
         if (isMounted) {
+          setAllShelfItems(shelf || []);
           const lendo = (shelf || []).filter(
             (item) => item.statusLeitura === "LENDO" || item.progressoAtual > 0
           );
@@ -323,20 +325,19 @@ export const HomePage: React.FC = () => {
         </section>
       ) : (
         <section className={styles.heroCarouselWrapper} aria-label="Boas-vindas ao Shiori">
-          <div className={styles.heroSlide}>
-            <div className={styles.heroDetails} style={{ maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.welcomeHeroSlide}>
+            <div className={styles.heroDetails}>
               <div className={styles.heroBadgesRow}>
                 <span className={styles.heroHighlightBadge}>
                   <Sparkles size={12} />
                   Plataforma Pessoal de Leituras
                 </span>
-                <Badge variant="brand">{isLocalMode() ? "Modo 100% Local" : "Shiori Web"}</Badge>
               </div>
 
               <h1 className={styles.heroTitle}>Sua Estante Pessoal e Privada de Leituras</h1>
 
               <p className={styles.heroSynopsis}>
-                Acompanhe o ritmo de leitura de seus mangás, novels, webtoons e livros favoritos. Registre seu progresso capítulo a capítulo com total soberania e privacidade no seu navegador.
+                Acompanhe o ritmo de leitura de seus mangás, novels, webtoons e livros favoritos. Registre seu progresso capítulo a capítulo com total autonomia no seu navegador.
               </p>
 
               <div className={styles.heroActions}>
@@ -357,6 +358,42 @@ export const HomePage: React.FC = () => {
                   <span>Explorar Catálogo</span>
                 </Button>
               </div>
+            </div>
+
+            <div className={styles.welcomeStatsCard}>
+              <div className={styles.welcomeStatsHeader}>
+                <h3 className={styles.welcomeStatsTitle}>Resumo da Sua Estante</h3>
+                <Link to="/minha-estante" style={{ textDecoration: "none", color: "var(--brand-primary)", fontSize: "var(--text-xs)", fontWeight: 600 }}>
+                  Ver tudo
+                </Link>
+              </div>
+              <div className={styles.welcomeStatsGrid}>
+                <div className={styles.welcomeStatItem}>
+                  <span className={styles.welcomeStatNumber}>{allShelfItems.length}</span>
+                  <span className={styles.welcomeStatLabel}>Total</span>
+                </div>
+                <div className={styles.welcomeStatItem}>
+                  <span className={styles.welcomeStatNumber}>
+                    {allShelfItems.filter((i) => i.statusLeitura === "LENDO").length}
+                  </span>
+                  <span className={styles.welcomeStatLabel}>Lendo</span>
+                </div>
+                <div className={styles.welcomeStatItem}>
+                  <span className={styles.welcomeStatNumber}>
+                    {allShelfItems.filter((i) => i.statusLeitura === "TERMINOU").length}
+                  </span>
+                  <span className={styles.welcomeStatLabel}>Concluídos</span>
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate("/minha-estante")}
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                <Plus size={14} />
+                <span>Gerenciar Minha Estante</span>
+              </Button>
             </div>
           </div>
         </section>
@@ -389,10 +426,10 @@ export const HomePage: React.FC = () => {
               enableMouseDrag
             >
               {displayedReadingItems.map((item) => {
-                const totalCap = item.obraTotalCapitulos || 0;
+                const totalCap = item.obraTotalCapitulos || item.totalCapitulos || 0;
                 const progresso = item.progressoAtual || 0;
-                const percent =
-                  totalCap > 0 ? Math.min(100, Math.round((progresso / totalCap) * 100)) : 0;
+                const hasTotal = totalCap > 0;
+                const percent = hasTotal ? Math.min(100, Math.round((progresso / totalCap) * 100)) : 0;
 
                 return (
                   <div key={item.id} className={styles.readingCard}>
@@ -409,10 +446,10 @@ export const HomePage: React.FC = () => {
                       }}
                     >
                       <div className={styles.readingCoverWrapper}>
-                        {item.obraCapaUrl ? (
+                        {item.obraCapaUrl || item.capaUrl ? (
                           <img
-                            src={item.obraCapaUrl}
-                            alt={item.obraTitulo}
+                            src={item.obraCapaUrl || item.capaUrl}
+                            alt={item.obraTitulo || item.titulo}
                             className={styles.readingCoverImg}
                             loading="lazy"
                           />
@@ -422,25 +459,27 @@ export const HomePage: React.FC = () => {
                       </div>
 
                       <div className={styles.readingInfo}>
-                        <h3 className={styles.readingTitle} title={item.obraTitulo}>
-                          {item.obraTitulo}
+                        <h3 className={styles.readingTitle} title={item.obraTitulo || item.titulo}>
+                          {item.obraTitulo || item.titulo}
                         </h3>
 
                         <div className={styles.readingProgressRow}>
                           <span>
-                            {totalCap > 0
+                            {hasTotal
                               ? `Cap. ${progresso} / ${totalCap}`
                               : `Cap. ${progresso} lidos`}
                           </span>
-                          {totalCap > 0 && <span>{percent}%</span>}
+                          {hasTotal && <span>{percent}%</span>}
                         </div>
 
-                        <div className={styles.progressBarContainer}>
-                          <div
-                            className={styles.progressBarFill}
-                            style={{ width: totalCap > 0 ? `${percent}%` : "100%" }}
-                          />
-                        </div>
+                        {hasTotal && (
+                          <div className={styles.progressBarContainer}>
+                            <div
+                              className={styles.progressBarFill}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </Link>
 
@@ -500,9 +539,9 @@ export const HomePage: React.FC = () => {
           </div>
         ) : isLocalMode() ? (
           <EmptyState
-            icon={<HardDrive size={32} />}
-            title="Modo 100% Local Ativo"
-            description="Você está utilizando o Shiori com soberania e privacidade no seu navegador. O feed social sincroniza atividades com a comunidade quando conectado a um servidor Shiori."
+            icon={<Users size={32} />}
+            title="Feed da Comunidade"
+            description="O feed social exibe atividades e avaliações de leitores quando conectado a um servidor Shiori."
             action={{
               label: "Conectar a um Servidor",
               onClick: openEndpointModal,

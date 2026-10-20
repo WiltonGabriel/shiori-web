@@ -10,6 +10,7 @@ import {
 } from "./components/ShelfBadges";
 import { ShelfCloseCycleModal } from "./components/ShelfCloseCycleModal";
 import { CatalogService } from "../../services/catalog.service";
+import { ReadingStatusSelect, getReadingStatusLabel } from "../../components/ui/ReadingStatusSelect";
 import type { ItemCatalogoResponse, StatusLeitura } from "../../types/catalog.types";
 import { toast } from "../../store/toastStore";
 import {
@@ -243,13 +244,25 @@ export const PersonalWorkDetailsPage: React.FC = () => {
     if (!item) return;
     try {
       setIsSavingProgress(true);
+      const totalCaps = item.totalCapitulos !== undefined ? item.totalCapitulos : item.obraTotalCapitulos;
+      let finalStatus = item.statusLeitura;
+
+      if (totalCaps && totalCaps > 0 && chapterInput >= totalCaps && finalStatus === "LENDO") {
+        finalStatus = "TERMINOU";
+      }
+
       const updated = await CatalogService.updateProgress(item.id, {
         capituloAtual: chapterInput,
         volumeAtual: item.volumeAtual,
-        statusLeitura: item.statusLeitura,
+        statusLeitura: finalStatus,
       });
       setItem(updated);
-      toast.success(`Capítulo ${chapterInput} salvo na sua estante.`, "Progresso Atualizado");
+      toast.success(
+        finalStatus === "TERMINOU" && item.statusLeitura !== "TERMINOU"
+          ? `Parabéns! Obra concluída no capítulo ${chapterInput} e ciclo registrado automaticamente.`
+          : `Capítulo ${chapterInput} salvo na sua estante.`,
+        "Progresso Atualizado"
+      );
     } catch (err: any) {
       toast.error(err, "Falha ao Salvar Progresso");
     } finally {
@@ -327,7 +340,7 @@ export const PersonalWorkDetailsPage: React.FC = () => {
         statusLeitura: newStatus,
       });
       setItem(updated);
-      toast.success(`Status atualizado para ${newStatus}!`);
+      toast.success(`Status atualizado para "${getReadingStatusLabel(newStatus)}"!`);
     } catch (err: any) {
       toast.error(err, "Falha ao mudar status");
     }
@@ -619,18 +632,10 @@ export const PersonalWorkDetailsPage: React.FC = () => {
 
               <div className={styles.editFieldGroup}>
                 <label className={styles.editLabel}>Status de Leitura</label>
-                <select
+                <ReadingStatusSelect
                   value={editStatusLeitura}
-                  onChange={(e) => setEditStatusLeitura(e.target.value as StatusLeitura)}
-                  className={styles.editSelect}
-                >
-                  <option value="LENDO">LENDO</option>
-                  <option value="PLANEJADO">PLANEJADO</option>
-                  <option value="TERMINOU">TERMINOU</option>
-                  <option value="PAUSADO">PAUSADO</option>
-                  <option value="ENGAVETADO">ENGAVETADO</option>
-                  <option value="ABDICOU">ABDICOU</option>
-                </select>
+                  onChange={setEditStatusLeitura}
+                />
               </div>
 
               <div className={styles.editTwoCols}>
@@ -1108,26 +1113,10 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                   <label style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
                     Status Atual:
                   </label>
-                  <select
+                  <ReadingStatusSelect
                     value={item.statusLeitura}
-                    onChange={(e) => handleStatusChange(e.target.value as StatusLeitura)}
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--border-subtle)",
-                      background: "var(--bg-surface-sunken)",
-                      color: "var(--text-primary)",
-                      fontSize: "var(--font-size-sm)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <option value="LENDO">LENDO</option>
-                    <option value="PLANEJADO">PLANEJADO</option>
-                    <option value="TERMINOU">TERMINOU</option>
-                    <option value="ENGAVETADO">ENGAVETADO</option>
-                    <option value="ABDICOU">ABDICOU</option>
-                    <option value="PAUSADO">PAUSADO</option>
-                  </select>
+                    onChange={handleStatusChange}
+                  />
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

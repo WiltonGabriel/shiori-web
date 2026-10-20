@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import styles from "./Navbar.module.css";
 import { useAuthStore } from "../../../store/authStore";
 import { useThemeStore } from "../../../store/themeStore";
-import { useApiEndpointStore } from "../../../store/apiEndpointStore";
 import { Avatar } from "../../ui/Avatar/Avatar";
 import { Button } from "../../ui/Button/Button";
-import { LogIn, LogOut, Sun, Moon, Settings, Server, Search } from "lucide-react";
+import { ConnectionStatusIndicator } from "./ConnectionStatusIndicator";
+import { LogIn, LogOut, Sun, Moon, Settings, Search } from "lucide-react";
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
@@ -16,7 +16,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal, onOpenQuickSearch }) => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
-  const { currentEndpoint, openModal: openApiModal } = useApiEndpointStore();
 
   return (
     <header className={styles.navbar}>
@@ -45,15 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal, onOpenQuickSear
           </button>
         )}
 
-        <button
-          type="button"
-          className={styles.themeButton}
-          onClick={openApiModal}
-          aria-label="Configurar Hub Shiori (API)"
-          title={`Hub Shiori API: ${currentEndpoint} (Clique para alterar)`}
-        >
-          <Server size={18} />
-        </button>
+        <ConnectionStatusIndicator />
 
         <button
           type="button"

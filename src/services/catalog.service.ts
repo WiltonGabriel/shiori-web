@@ -17,16 +17,25 @@ export class CatalogService {
       return LocalShelfRepository.getAll();
     }
 
-    const response = await api.get<any>("/api/catalogo/minha-estante", {
-      params: { page, size },
-    });
-    if (response.data && Array.isArray(response.data.content)) {
-      return response.data.content;
+    try {
+      const response = await api.get<any>("/api/catalogo/minha-estante", {
+        params: { page, size },
+      });
+      const remoteItems: ItemCatalogoResponse[] =
+        response.data && Array.isArray(response.data.content)
+          ? response.data.content
+          : Array.isArray(response.data)
+          ? response.data
+          : [];
+
+      const localItems = LocalShelfRepository.getAll();
+      const remoteIds = new Set(remoteItems.map((i) => i.id));
+      const purelyLocal = localItems.filter((i) => !remoteIds.has(i.id));
+
+      return [...remoteItems, ...purelyLocal];
+    } catch {
+      return LocalShelfRepository.getAll();
     }
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    return [];
   }
 
   public static async getCatalogItem(id: number): Promise<ItemCatalogoResponse> {
@@ -38,8 +47,16 @@ export class CatalogService {
       return item;
     }
 
-    const response = await api.get<ItemCatalogoResponse>(`/api/catalogo/${id}`);
-    return response.data;
+    try {
+      const response = await api.get<ItemCatalogoResponse>(`/api/catalogo/${id}`);
+      return response.data;
+    } catch (err: any) {
+      const local = LocalShelfRepository.getById(id);
+      if (local) {
+        return local;
+      }
+      throw err;
+    }
   }
 
   public static async addItemToShelf(
@@ -49,8 +66,20 @@ export class CatalogService {
       return LocalShelfRepository.add(data);
     }
 
-    const response = await api.post<ItemCatalogoResponse>("/api/catalogo", data);
-    return response.data;
+    try {
+      const response = await api.post<ItemCatalogoResponse>("/api/catalogo", data);
+      try {
+        LocalShelfRepository.add({
+          ...data,
+          id: response.data.id,
+        } as any);
+      } catch {
+        // ignora se já existir
+      }
+      return response.data;
+    } catch {
+      return LocalShelfRepository.add(data);
+    }
   }
 
   public static async updateProgress(
@@ -125,12 +154,38 @@ export class CatalogService {
   }
 
   public static async removeItemFromShelf(itemId: number): Promise<void> {
-    if (isLocalMode()) {
+    const isLocal = isLocalMode();
+    const itemInLocal = LocalShelfRepository.getById(itemId);
+
+    // 1. Remove sempre do repositório local se existir
+    if (itemInLocal) {
       LocalShelfRepository.remove(itemId);
+    }
+
+    // 2. Se estiver em modo local puro, a exclusão local conclui a operação
+    if (isLocal) {
       return;
     }
 
-    await api.delete(`/api/catalogo/${itemId}`);
+    // 3. Em modo conectado, tenta sincronizar a exclusão com a API remota
+    try {
+      await api.delete(`/api/catalogo/${itemId}`);
+    } catch (err: any) {
+      const is404 = err?.status === 404 || err?.response?.status === 404;
+      const isNetworkOrOffline =
+        !err?.response ||
+        err?.code === "ERR_NETWORK" ||
+        err?.message?.includes("Network") ||
+        err?.status === 500 ||
+        err?.response?.status === 500;
+
+      // Se o item existia localmente ou a API retornou 404/offline, não impede a exclusão da estante do leitor
+      if (itemInLocal || is404 || isNetworkOrOffline) {
+        console.warn("Item removido localmente; API não processou a exclusão:", err);
+        return;
+      }
+      throw err;
+    }
   }
 
   public static async desvincularObra(itemId: number): Promise<ItemCatalogoResponse> {

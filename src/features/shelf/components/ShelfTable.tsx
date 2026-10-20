@@ -12,7 +12,6 @@ import type { ItemCatalogoResponse } from "../../../types/catalog.types";
 import {
   BookOpen,
   Star,
-  CheckCircle,
   Edit3,
   Unlink,
   ExternalLink,
@@ -22,7 +21,7 @@ import {
 interface ShelfTableProps {
   items: ItemCatalogoResponse[];
   onQuickIncrement: (item: ItemCatalogoResponse) => void;
-  onOpenCycle: (item: ItemCatalogoResponse) => void;
+  onOpenCycle?: (item: ItemCatalogoResponse) => void;
   onOpenEdit: (item: ItemCatalogoResponse) => void;
   onUnlink: (itemId: number) => void;
   onRemove: (itemId: number) => void;
@@ -32,7 +31,7 @@ interface ShelfTableProps {
 export const ShelfTable: React.FC<ShelfTableProps> = ({
   items,
   onQuickIncrement,
-  onOpenCycle,
+  onOpenCycle: _onOpenCycle,
   onOpenEdit,
   onUnlink,
   onRemove,
@@ -130,12 +129,14 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                         ? `Cap. ${item.progressoAtual || 0} / ${totalCaps}`
                         : `Cap. ${item.progressoAtual || 0}`}
                     </span>
-                    <div className={styles.progressBarContainer} style={{ height: 4 }}>
-                      <div
-                        className={styles.progressBarFill}
-                        style={{ width: hasTotalCap ? `${percentCap}%` : "100%" }}
-                      />
-                    </div>
+                    {hasTotalCap && (
+                      <div className={styles.progressBarContainer} style={{ height: 4 }}>
+                        <div
+                          className={styles.progressBarFill}
+                          style={{ width: `${percentCap}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td>
@@ -151,16 +152,6 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                       aria-label={`Incrementar +1 capítulo de ${tituloExibido}`}
                     >
                       +1
-                    </button>
-
-                    <button
-                      type="button"
-                      className={styles.cycleBtn}
-                      onClick={() => onOpenCycle(item)}
-                      title="Registro de ciclo"
-                    >
-                      <CheckCircle size={12} />
-                      <span>Ciclo</span>
                     </button>
 
                     <Button

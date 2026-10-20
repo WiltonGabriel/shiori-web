@@ -14,7 +14,7 @@ import { ShelfCard } from "./components/ShelfCard";
 import { ShelfTable } from "./components/ShelfTable";
 import { ShelfEditModal } from "./components/ShelfEditModal";
 import { ShelfCloseCycleModal } from "./components/ShelfCloseCycleModal";
-import { SuggestWorkModal } from "../catalog/components/SuggestWorkModal";
+import { AddWorkToShelfModal } from "./components/AddWorkToShelfModal";
 import { Plus } from "lucide-react";
 
 export const ShelfPage: React.FC = () => {
@@ -85,7 +85,7 @@ export const ShelfPage: React.FC = () => {
           title={`Nenhum item na estante para o filtro "${activeTab}"`}
           description="Sua estante é o seu espaço pessoal e autônomo. Adicione obras à sua estante para acompanhar capítulos e ciclos de releitura!"
           action={{
-            label: "Adicionar Obra Manual",
+            label: "Adicionar Obra",
             onClick: () => setIsAddModalOpen(true),
             icon: <Plus size={16} />,
             variant: "primary",
@@ -139,10 +139,10 @@ export const ShelfPage: React.FC = () => {
         onCycleClosed={updateItemInList}
       />
 
-      <SuggestWorkModal
+      <AddWorkToShelfModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onWorkCreated={() => loadShelf()}
+        onWorkAdded={() => loadShelf()}
       />
     </div>
   );

@@ -14,7 +14,7 @@ export const TIPO_OBRA_LABELS: Record<TipoObra, string> = {
   LIGHT_NOVEL: "Light Novel",
   WEB_NOVEL: "Web Novel",
   COMIC: "Comic / HQ",
-  LIVRO: "Livro Tradicional",
+  LIVRO: "Livro",
 };
 
 export const TODOS_FORMATOS: TipoObra[] = [
