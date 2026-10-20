@@ -31,7 +31,11 @@ import {
   ChevronLeft,
   ChevronRight,
   EyeOff,
+  Server,
+  Bookmark,
 } from "lucide-react";
+import { isLocalMode } from "../../services/api/httpClient";
+import { useApiEndpointStore } from "../../store/apiEndpointStore";
 
 export const CatalogPage: React.FC = () => {
   useDocumentTitle(
@@ -41,6 +45,7 @@ export const CatalogPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { isAuthenticated, openAuthModal } = useAuthStore();
+  const { openModal: openEndpointModal } = useApiEndpointStore();
 
   const {
     filteredWorks,
@@ -119,9 +124,73 @@ export const CatalogPage: React.FC = () => {
             <span>Sugerir Obra Manual</span>
           </Button>
         </div>
+      </div>
 
-        {/* 1. Barra de Busca Central com Debounce */}
-        <div className={styles.searchSection}>
+      {isLocalMode() ? (
+        <div style={{ maxWidth: 640, margin: "2.5rem auto", textAlign: "center", width: "100%" }}>
+          <div
+            style={{
+              padding: "3rem 2rem",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-xl)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1.25rem",
+              boxShadow: "var(--shadow-lg)",
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(99, 102, 241, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--brand-primary)",
+              }}
+            >
+              <Server size={32} />
+            </div>
+
+            <div>
+              <h2 style={{ fontSize: "var(--font-size-lg)", fontWeight: 700, margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
+                Conexão Necessária para o Catálogo Global
+              </h2>
+              <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+                Você está utilizando o Shiori em <strong>Modo Local</strong>. Sua estante pessoal, anotações e acompanhamento de leitura funcionam com total autonomia e privacidade no seu dispositivo.
+                <br />
+                Para pesquisar, explorar e importar obras públicas do Catálogo Global, conecte-se a uma instância da <strong>Shiori API</strong>.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", flexWrap: "wrap", justifyContent: "center" }}>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => openEndpointModal()}
+              >
+                <Server size={16} />
+                <span>Configurar Conexão com Servidor</span>
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => navigate("/minha-estante")}
+              >
+                <Bookmark size={16} />
+                <span>Voltar à Minha Estante</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 1. Barra de Busca Central com Debounce */}
+          <div className={styles.searchSection}>
           <div className={styles.searchBarWrapper}>
             <div className={styles.searchInputArea}>
               <Input
@@ -211,7 +280,6 @@ export const CatalogPage: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
 
       {/* 3. Grade de Resultados de Cartões de Obra */}
       {isLoading ? (
@@ -323,6 +391,8 @@ export const CatalogPage: React.FC = () => {
               </Button>
             </div>
           )}
+        </>
+      )}
         </>
       )}
 

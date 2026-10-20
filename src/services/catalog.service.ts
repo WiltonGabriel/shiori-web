@@ -68,6 +68,50 @@ export class CatalogService {
     return response.data;
   }
 
+  public static async updatePersonalWork(
+    itemId: number,
+    data: {
+      titulo?: string;
+      capaUrl?: string;
+      tipoObra?: string;
+      totalCapitulos?: number;
+      totalVolumes?: number;
+      progressoAtual?: number;
+      volumeAtual?: number;
+      statusLeitura?: import("../types/catalog.types").StatusLeitura;
+      avaliacaoPessoal?: number;
+      urlLeitura?: string;
+      anotacao?: string;
+      sincronizarMetadados?: boolean;
+    }
+  ): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.updateItem(itemId, data);
+    }
+
+    const response = await api.post<ItemCatalogoResponse>(
+      `/api/catalogo/${itemId}/progresso`,
+      {
+        capituloAtual: data.progressoAtual !== undefined ? data.progressoAtual : 0,
+        volumeAtual: data.volumeAtual,
+        nota: data.avaliacaoPessoal,
+        anotacao: data.anotacao,
+        statusLeitura: data.statusLeitura,
+      }
+    );
+
+    try {
+      LocalShelfRepository.updateItem(itemId, {
+        ...response.data,
+        ...data,
+      });
+    } catch {
+      // item pode não existir no storage local em modo puramente remoto
+    }
+
+    return response.data;
+  }
+
   public static async updateVisibility(
     itemId: number,
     data: AtualizarVisibilidadeRequest

@@ -220,8 +220,8 @@ export const WorkDetailsPage: React.FC = () => {
               {shelfItem ? (
                 <Button
                   variant="secondary"
-                  onClick={() => navigate("/meu-catalogo")}
-                  title="Obra já vinculada à sua estante pessoal"
+                  onClick={() => navigate(`/minha-estante/${shelfItem.id}`)}
+                  title="Abrir detalhes pessoais desta obra na sua estante"
                 >
                   <Check size={16} color="var(--accent-emerald)" />
                   <span>Na Minha Estante</span>

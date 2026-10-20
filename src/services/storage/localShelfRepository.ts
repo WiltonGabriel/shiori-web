@@ -7,6 +7,7 @@ import type {
   EstanteImportRequest,
   HistoricoLeituraResponse,
 } from "../../types/catalog.types";
+import { SettingsRepository } from "./settingsRepository";
 
 export const LOCAL_SHELF_STORAGE_KEY = "shiori_local_shelf_v1";
 
@@ -78,7 +79,10 @@ export class LocalShelfRepository {
       dataAdicao: now,
       ultimaAtualizacao: now,
       desvinculado: !req.obraId,
-      sincronizarMetadados: Boolean(req.sincronizarMetadados),
+      sincronizarMetadados:
+        req.sincronizarMetadados !== undefined
+          ? Boolean(req.sincronizarMetadados)
+          : SettingsRepository.getDefaultSyncMetadata(),
       historicosLeitura: [],
     };
 
@@ -134,6 +138,75 @@ export class LocalShelfRepository {
       avaliacaoPessoal: novaNota,
       ultimaAtualizacao: now,
       historicosLeitura: [novoHistorico, ...(current.historicosLeitura || [])],
+    };
+
+    items[idx] = updated;
+    this.saveRawItems(items);
+    return updated;
+  }
+
+  public static updateItem(
+    id: number,
+    patch: Partial<ItemCatalogoResponse> & { anotacao?: string }
+  ): ItemCatalogoResponse {
+    const items = this.getRawItems();
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) {
+      throw new Error(`Item da estante local com ID ${id} não foi encontrado.`);
+    }
+
+    const current = items[idx];
+    const now = new Date().toISOString();
+
+    const novoCapitulo =
+      patch.progressoAtual !== undefined ? patch.progressoAtual : current.progressoAtual;
+    const novoVolume =
+      patch.volumeAtual !== undefined ? patch.volumeAtual : current.volumeAtual;
+    const novoStatus = patch.statusLeitura || current.statusLeitura;
+    const novaNota =
+      patch.avaliacaoPessoal !== undefined ? patch.avaliacaoPessoal : current.avaliacaoPessoal;
+
+    const historicos = [...(current.historicosLeitura || [])];
+    if (
+      patch.progressoAtual !== undefined ||
+      patch.volumeAtual !== undefined ||
+      patch.statusLeitura !== undefined ||
+      patch.avaliacaoPessoal !== undefined ||
+      patch.anotacao
+    ) {
+      historicos.unshift({
+        id: historicos.length + 1,
+        capituloLido: novoCapitulo,
+        volumeLido: novoVolume,
+        notaMomento: novaNota,
+        anotacao: patch.anotacao,
+        dataLeitura: now,
+      });
+    }
+
+    const updated: ItemCatalogoResponse = {
+      ...current,
+      ...patch,
+      obraTitulo: patch.titulo !== undefined ? (patch.titulo.trim() || current.obraTitulo) : current.obraTitulo,
+      titulo: patch.titulo !== undefined ? (patch.titulo.trim() || current.titulo) : current.titulo,
+      obraCapaUrl: patch.capaUrl !== undefined ? patch.capaUrl : current.obraCapaUrl,
+      capaUrl: patch.capaUrl !== undefined ? patch.capaUrl : current.capaUrl,
+      obraTotalCapitulos: patch.totalCapitulos !== undefined ? patch.totalCapitulos : current.obraTotalCapitulos,
+      totalCapitulos: patch.totalCapitulos !== undefined ? patch.totalCapitulos : current.totalCapitulos,
+      obraTotalVolumes: patch.totalVolumes !== undefined ? patch.totalVolumes : current.obraTotalVolumes,
+      totalVolumes: patch.totalVolumes !== undefined ? patch.totalVolumes : current.totalVolumes,
+      progressoAtual: novoCapitulo,
+      volumeAtual: novoVolume,
+      statusLeitura: novoStatus,
+      avaliacaoPessoal: novaNota,
+      urlLeitura: patch.urlLeitura !== undefined ? patch.urlLeitura.trim() : current.urlLeitura,
+      sincronizarMetadados:
+        patch.sincronizarMetadados !== undefined
+          ? patch.sincronizarMetadados
+          : current.sincronizarMetadados,
+      tipoObra: patch.tipoObra || current.tipoObra,
+      ultimaAtualizacao: now,
+      historicosLeitura: historicos,
     };
 
     items[idx] = updated;

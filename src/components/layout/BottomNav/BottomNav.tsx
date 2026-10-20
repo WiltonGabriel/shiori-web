@@ -23,7 +23,7 @@ export const BottomNav: React.FC = () => {
       </NavLink>
 
       <NavLink
-        to="/meu-catalogo"
+        to="/minha-estante"
         className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ""}`}
       >
         <Bookmark size={20} />

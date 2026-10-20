@@ -64,7 +64,7 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
             return (
               <tr key={item.id}>
                 <td>
-                  <Link to={`/meu-catalogo/${item.id}`} style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
+                  <Link to={`/minha-estante/${item.id}`} style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
                     {capaExibida ? (
                       <img
                         src={capaExibida}
@@ -92,7 +92,7 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                   <div className={styles.tableObraCell}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                        <Link to={`/meu-catalogo/${item.id}`} className={styles.tableTitle} style={{ textDecoration: "none", color: "inherit" }}>
+                        <Link to={`/minha-estante/${item.id}`} className={styles.tableTitle} style={{ textDecoration: "none", color: "inherit" }}>
                           {tituloExibido}
                         </Link>
                         {item.desvinculado && <UnlinkedBadge />}
@@ -139,7 +139,7 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                   </div>
                 </td>
                 <td>
-                  <VisibilityBadge visibility={item.visibilidade} />
+                  <VisibilityBadge visibility="PRIVADO" />
                 </td>
                 <td style={{ textAlign: "right" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>

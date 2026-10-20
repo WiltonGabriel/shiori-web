@@ -38,10 +38,10 @@ export const NotFoundPage: React.FC = () => {
             </Button>
           </Link>
 
-          <Link to="/meu-catalogo">
+          <Link to="/minha-estante">
             <Button variant="ghost" size="md">
               <Bookmark size={18} />
-              <span>Meu Catálogo</span>
+              <span>Minha Estante</span>
             </Button>
           </Link>
         </div>

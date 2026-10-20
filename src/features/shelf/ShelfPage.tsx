@@ -19,7 +19,7 @@ import { Plus } from "lucide-react";
 
 export const ShelfPage: React.FC = () => {
   useDocumentTitle(
-    "Meu Catálogo | Shiori",
+    "Minha Estante | Shiori",
     "Acompanhe o ritmo de leitura de seus mangás, novels e livros. Registre notas, conclua ciclos e acesse seus links seguros."
   );
 

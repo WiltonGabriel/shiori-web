@@ -4,7 +4,6 @@ import styles from "../ShelfPage.module.css";
 import { Button } from "../../../components/ui/Button/Button";
 import {
   StatusBadge,
-  VisibilityBadge,
   UnlinkedBadge,
   NewChaptersNotificationBadge,
 } from "./ShelfBadges";
@@ -49,7 +48,7 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
 
   return (
     <div className={styles.shelfCard}>
-      <Link to={`/meu-catalogo/${item.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+      <Link to={`/minha-estante/${item.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
         {capaExibida ? (
           <img
             src={capaExibida}
@@ -65,13 +64,12 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
       <div className={styles.cardBody}>
         <div className={styles.cardHeaderRow}>
           <h3 className={styles.cardTitle} title={tituloExibido}>
-            <Link to={`/meu-catalogo/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <Link to={`/minha-estante/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
               {tituloExibido}
             </Link>
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
             {item.desvinculado && <UnlinkedBadge />}
-            <VisibilityBadge visibility={item.visibilidade} />
           </div>
         </div>
 

@@ -58,9 +58,11 @@ export const App: React.FC = () => {
 
               {/* Rotas Protegidas de Leitor */}
               <Route element={<ProtectedRoute />}>
-                <Route path="meu-catalogo" element={<ShelfPage />} />
+                <Route path="minha-estante" element={<ShelfPage />} />
+                <Route path="minha-estante/:id" element={<PersonalWorkDetailsPage />} />
+                <Route path="meu-catalogo" element={<Navigate to="/minha-estante" replace />} />
                 <Route path="meu-catalogo/:id" element={<PersonalWorkDetailsPage />} />
-                <Route path="estante" element={<Navigate to="/meu-catalogo" replace />} />
+                <Route path="estante" element={<Navigate to="/minha-estante" replace />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="configuracoes" element={<SettingsPage />} />
               </Route>

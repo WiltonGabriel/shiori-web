@@ -9,6 +9,8 @@ import type {
   SortOption,
 } from "../../../types/work.types";
 
+import { isLocalMode } from "../../../services/api/httpClient";
+
 export const PAGE_SIZE = 15;
 
 export interface AssistedNotice {
@@ -36,7 +38,7 @@ export const QUICK_STATUSES: { value: StatusPublicacao | "TODOS"; label: string 
 
 export function useCatalog() {
   const [works, setWorks] = useState<ObraResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => !isLocalMode());
   const [assistedNotice, setAssistedNotice] = useState<AssistedNotice | null>(null);
 
   // Filtros
@@ -49,6 +51,11 @@ export function useCatalog() {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const fetchWorks = useCallback(async () => {
+    if (isLocalMode()) {
+      setWorks([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       if (debouncedSearch.trim()) {
@@ -77,6 +84,10 @@ export function useCatalog() {
 
   useEffect(() => {
     let isMounted = true;
+    if (isLocalMode()) {
+      return;
+    }
+
     if (debouncedSearch.trim()) {
       WorkService.searchWorksAssisted(debouncedSearch.trim())
         .then((result) => {
@@ -117,7 +128,7 @@ export function useCatalog() {
     return () => {
       isMounted = false;
     };
-  }, [debouncedSearch, selectedType, selectedStatus]);
+  }, [debouncedSearch]);
 
   // Filtragem e ordenação
   const filteredWorks = useMemo(() => {

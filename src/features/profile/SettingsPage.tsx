@@ -27,7 +27,7 @@ import {
   FileCheck,
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import type { Visibilidade } from "../../types/catalog.types";
+import { SettingsRepository } from "../../services/storage/settingsRepository";
 import { TODOS_FORMATOS, TIPO_OBRA_LABELS, type TipoObra } from "../../types/work.types";
 import { HubPairingSection } from "./components/HubPairingSection";
 
@@ -53,15 +53,19 @@ export const SettingsPage: React.FC = () => {
   // Categoria Ativa
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("SERVIDOR_SYNC");
 
-  // Preferência de Privacidade Padrão
-  const [defaultPrivacy, setDefaultPrivacy] = useState<Visibilidade>(() => {
-    return (localStorage.getItem("shiori_default_privacy") as Visibilidade) || "RESTRITO";
-  });
+  // Preferência Global de Sincronização de Metadados para Novas Obras (Seção 6.1)
+  const [defaultSyncMetadata, setDefaultSyncMetadata] = useState<boolean>(() =>
+    SettingsRepository.getDefaultSyncMetadata()
+  );
 
-  const handleDefaultPrivacyChange = (val: Visibilidade) => {
-    setDefaultPrivacy(val);
-    localStorage.setItem("shiori_default_privacy", val);
-    toast.success(`Privacidade padrão para novas leituras definida como: ${val}`);
+  const handleToggleDefaultSyncMetadata = (enabled: boolean) => {
+    setDefaultSyncMetadata(enabled);
+    SettingsRepository.setDefaultSyncMetadata(enabled);
+    toast.success(
+      enabled
+        ? "Sincronização de metadados ativada por padrão para novas obras."
+        : "Sincronização de metadados desativada por padrão para novas obras."
+    );
   };
 
   // Formatos Literários Preferidos
@@ -358,6 +362,35 @@ export const SettingsPage: React.FC = () => {
                     </Button>
                   </div>
                 </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <span className={styles.settingLabel}>Sincronização Padrão de Metadados</span>
+                    <span className={styles.settingValue}>
+                      {defaultSyncMetadata ? "Sincronização Ativada por Padrão" : "Sincronização Desativada por Padrão"}
+                    </span>
+                    <span className={styles.settingDesc}>
+                      Define se novas obras salvas na Minha Estante buscarão atualizações de metadados públicos
+                      do catálogo colaborativo. Cada obra também possui controle individual próprio no modo de edição.
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <Button
+                      variant={defaultSyncMetadata ? "primary" : "secondary"}
+                      size="sm"
+                      onClick={() => handleToggleDefaultSyncMetadata(true)}
+                    >
+                      {defaultSyncMetadata && <Check size={14} />} Ativada
+                    </Button>
+                    <Button
+                      variant={!defaultSyncMetadata ? "primary" : "secondary"}
+                      size="sm"
+                      onClick={() => handleToggleDefaultSyncMetadata(false)}
+                    >
+                      {!defaultSyncMetadata && <Check size={14} />} Desativada
+                    </Button>
+                  </div>
+                </div>
               </Card>
 
               {/* Seção de Pareamento com Mesh/Hub Shiori */}
@@ -436,36 +469,27 @@ export const SettingsPage: React.FC = () => {
               <Card className={styles.card}>
                 <div className={styles.settingRow}>
                   <div className={styles.settingInfo}>
-                    <span className={styles.settingLabel}>Visibilidade Padrão de Novas Obras</span>
+                    <span className={styles.settingLabel}>Privacidade da Minha Estante</span>
                     <span className={styles.settingDesc}>
-                      Define o nível de isolamento inicial ao incorporar uma obra à Minha Estante.
+                      As obras, progresso e dados pessoais de leitura são sempre estritamente privados por padrão.
+                      Não são compartilhados na rede nem expostos no catálogo colaborativo.
                     </span>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    {(["PRIVADO", "RESTRITO", "PUBLICO"] as Visibilidade[]).map((val) => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => handleDefaultPrivacyChange(val)}
-                        style={{
-                          padding: "0.4rem 0.8rem",
-                          borderRadius: "var(--radius-md)",
-                          fontSize: "var(--text-xs)",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          border: defaultPrivacy === val ? "1px solid var(--brand-primary)" : "1px solid var(--border-light)",
-                          background: defaultPrivacy === val ? "var(--brand-primary)" : "var(--bg-surface)",
-                          color: defaultPrivacy === val ? "#fff" : "var(--text-secondary)",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        {val === "PRIVADO" && "🔒 "}
-                        {val === "RESTRITO" && "🛡️ "}
-                        {val === "PUBLICO" && "🌐 "}
-                        {val}
-                      </button>
-                    ))}
-                  </div>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.4rem 0.8rem",
+                      borderRadius: "var(--radius-full)",
+                      fontSize: "var(--text-xs)",
+                      background: "rgba(16, 185, 129, 0.15)",
+                      color: "var(--accent-emerald)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <ShieldCheck size={14} /> Estritamente Privado
+                  </span>
                 </div>
 
                 <div className={styles.settingRow}>

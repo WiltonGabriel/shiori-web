@@ -31,5 +31,7 @@ export interface AuthenticatedUser {
   role: UserRole;
   onboardingConcluido: boolean;
   formatosPreferidos?: TipoObra[];
+  avatarUrl?: string;
+  bio?: string;
   token: string;
 }

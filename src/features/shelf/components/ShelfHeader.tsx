@@ -33,7 +33,7 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
     <div className={styles.header}>
       <div className={styles.titleArea}>
         <div>
-          <h1 className={styles.title}>Meu Catálogo</h1>
+          <h1 className={styles.title}>Minha Estante</h1>
           <p className={styles.subtitle}>
             Sua estante pessoal e diário de leitura. Acompanhe seu ritmo capítulo a capítulo, registre anotações e conclua ciclos.
           </p>

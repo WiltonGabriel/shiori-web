@@ -2,7 +2,6 @@ import { create } from "zustand";
 import {
   getApiBaseUrl,
   isApiEndpointConfigured,
-  isInitialSetupDismissed,
   markInitialSetupDone,
   setCustomApiEndpoint,
   resetCustomApiEndpoint,
@@ -45,16 +44,12 @@ export const useApiEndpointStore = create<ApiEndpointState>((set) => ({
 
   checkInitialSetup: () => {
     const configured = isApiEndpointConfigured();
-    const dismissed = isInitialSetupDismissed();
     set({
       isConfigured: configured,
       operationMode: getOperationMode(),
     });
 
-    // Se o cliente não tem endpoint configurado nem escolheu modo e nunca foi descartado, abre o setup inicial
-    if (!configured && !dismissed) {
-      set({ isModalOpen: true });
-    }
+    // A aplicação não insiste na conexão na home; conexão é oferecida contextualmente ou no assistente
   },
 
   setLocalMode: () => {

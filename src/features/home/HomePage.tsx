@@ -272,7 +272,7 @@ export const HomePage: React.FC = () => {
                 <Button
                   variant="secondary"
                   size="md"
-                  onClick={() => navigate("/meu-catalogo")}
+                  onClick={() => navigate("/minha-estante")}
                 >
                   <Bookmark size={18} />
                   <span>Minha Estante</span>
@@ -343,7 +343,7 @@ export const HomePage: React.FC = () => {
                 <Button
                   variant="primary"
                   size="md"
-                  onClick={() => navigate("/meu-catalogo")}
+                  onClick={() => navigate("/minha-estante")}
                 >
                   <Bookmark size={18} />
                   <span>Acessar Minha Estante</span>
@@ -372,7 +372,7 @@ export const HomePage: React.FC = () => {
               <h2 className={styles.sectionTitle}>Continuar Lendo</h2>
               <Badge variant="neutral">{displayedReadingItems.length}</Badge>
             </div>
-            <Link to="/meu-catalogo" className={styles.sectionLink}>
+            <Link to="/minha-estante" className={styles.sectionLink}>
               <span>Ver estante completa</span>
               <ArrowRight size={14} />
             </Link>
@@ -396,45 +396,61 @@ export const HomePage: React.FC = () => {
 
                 return (
                   <div key={item.id} className={styles.readingCard}>
-                    <div className={styles.readingCoverWrapper}>
-                      {item.obraCapaUrl ? (
-                        <img
-                          src={item.obraCapaUrl}
-                          alt={item.obraTitulo}
-                          className={styles.readingCoverImg}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <BookOpen size={20} style={{ color: "var(--text-muted)" }} />
-                      )}
-                    </div>
-
-                    <div className={styles.readingInfo}>
-                      <h3 className={styles.readingTitle} title={item.obraTitulo}>
-                        {item.obraTitulo}
-                      </h3>
-
-                      <div className={styles.readingProgressRow}>
-                        <span>
-                          {totalCap > 0
-                            ? `Cap. ${progresso} / ${totalCap}`
-                            : `Cap. ${progresso} lidos`}
-                        </span>
-                        {totalCap > 0 && <span>{percent}%</span>}
+                    <Link
+                      to={`/minha-estante/${item.id}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        flex: 1,
+                        textDecoration: "none",
+                        color: "inherit",
+                        minWidth: 0,
+                      }}
+                    >
+                      <div className={styles.readingCoverWrapper}>
+                        {item.obraCapaUrl ? (
+                          <img
+                            src={item.obraCapaUrl}
+                            alt={item.obraTitulo}
+                            className={styles.readingCoverImg}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <BookOpen size={20} style={{ color: "var(--text-muted)" }} />
+                        )}
                       </div>
 
-                      <div className={styles.progressBarContainer}>
-                        <div
-                          className={styles.progressBarFill}
-                          style={{ width: totalCap > 0 ? `${percent}%` : "100%" }}
-                        />
+                      <div className={styles.readingInfo}>
+                        <h3 className={styles.readingTitle} title={item.obraTitulo}>
+                          {item.obraTitulo}
+                        </h3>
+
+                        <div className={styles.readingProgressRow}>
+                          <span>
+                            {totalCap > 0
+                              ? `Cap. ${progresso} / ${totalCap}`
+                              : `Cap. ${progresso} lidos`}
+                          </span>
+                          {totalCap > 0 && <span>{percent}%</span>}
+                        </div>
+
+                        <div className={styles.progressBarContainer}>
+                          <div
+                            className={styles.progressBarFill}
+                            style={{ width: totalCap > 0 ? `${percent}%` : "100%" }}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    </Link>
 
                     <button
                       type="button"
                       className={styles.readingPlusBtn}
-                      onClick={() => handleQuickIncrement(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickIncrement(item);
+                      }}
                       title={`Incrementar +1 capítulo de ${item.obraTitulo}`}
                       aria-label={`Incrementar capítulo de ${item.obraTitulo}`}
                     >
