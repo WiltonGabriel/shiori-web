@@ -5,6 +5,8 @@ import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
 import { Badge } from "../../../components/ui/Badge/Badge";
 import { WorkService } from "../../../services/work.service";
+import { CatalogService } from "../../../services/catalog.service";
+import { isLocalMode } from "../../../services/api/httpClient";
 import { toast } from "../../../store/toastStore";
 import { useAuthStore } from "../../../store/authStore";
 import {
@@ -83,6 +85,27 @@ export const SuggestWorkModal: React.FC<SuggestWorkModalProps> = ({
 
     try {
       setIsSubmitting(true);
+
+      if (isLocalMode()) {
+        await CatalogService.addItemToShelf({
+          titulo: tituloPrincipal.trim(),
+          tipoObra,
+          totalCapitulos: totalCapitulos > 0 ? totalCapitulos : undefined,
+          capaUrl: capaUrl.trim() || undefined,
+          statusLeitura: "LENDO",
+          visibilidade: "PRIVADO",
+        });
+
+        toast.success(
+          `"${tituloPrincipal.trim()}" adicionada à sua estante pessoal!`,
+          "Obra Salva na Estante"
+        );
+
+        onClose();
+        onWorkCreated();
+        return;
+      }
+
       const created = await WorkService.createWork({
         tituloPrincipal: tituloPrincipal.trim(),
         tituloOriginal: tituloOriginal.trim() || undefined,

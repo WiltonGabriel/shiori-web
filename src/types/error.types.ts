@@ -4,7 +4,7 @@
 export interface ProblemDetail {
   type?: string;
   title: string;
-  status: number;
+  status?: number;
   detail: string;
   instance?: string;
   path?: string;
@@ -13,7 +13,7 @@ export interface ProblemDetail {
 }
 
 export class ShioriApiError extends Error {
-  public readonly status: number;
+  public readonly status?: number;
   public readonly problem: ProblemDetail;
 
   constructor(problem: ProblemDetail) {

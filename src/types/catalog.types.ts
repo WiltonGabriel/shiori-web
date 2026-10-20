@@ -90,6 +90,7 @@ export interface EstanteItemExportDTO {
   urlLeitura?: string;
   sincronizarMetadados?: boolean;
   obraGlobalId?: number;
+  desvinculado?: boolean;
   historicos?: {
     capituloInicial: number;
     capituloFinal: number;

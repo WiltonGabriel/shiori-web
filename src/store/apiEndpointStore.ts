@@ -7,11 +7,16 @@ import {
   setCustomApiEndpoint,
   resetCustomApiEndpoint,
   checkEndpointHealth,
+  getOperationMode,
+  setOperationModeStorage,
+  type OperationMode,
   type HealthCheckResult,
 } from "../services/api/httpClient";
+import { useAuthStore } from "./authStore";
 
 interface ApiEndpointState {
   currentEndpoint: string;
+  operationMode: OperationMode;
   isConfigured: boolean;
   isModalOpen: boolean;
   isTesting: boolean;
@@ -20,6 +25,7 @@ interface ApiEndpointState {
   openModal: () => void;
   closeModal: () => void;
   checkInitialSetup: () => void;
+  setLocalMode: () => void;
   saveEndpoint: (url: string) => void;
   resetToDefault: () => void;
   dismissModal: () => void;
@@ -28,6 +34,7 @@ interface ApiEndpointState {
 
 export const useApiEndpointStore = create<ApiEndpointState>((set) => ({
   currentEndpoint: getApiBaseUrl(),
+  operationMode: getOperationMode(),
   isConfigured: isApiEndpointConfigured(),
   isModalOpen: false,
   isTesting: false,
@@ -39,19 +46,35 @@ export const useApiEndpointStore = create<ApiEndpointState>((set) => ({
   checkInitialSetup: () => {
     const configured = isApiEndpointConfigured();
     const dismissed = isInitialSetupDismissed();
-    set({ isConfigured: configured });
+    set({
+      isConfigured: configured,
+      operationMode: getOperationMode(),
+    });
 
-    // Se o cliente não tem endpoint explicitamente configurado e nunca foi descartado, abre o setup inicial
+    // Se o cliente não tem endpoint configurado nem escolheu modo e nunca foi descartado, abre o setup inicial
     if (!configured && !dismissed) {
       set({ isModalOpen: true });
     }
   },
 
+  setLocalMode: () => {
+    setOperationModeStorage("local");
+    markInitialSetupDone();
+    useAuthStore.getState().activateLocalSession();
+    set({
+      operationMode: "local",
+      isModalOpen: false,
+      lastCheckResult: null,
+    });
+  },
+
   saveEndpoint: (url: string) => {
+    setOperationModeStorage("connected");
     setCustomApiEndpoint(url);
     const updatedUrl = getApiBaseUrl();
     set({
       currentEndpoint: updatedUrl,
+      operationMode: "connected",
       isConfigured: true,
       isModalOpen: false,
       lastCheckResult: null,

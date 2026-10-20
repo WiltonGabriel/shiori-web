@@ -14,6 +14,8 @@ import { ShelfCard } from "./components/ShelfCard";
 import { ShelfTable } from "./components/ShelfTable";
 import { ShelfEditModal } from "./components/ShelfEditModal";
 import { ShelfCloseCycleModal } from "./components/ShelfCloseCycleModal";
+import { SuggestWorkModal } from "../catalog/components/SuggestWorkModal";
+import { Plus } from "lucide-react";
 
 export const ShelfPage: React.FC = () => {
   useDocumentTitle(
@@ -43,6 +45,7 @@ export const ShelfPage: React.FC = () => {
   // Estados dos Modais
   const [editingItem, setEditingItem] = useState<ItemCatalogoResponse | null>(null);
   const [closingCycleItem, setClosingCycleItem] = useState<ItemCatalogoResponse | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   return (
     <div className={styles.pageContainer}>
@@ -54,6 +57,7 @@ export const ShelfPage: React.FC = () => {
         setViewMode={setViewMode}
         onExport={exportShelf}
         onImport={importShelf}
+        onAddManual={() => setIsAddModalOpen(true)}
       />
 
       {isLoading ? (
@@ -79,12 +83,18 @@ export const ShelfPage: React.FC = () => {
         <EmptyState
           icon={<BookOpen size={32} />}
           title={`Nenhum item na estante para o filtro "${activeTab}"`}
-          description="Sua estante é o seu espaço pessoal e autônomo. Adicione obras através do catálogo global para acompanhar seus capítulos e ciclos de releitura!"
+          description="Sua estante é o seu espaço pessoal e autônomo. Adicione obras à sua estante para acompanhar capítulos e ciclos de releitura!"
           action={{
+            label: "Adicionar Obra Manual",
+            onClick: () => setIsAddModalOpen(true),
+            icon: <Plus size={16} />,
+            variant: "primary",
+          }}
+          secondaryAction={{
             label: "Explorar Catálogo Global",
             href: "/catalogo",
             icon: <Compass size={16} />,
-            variant: "primary",
+            variant: "secondary",
           }}
         />
       ) : viewMode === "grid" ? (
@@ -127,6 +137,12 @@ export const ShelfPage: React.FC = () => {
         isOpen={Boolean(closingCycleItem)}
         onClose={() => setClosingCycleItem(null)}
         onCycleClosed={updateItemInList}
+      />
+
+      <SuggestWorkModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onWorkCreated={() => loadShelf()}
       />
     </div>
   );

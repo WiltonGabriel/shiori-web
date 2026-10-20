@@ -28,6 +28,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import { isLocalMode } from "./services/api/httpClient";
+
 export const App: React.FC = () => {
   const { initAuth } = useAuthStore();
   const { setBroadcasts } = useBroadcastStore();
@@ -35,10 +37,12 @@ export const App: React.FC = () => {
   useEffect(() => {
     initAuth();
 
-    // Carregar comunicados ativos do sistema
-    BroadcastService.getActiveBroadcasts()
-      .then((data) => setBroadcasts(data))
-      .catch(() => {});
+    // Carregar comunicados ativos do sistema apenas se não for modo puramente local
+    if (!isLocalMode()) {
+      BroadcastService.getActiveBroadcasts()
+        .then((data) => setBroadcasts(data))
+        .catch(() => {});
+    }
   }, [initAuth, setBroadcasts]);
 
   return (

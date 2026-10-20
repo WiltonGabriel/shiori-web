@@ -14,15 +14,15 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://100.127.79.49:8088',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8080',
         changeOrigin: true,
       },
       '/obras': {
-        target: 'http://100.127.79.49:8088',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8080',
         changeOrigin: true,
       },
       '/actuator': {
-        target: 'http://100.127.79.49:8088',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8080',
         changeOrigin: true,
       }
     }

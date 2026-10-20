@@ -1,6 +1,16 @@
 import { create } from "zustand";
 import { AuthService } from "../services/auth.service";
+import { isLocalMode } from "../services/api/httpClient";
 import type { AuthenticatedUser, LoginRequest, RegistroRequest } from "../types/auth.types";
+
+export const LOCAL_READER_USER: AuthenticatedUser = {
+  id: 0,
+  apelido: "Leitor Local",
+  email: "local@shiori.app",
+  role: "ROLE_USER",
+  onboardingConcluido: true,
+  token: "shiori-local-session",
+};
 
 interface AuthState {
   user: AuthenticatedUser | null;
@@ -10,6 +20,7 @@ interface AuthState {
   openAuthModal: () => void;
   closeAuthModal: () => void;
   initAuth: () => void;
+  activateLocalSession: () => void;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegistroRequest) => Promise<void>;
   updateUser: (partial: Partial<AuthenticatedUser>) => void;
@@ -25,14 +36,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   openAuthModal: () => set({ isAuthModalOpen: true }),
   closeAuthModal: () => set({ isAuthModalOpen: false }),
 
+  activateLocalSession: () => {
+    set({ user: LOCAL_READER_USER, isAuthenticated: true, isLoading: false });
+  },
+
   initAuth: () => {
     try {
       const stored = AuthService.getStoredUser();
       if (stored) {
         set({ user: stored, isAuthenticated: true, isLoading: false });
-      } else {
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        return;
       }
+      if (isLocalMode()) {
+        set({ user: LOCAL_READER_USER, isAuthenticated: true, isLoading: false });
+        return;
+      }
+      set({ user: null, isAuthenticated: false, isLoading: false });
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false });
     }

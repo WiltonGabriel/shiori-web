@@ -1,4 +1,6 @@
 import { api } from "./api";
+import { isLocalMode } from "./api/httpClient";
+import { LocalShelfRepository } from "./storage/localShelfRepository";
 import type {
   ItemCatalogoResponse,
   AdicionarItemCatalogoRequest,
@@ -8,10 +10,13 @@ import type {
 
 export class CatalogService {
   /**
-   * Obtém as obras na estante do usuário autenticado.
-   * Suporta o formato Spring Data Page<ItemCatalogoResponse> ({ content: [...] }) e Array direto.
+   * Obtém as obras na estante do usuário autenticado ou da persistência local (Modo 100% Local).
    */
   public static async getMyShelf(page = 0, size = 100): Promise<ItemCatalogoResponse[]> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.getAll();
+    }
+
     const response = await api.get<any>("/api/catalogo/minha-estante", {
       params: { page, size },
     });
@@ -25,6 +30,14 @@ export class CatalogService {
   }
 
   public static async getCatalogItem(id: number): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      const item = LocalShelfRepository.getById(id);
+      if (!item) {
+        throw new Error(`Obra não encontrada na estante local (ID: ${id})`);
+      }
+      return item;
+    }
+
     const response = await api.get<ItemCatalogoResponse>(`/api/catalogo/${id}`);
     return response.data;
   }
@@ -32,6 +45,10 @@ export class CatalogService {
   public static async addItemToShelf(
     data: AdicionarItemCatalogoRequest
   ): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.add(data);
+    }
+
     const response = await api.post<ItemCatalogoResponse>("/api/catalogo", data);
     return response.data;
   }
@@ -40,6 +57,10 @@ export class CatalogService {
     itemId: number,
     data: RegistrarProgressoRequest
   ): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.updateProgress(itemId, data);
+    }
+
     const response = await api.post<ItemCatalogoResponse>(
       `/api/catalogo/${itemId}/progresso`,
       data
@@ -51,19 +72,45 @@ export class CatalogService {
     itemId: number,
     data: AtualizarVisibilidadeRequest
   ): Promise<void> {
+    if (isLocalMode()) {
+      LocalShelfRepository.updateVisibility(itemId, data.visibilidade);
+      return;
+    }
+
     await api.patch(`/api/catalogo/${itemId}/visibilidade`, data);
   }
 
   public static async removeItemFromShelf(itemId: number): Promise<void> {
+    if (isLocalMode()) {
+      LocalShelfRepository.remove(itemId);
+      return;
+    }
+
     await api.delete(`/api/catalogo/${itemId}`);
   }
 
   public static async desvincularObra(itemId: number): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.unlink(itemId);
+    }
+
     const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/desvincular`);
     return response.data;
   }
 
   public static async vincularObra(itemId: number, obraId: number, sincronizarMetadados = true): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      const current = LocalShelfRepository.getById(itemId);
+      if (!current) throw new Error("Item não encontrado");
+      const updated: ItemCatalogoResponse = {
+        ...current,
+        obraId,
+        desvinculado: false,
+        sincronizarMetadados,
+      };
+      return updated;
+    }
+
     const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/vincular`, {
       obraId,
       sincronizarMetadados,
@@ -72,16 +119,30 @@ export class CatalogService {
   }
 
   public static async atualizarMetaCapitulos(itemId: number): Promise<ItemCatalogoResponse> {
+    if (isLocalMode()) {
+      const item = LocalShelfRepository.getById(itemId);
+      if (!item) throw new Error("Item não encontrado");
+      return item;
+    }
+
     const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/atualizar-meta`);
     return response.data;
   }
 
   public static async exportarEstante(): Promise<import("../types/catalog.types").EstanteExportDTO> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.exportData();
+    }
+
     const response = await api.get<import("../types/catalog.types").EstanteExportDTO>("/api/catalogo/exportar");
     return response.data;
   }
 
   public static async importarEstante(data: import("../types/catalog.types").EstanteImportRequest): Promise<{ mensagem: string; totalImportados: number }> {
+    if (isLocalMode()) {
+      return LocalShelfRepository.importData(data);
+    }
+
     const response = await api.post<{ mensagem: string; totalImportados: number }>("/api/catalogo/importar", data);
     return response.data;
   }

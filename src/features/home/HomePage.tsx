@@ -31,6 +31,10 @@ import {
   Users,
 } from "lucide-react";
 
+import { isLocalMode } from "../../services/api/httpClient";
+import { useApiEndpointStore } from "../../store/apiEndpointStore";
+import { HardDrive, Server } from "lucide-react";
+
 export const HomePage: React.FC = () => {
   useDocumentTitle(
     "Shiori — Seu Catálogo e Diário Pessoal de Leituras",
@@ -38,6 +42,7 @@ export const HomePage: React.FC = () => {
   );
 
   const { isAuthenticated, openAuthModal } = useAuthStore();
+  const { openModal: openEndpointModal } = useApiEndpointStore();
   const navigate = useNavigate();
 
   // Estados dos Destaques (Hero)
@@ -57,10 +62,14 @@ export const HomePage: React.FC = () => {
   // Reações locais do feed (curtidas interativas)
   const [likedActivities, setLikedActivities] = useState<Record<number, boolean>>({});
 
-  // 1. Carregar Obras em Destaque do Servidor
+  // 1. Carregar Obras em Destaque do Servidor (apenas se conectado)
   useEffect(() => {
     let isMounted = true;
     const fetchHighlights = async () => {
+      if (isLocalMode()) {
+        setIsLoadingHighlights(false);
+        return;
+      }
       try {
         setIsLoadingHighlights(true);
         const data = await WorkService.listHomeWorks();
@@ -80,7 +89,7 @@ export const HomePage: React.FC = () => {
     };
   }, []);
 
-  // 2. Carregar Continuar Lendo (quando autenticado)
+  // 2. Carregar Continuar Lendo (quando autenticado ou modo local)
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -114,7 +123,7 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchFeed = async () => {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || isLocalMode()) {
         setFeedItems([]);
         return;
       }
@@ -312,7 +321,46 @@ export const HomePage: React.FC = () => {
             </div>
           )}
         </section>
-      ) : null}
+      ) : (
+        <section className={styles.heroCarouselWrapper} aria-label="Boas-vindas ao Shiori">
+          <div className={styles.heroSlide}>
+            <div className={styles.heroDetails} style={{ maxWidth: "100%", padding: "2rem" }}>
+              <div className={styles.heroBadgesRow}>
+                <span className={styles.heroHighlightBadge}>
+                  <Sparkles size={12} />
+                  Plataforma Pessoal de Leituras
+                </span>
+                <Badge variant="brand">{isLocalMode() ? "Modo 100% Local" : "Shiori Web"}</Badge>
+              </div>
+
+              <h1 className={styles.heroTitle}>Sua Estante Pessoal e Privada de Leituras</h1>
+
+              <p className={styles.heroSynopsis}>
+                Acompanhe o ritmo de leitura de seus mangás, novels, webtoons e livros favoritos. Registre seu progresso capítulo a capítulo com total soberania e privacidade no seu navegador.
+              </p>
+
+              <div className={styles.heroActions}>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => navigate("/meu-catalogo")}
+                >
+                  <Bookmark size={18} />
+                  <span>Acessar Minha Estante</span>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => navigate("/catalogo")}
+                >
+                  <Compass size={18} />
+                  <span>Explorar Catálogo</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===================================================================
        * 2. BLOCO "CONTINUAR LENDO" (Exclusivo para Usuários Autenticados)
@@ -434,6 +482,18 @@ export const HomePage: React.FC = () => {
           <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}>
             <Spinner size="md" />
           </div>
+        ) : isLocalMode() ? (
+          <EmptyState
+            icon={<HardDrive size={32} />}
+            title="Modo 100% Local Ativo"
+            description="Você está utilizando o Shiori com soberania e privacidade no seu navegador. O feed social sincroniza atividades com a comunidade quando conectado a um servidor Shiori."
+            action={{
+              label: "Conectar a um Servidor",
+              onClick: openEndpointModal,
+              icon: <Server size={16} />,
+              variant: "secondary",
+            }}
+          />
         ) : !isAuthenticated ? (
           <EmptyState
             icon={<Users size={32} />}
