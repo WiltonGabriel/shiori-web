@@ -124,4 +124,86 @@ describe("LocalShelfRepository (Modo 100% Local / Soberania do Leitor)", () => {
     expect(importedItems[0].obraTitulo).toBe("Berserk");
     expect(importedItems[0].progressoAtual).toBe(375);
   });
+
+  it("previne duplicações de registros de leitura quando o progresso não foi alterado", () => {
+    const item = LocalShelfRepository.add({
+      titulo: "Chainsaw Man",
+      statusLeitura: "LENDO",
+      capituloAtual: 10,
+    });
+
+    expect(item.historicosLeitura).toHaveLength(1);
+
+    // Chamada redundante com os mesmos dados sem nova anotação
+    const rep1 = LocalShelfRepository.updateProgress(item.id, {
+      capituloAtual: 10,
+      statusLeitura: "LENDO",
+    });
+
+    expect(rep1.historicosLeitura).toHaveLength(1);
+
+    // Atualização com mesma nota/anotação não duplica linha
+    const rep2 = LocalShelfRepository.updateProgress(item.id, {
+      capituloAtual: 10,
+      statusLeitura: "LENDO",
+      anotacao: "Leitura do arco dos demônios",
+    });
+
+    expect(rep2.historicosLeitura).toHaveLength(1);
+    expect(rep2.historicosLeitura[0].anotacao).toBe("Leitura do arco dos demônios");
+  });
+
+  it("registra correções de progresso com nota explicativa e preserva consistência", () => {
+    const item = LocalShelfRepository.add({
+      titulo: "Monster",
+      statusLeitura: "LENDO",
+      capituloAtual: 30,
+    });
+
+    // Usuário corrige progresso para trás (ex: de 30 para 25)
+    const corrigido = LocalShelfRepository.updateProgress(item.id, {
+      capituloAtual: 25,
+      statusLeitura: "LENDO",
+    });
+
+    expect(corrigido.progressoAtual).toBe(25);
+    expect(corrigido.historicosLeitura).toHaveLength(2);
+    expect(corrigido.historicosLeitura[0].capituloLido).toBe(25);
+    expect(corrigido.historicosLeitura[0].anotacao).toContain("Correção de progresso: capítulo 30 para 25");
+  });
+
+  it("conclui automaticamente com TERMINOU ao atingir total de capítulos", () => {
+    const item = LocalShelfRepository.add({
+      titulo: "Death Note",
+      statusLeitura: "LENDO",
+      capituloAtual: 107,
+      totalCapitulos: 108,
+    });
+
+    const finalizado = LocalShelfRepository.updateProgress(item.id, {
+      capituloAtual: 108,
+    });
+
+    expect(finalizado.progressoAtual).toBe(108);
+    expect(finalizado.statusLeitura).toBe("TERMINOU");
+  });
+
+  it("persiste gêneros selecionados tanto no cadastro quanto na edição", () => {
+    const item = LocalShelfRepository.add({
+      titulo: "Dungeon Meshi",
+      statusLeitura: "LENDO",
+      generos: ["Fantasia", "Comédia"],
+    });
+
+    expect(item.generos).toEqual(["Fantasia", "Comédia"]);
+
+    const reloaded = LocalShelfRepository.getById(item.id);
+    expect(reloaded?.generos).toEqual(["Fantasia", "Comédia"]);
+
+    const editado = LocalShelfRepository.updateItem(item.id, {
+      generos: ["Fantasia", "Comédia", "Aventura"],
+    });
+
+    expect(editado.generos).toEqual(["Fantasia", "Comédia", "Aventura"]);
+  });
 });

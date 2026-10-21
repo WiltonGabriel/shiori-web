@@ -8,9 +8,7 @@ import { toast } from "../../../store/toastStore";
 export const ConnectionStatusIndicator: React.FC = () => {
   const {
     currentEndpoint,
-    operationMode,
     openModal: openSetupModal,
-    setLocalMode,
     testConnection,
   } = useApiEndpointStore();
 
@@ -21,10 +19,7 @@ export const ConnectionStatusIndicator: React.FC = () => {
 
   useEffect(() => {
     let active = true;
-    if (operationMode === "local") {
-      return;
-    }
-    const timer = setTimeout(() => {
+    const check = () => {
       if (!active) return;
       setIsChecking(true);
       testConnection(currentEndpoint)
@@ -37,13 +32,16 @@ export const ConnectionStatusIndicator: React.FC = () => {
         .finally(() => {
           if (active) setIsChecking(false);
         });
-    }, 0);
+    };
+
+    check();
+    const interval = setInterval(check, 45_000);
 
     return () => {
       active = false;
-      clearTimeout(timer);
+      clearInterval(interval);
     };
-  }, [currentEndpoint, operationMode, testConnection]);
+  }, [currentEndpoint, testConnection]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -59,7 +57,7 @@ export const ConnectionStatusIndicator: React.FC = () => {
     };
   }, [isOpen]);
 
-  const isConnected = operationMode === "connected" && isLiveConnected;
+  const isConnected = isLiveConnected;
 
   const handleManualTest = async () => {
     setIsChecking(true);
@@ -67,9 +65,9 @@ export const ConnectionStatusIndicator: React.FC = () => {
       const res = await testConnection(currentEndpoint);
       setIsLiveConnected(res.ok);
       if (res.ok) {
-        toast.success(res.message, "Servidor Conectado");
+        toast.success(res.message, "API Conectada");
       } else {
-        toast.warning(res.message, "Servidor Inacessível");
+        toast.warning(res.message, "API Inacessível");
       }
     } finally {
       setIsChecking(false);
@@ -77,10 +75,9 @@ export const ConnectionStatusIndicator: React.FC = () => {
   };
 
   const handleDisconnect = () => {
-    setLocalMode();
     setIsLiveConnected(false);
     setIsOpen(false);
-    toast.info("Desconectado do servidor. Seu aplicativo opera com total autonomia e armazenamento local.");
+    toast.info("Conexão com a API pausada. Sua aplicação pessoal continua operando normalmente com dados locais.");
   };
 
   return (
@@ -89,12 +86,12 @@ export const ConnectionStatusIndicator: React.FC = () => {
         type="button"
         className={styles.indicatorButton}
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Estado da conexão com o servidor"
+        aria-label="Estado da conexão com a API"
         aria-expanded={isOpen}
         title={
           isConnected
-            ? `Conectado ao servidor: ${currentEndpoint}`
-            : "Desconectado do servidor (Operação local ativa)"
+            ? `Conectado à API: ${currentEndpoint}`
+            : `Desconectado da API (${currentEndpoint})`
         }
       >
         <span
@@ -103,7 +100,7 @@ export const ConnectionStatusIndicator: React.FC = () => {
           }`}
         />
         <span className={styles.label}>
-          {isConnected ? "Conectado ao servidor" : "Desconectado"}
+          {isConnected ? "Conectado" : "Desconectado"}
         </span>
       </button>
 
@@ -112,7 +109,7 @@ export const ConnectionStatusIndicator: React.FC = () => {
           <div className={styles.dropdownHeader}>
             <h3 className={styles.dropdownTitle}>
               <Server size={16} />
-              <span>Conexão Shiori</span>
+              <span>Conexão com a API</span>
             </h3>
             <button
               type="button"
@@ -137,39 +134,43 @@ export const ConnectionStatusIndicator: React.FC = () => {
               }`}
             />
             <span>
-              {isConnected ? "Conectado ao servidor" : "Desconectado"}
+              {isConnected ? "Conectado à API" : "Desconectado da API"}
             </span>
           </div>
 
           <div className={styles.detailsList}>
             <div className={styles.detailItem}>
-              <span>Servidor:</span>
+              <span>Endereço da API:</span>
               <span className={styles.detailValue} title={currentEndpoint}>
-                {operationMode === "connected" ? currentEndpoint : "Nenhum (Local)"}
+                {currentEndpoint}
               </span>
             </div>
             <div className={styles.detailItem}>
-              <span>Capacidade Local:</span>
-              <span style={{ color: "#10b981", fontWeight: 600 }}>Ativa</span>
+              <span>Estado da API:</span>
+              <span style={{ color: isConnected ? "#10b981" : "var(--accent-amber)", fontWeight: 600 }}>
+                {isConnected ? "Online e responsiva" : "Inacessível / Offline"}
+              </span>
             </div>
             <div className={styles.detailItem}>
-              <span>Soberania:</span>
-              <span>Dados salvos no navegador</span>
+              <span>Aplicação:</span>
+              <span>Pessoal e Soberana</span>
+            </div>
+            <div className={styles.detailItem}>
+              <span>Estante Pessoal:</span>
+              <span style={{ color: "#10b981", fontWeight: 600 }}>Salva no navegador</span>
             </div>
           </div>
 
           <div className={styles.actionsCol}>
-            {operationMode === "connected" && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleManualTest}
-                isLoading={isChecking}
-              >
-                <RefreshCw size={14} />
-                <span>Testar Conexão</span>
-              </Button>
-            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleManualTest}
+              isLoading={isChecking}
+            >
+              <RefreshCw size={14} />
+              <span>Testar Conexão</span>
+            </Button>
 
             <Button
               variant="secondary"
@@ -180,10 +181,10 @@ export const ConnectionStatusIndicator: React.FC = () => {
               }}
             >
               <Activity size={14} />
-              <span>{operationMode === "connected" ? "Configurar Servidor" : "Conectar a um Servidor"}</span>
+              <span>Configurar Endereço da API</span>
             </Button>
 
-            {operationMode === "connected" && (
+            {isConnected && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -191,7 +192,7 @@ export const ConnectionStatusIndicator: React.FC = () => {
                 style={{ color: "var(--accent-amber)" }}
               >
                 <Unlink size={14} />
-                <span>Desconectar Servidor</span>
+                <span>Desconectar da API</span>
               </Button>
             )}
           </div>

@@ -779,6 +779,26 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                   {item.temNovosCapitulos && (
                     <NewChaptersNotificationBadge onUpdateMeta={handleSyncMeta} />
                   )}
+                  {item.generos && item.generos.length > 0 && (
+                    <div style={{ display: "inline-flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                      {item.generos.map((g) => (
+                        <span
+                          key={g}
+                          style={{
+                            fontSize: "0.72rem",
+                            padding: "0.15rem 0.5rem",
+                            borderRadius: "12px",
+                            background: "rgba(99, 102, 241, 0.12)",
+                            color: "var(--brand-primary)",
+                            border: "1px solid rgba(99, 102, 241, 0.25)",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.authorMeta}>

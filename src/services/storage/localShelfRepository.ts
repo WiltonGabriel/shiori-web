@@ -83,6 +83,7 @@ export class LocalShelfRepository {
         req.sincronizarMetadados !== undefined
           ? Boolean(req.sincronizarMetadados)
           : SettingsRepository.getDefaultSyncMetadata(),
+      generos: req.generos && req.generos.length > 0 ? req.generos : undefined,
       historicosLeitura: [],
     };
 
@@ -117,18 +118,63 @@ export class LocalShelfRepository {
       req.capituloAtual !== undefined ? req.capituloAtual : current.progressoAtual;
     const novoVolume =
       req.volumeAtual !== undefined ? req.volumeAtual : current.volumeAtual;
-    const novoStatus = req.statusLeitura || current.statusLeitura;
+    let novoStatus = req.statusLeitura || current.statusLeitura;
     const novaNota =
       req.nota !== undefined ? req.nota : current.avaliacaoPessoal;
 
-    const novoHistorico: HistoricoLeituraResponse = {
-      id: (current.historicosLeitura?.length || 0) + 1,
-      capituloLido: novoCapitulo,
-      volumeLido: novoVolume,
-      notaMomento: novaNota,
-      anotacao: req.anotacao,
-      dataLeitura: now,
-    };
+    // Conclusão consistente ao atingir total de capítulos
+    const totalCaps = current.totalCapitulos || current.obraTotalCapitulos;
+    if (totalCaps && totalCaps > 0 && novoCapitulo >= totalCaps && novoStatus === "LENDO") {
+      novoStatus = "TERMINOU";
+    }
+
+    const existingHistoricos = [...(current.historicosLeitura || [])];
+    const latest = existingHistoricos[0];
+
+    // Prevenção de duplicações: não gera novo ciclo idêntico se progresso não mudou
+    const isExactDuplicate =
+      latest &&
+      latest.capituloLido === novoCapitulo &&
+      (latest.volumeLido || undefined) === (novoVolume || undefined) &&
+      (latest.notaMomento || undefined) === (novaNota || undefined) &&
+      (latest.anotacao || undefined) === (req.anotacao || undefined) &&
+      current.statusLeitura === novoStatus &&
+      current.progressoAtual === novoCapitulo;
+
+    let historicosAtualizados = existingHistoricos;
+
+    if (!isExactDuplicate) {
+      if (
+        latest &&
+        latest.capituloLido === novoCapitulo &&
+        (latest.volumeLido || undefined) === (novoVolume || undefined) &&
+        (req.anotacao || req.nota !== undefined)
+      ) {
+        // Atualiza nota ou reflexão do mesmo capítulo/volume
+        historicosAtualizados[0] = {
+          ...latest,
+          notaMomento: novaNota !== undefined ? novaNota : latest.notaMomento,
+          anotacao: req.anotacao !== undefined ? req.anotacao : latest.anotacao,
+          dataLeitura: now,
+        };
+      } else {
+        // Registro de avanço ou correção de progresso
+        let anotacaoRegistro = req.anotacao;
+        if (!anotacaoRegistro && novoCapitulo < current.progressoAtual) {
+          anotacaoRegistro = `Correção de progresso: capítulo ${current.progressoAtual} para ${novoCapitulo}`;
+        }
+
+        const novoHistorico: HistoricoLeituraResponse = {
+          id: (current.historicosLeitura?.length || 0) + 1,
+          capituloLido: novoCapitulo,
+          volumeLido: novoVolume,
+          notaMomento: novaNota,
+          anotacao: anotacaoRegistro,
+          dataLeitura: now,
+        };
+        historicosAtualizados = [novoHistorico, ...existingHistoricos];
+      }
+    }
 
     const updated: ItemCatalogoResponse = {
       ...current,
@@ -137,7 +183,7 @@ export class LocalShelfRepository {
       statusLeitura: novoStatus,
       avaliacaoPessoal: novaNota,
       ultimaAtualizacao: now,
-      historicosLeitura: [novoHistorico, ...(current.historicosLeitura || [])],
+      historicosLeitura: historicosAtualizados,
     };
 
     items[idx] = updated;
@@ -162,24 +208,35 @@ export class LocalShelfRepository {
       patch.progressoAtual !== undefined ? patch.progressoAtual : current.progressoAtual;
     const novoVolume =
       patch.volumeAtual !== undefined ? patch.volumeAtual : current.volumeAtual;
-    const novoStatus = patch.statusLeitura || current.statusLeitura;
+    let novoStatus = patch.statusLeitura || current.statusLeitura;
     const novaNota =
       patch.avaliacaoPessoal !== undefined ? patch.avaliacaoPessoal : current.avaliacaoPessoal;
 
+    const totalCaps = patch.totalCapitulos !== undefined ? patch.totalCapitulos : (current.totalCapitulos || current.obraTotalCapitulos);
+    if (totalCaps && totalCaps > 0 && novoCapitulo >= totalCaps && novoStatus === "LENDO") {
+      novoStatus = "TERMINOU";
+    }
+
     const historicos = [...(current.historicosLeitura || [])];
-    if (
-      patch.progressoAtual !== undefined ||
-      patch.volumeAtual !== undefined ||
-      patch.statusLeitura !== undefined ||
-      patch.avaliacaoPessoal !== undefined ||
-      patch.anotacao
-    ) {
+    const isProgressChange =
+      (patch.progressoAtual !== undefined && patch.progressoAtual !== current.progressoAtual) ||
+      (patch.volumeAtual !== undefined && patch.volumeAtual !== current.volumeAtual) ||
+      (patch.statusLeitura !== undefined && patch.statusLeitura !== current.statusLeitura) ||
+      (patch.avaliacaoPessoal !== undefined && patch.avaliacaoPessoal !== current.avaliacaoPessoal) ||
+      Boolean(patch.anotacao);
+
+    if (isProgressChange) {
+      let anotacaoRegistro = patch.anotacao;
+      if (!anotacaoRegistro && patch.progressoAtual !== undefined && patch.progressoAtual < current.progressoAtual) {
+        anotacaoRegistro = `Correção de progresso: capítulo ${current.progressoAtual} para ${novoCapitulo}`;
+      }
+
       historicos.unshift({
         id: historicos.length + 1,
         capituloLido: novoCapitulo,
         volumeLido: novoVolume,
         notaMomento: novaNota,
-        anotacao: patch.anotacao,
+        anotacao: anotacaoRegistro,
         dataLeitura: now,
       });
     }
@@ -204,6 +261,7 @@ export class LocalShelfRepository {
         patch.sincronizarMetadados !== undefined
           ? patch.sincronizarMetadados
           : current.sincronizarMetadados,
+      generos: patch.generos !== undefined ? patch.generos : current.generos,
       tipoObra: patch.tipoObra || current.tipoObra,
       ultimaAtualizacao: now,
       historicosLeitura: historicos,

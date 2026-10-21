@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { isLocalMode } from "./api/httpClient";
 
 export interface GeneroItem {
   id: number;
@@ -31,13 +30,15 @@ export class GenreService {
       return this.cached;
     }
 
+    let localGenres: GeneroItem[] = [...DEFAULT_GENRES];
+
     if (typeof window !== "undefined" && window.localStorage) {
       try {
         const stored = localStorage.getItem(GENRES_CACHE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            this.cached = parsed;
+            localGenres = parsed;
           }
         }
       } catch {
@@ -45,23 +46,30 @@ export class GenreService {
       }
     }
 
-    if (isLocalMode()) {
-      return this.cached || DEFAULT_GENRES;
-    }
-
     try {
       const response = await api.get<GeneroItem[]>("/api/generos");
       if (Array.isArray(response.data) && response.data.length > 0) {
-        this.cached = response.data;
+        // Preserva gêneros locais e mescla os oficiais da API sem descartar
+        const map = new Map<string, GeneroItem>();
+        localGenres.forEach((g) => map.set(g.nome.toLowerCase().trim(), g));
+        response.data.forEach((g) => {
+          const key = g.nome.toLowerCase().trim();
+          if (!map.has(key)) {
+            map.set(key, g);
+          }
+        });
+        const merged = Array.from(map.values());
+        this.cached = merged;
         if (typeof window !== "undefined" && window.localStorage) {
-          localStorage.setItem(GENRES_CACHE_KEY, JSON.stringify(response.data));
+          localStorage.setItem(GENRES_CACHE_KEY, JSON.stringify(merged));
         }
-        return response.data;
+        return merged;
       }
     } catch {
-      // Fallback gracioso
+      // Fallback gracioso com preservação integral de dados locais
     }
 
-    return this.cached || DEFAULT_GENRES;
+    this.cached = localGenres;
+    return localGenres;
   }
 }

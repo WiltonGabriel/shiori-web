@@ -202,6 +202,7 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
         capaUrl: capaUrl.trim() || undefined,
         urlLeitura: urlLeitura.trim() || undefined,
         visibilidade: "PRIVADO",
+        generos: selectedGeneros.length > 0 ? selectedGeneros : undefined,
       });
 
       // 2. Proposta opcional para o Catálogo Global
