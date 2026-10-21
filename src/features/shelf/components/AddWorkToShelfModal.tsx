@@ -5,6 +5,7 @@ import { Button } from "../../../components/ui/Button/Button";
 import { ReadingStatusSelect } from "../../../components/ui/ReadingStatusSelect";
 import { CatalogService } from "../../../services/catalog.service";
 import { WorkService } from "../../../services/work.service";
+import { AuthService } from "../../../services/auth.service";
 import { GenreService, type GeneroItem } from "../../../services/genre.service";
 import { LocalShelfRepository } from "../../../services/storage/localShelfRepository";
 import { isLocalMode } from "../../../services/api/httpClient";
@@ -209,12 +210,20 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
       let proposalSent = false;
       if (proporGlobal && !isLocalMode()) {
         try {
-          await WorkService.createWork({
+          const user = AuthService.getStoredUser();
+          const created = await WorkService.createWork({
             tituloPrincipal: cleanTitle,
             tipoObra,
             capaUrl: capaUrl.trim() || undefined,
             totalCapitulosLancados: parsedTotalCaps && parsedTotalCaps > 0 ? parsedTotalCaps : undefined,
           });
+          if (created && created.id && user?.id) {
+            try {
+              await WorkService.submitToGlobalCatalog(created.id, user.id);
+            } catch (subErr) {
+              console.warn("Obra criada, mas submissão comunitária falhou:", subErr);
+            }
+          }
           proposalSent = true;
         } catch (proposalErr) {
           console.warn("Proposta ao catálogo global não pôde ser transmitida à API:", proposalErr);
@@ -223,12 +232,12 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
 
       if (proporGlobal && !isLocalMode() && !proposalSent) {
         toast.info(
-          `"${cleanTitle}" foi adicionada à sua estante pessoal. A proposta para o Catálogo Global não pôde ser enviada porque o servidor está indisponível no momento.`,
+          `"${cleanTitle}" foi adicionada à sua estante pessoal. A proposta para o Catálogo Global não pôde ser enviada porque a API está indisponível ou você não está autenticado no momento.`,
           "Obra Salva na Estante"
         );
       } else if (proposalSent) {
         toast.success(
-          `"${cleanTitle}" adicionada à sua estante e proposta enviada para revisão no Catálogo Global!`,
+          `"${cleanTitle}" adicionada à sua estante e proposta enviada (pendente de revisão pela curadoria)!`,
           "Obra Salva na Estante"
         );
       } else {

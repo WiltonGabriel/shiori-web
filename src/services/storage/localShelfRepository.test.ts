@@ -172,7 +172,7 @@ describe("LocalShelfRepository (Modo 100% Local / Soberania do Leitor)", () => {
     expect(corrigido.historicosLeitura[0].anotacao).toContain("Correção de progresso: capítulo 30 para 25");
   });
 
-  it("conclui automaticamente com TERMINOU ao atingir total de capítulos", () => {
+  it("conclui automaticamente com TERMINOU ao atingir total de capítulos e gera anotação de ciclo sem duplicar", () => {
     const item = LocalShelfRepository.add({
       titulo: "Death Note",
       statusLeitura: "LENDO",
@@ -186,6 +186,38 @@ describe("LocalShelfRepository (Modo 100% Local / Soberania do Leitor)", () => {
 
     expect(finalizado.progressoAtual).toBe(108);
     expect(finalizado.statusLeitura).toBe("TERMINOU");
+    expect(finalizado.historicosLeitura).toHaveLength(2);
+    expect(finalizado.historicosLeitura[0].anotacao).toBe("Leitura concluída (Ciclo finalizado)");
+
+    // Salvar novamente o mesmo estado não deve gerar entrada duplicada
+    const repetido = LocalShelfRepository.updateProgress(item.id, {
+      capituloAtual: 108,
+      statusLeitura: "TERMINOU",
+    });
+    expect(repetido.historicosLeitura).toHaveLength(2);
+  });
+
+  it("updateItem deduplica ciclos idênticos e registra conclusão de forma consistente", () => {
+    const item = LocalShelfRepository.add({
+      titulo: "Akira",
+      statusLeitura: "LENDO",
+      capituloAtual: 120,
+      totalCapitulos: 120,
+    });
+
+    // Edição via updateItem alterando status para TERMINOU
+    const terminado = LocalShelfRepository.updateItem(item.id, {
+      statusLeitura: "TERMINOU",
+    });
+
+    expect(terminado.statusLeitura).toBe("TERMINOU");
+    expect(terminado.historicosLeitura[0].anotacao).toBe("Leitura concluída (Ciclo finalizado)");
+
+    // Salvar novamente sem alterar progresso não duplica histórico
+    const reSalvo = LocalShelfRepository.updateItem(item.id, {
+      titulo: "Akira (Edição Especial)",
+    });
+    expect(reSalvo.historicosLeitura).toHaveLength(terminado.historicosLeitura.length);
   });
 
   it("persiste gêneros selecionados tanto no cadastro quanto na edição", () => {
@@ -207,3 +239,4 @@ describe("LocalShelfRepository (Modo 100% Local / Soberania do Leitor)", () => {
     expect(editado.generos).toEqual(["Fantasia", "Comédia", "Aventura"]);
   });
 });
+

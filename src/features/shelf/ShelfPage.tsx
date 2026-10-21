@@ -13,7 +13,6 @@ import { ShelfHeader } from "./components/ShelfHeader";
 import { ShelfCard } from "./components/ShelfCard";
 import { ShelfTable } from "./components/ShelfTable";
 import { ShelfEditModal } from "./components/ShelfEditModal";
-import { ShelfCloseCycleModal } from "./components/ShelfCloseCycleModal";
 import { AddWorkToShelfModal } from "./components/AddWorkToShelfModal";
 import { Plus } from "lucide-react";
 
@@ -44,7 +43,6 @@ export const ShelfPage: React.FC = () => {
 
   // Estados dos Modais
   const [editingItem, setEditingItem] = useState<ItemCatalogoResponse | null>(null);
-  const [closingCycleItem, setClosingCycleItem] = useState<ItemCatalogoResponse | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   return (
@@ -104,7 +102,6 @@ export const ShelfPage: React.FC = () => {
               key={item.id}
               item={item}
               onQuickIncrement={handleQuickIncrement}
-              onOpenCycle={(i) => setClosingCycleItem(i)}
               onOpenEdit={(i) => setEditingItem(i)}
               onUnlink={handleUnlink}
               onRemove={handleRemove}
@@ -116,7 +113,6 @@ export const ShelfPage: React.FC = () => {
         <ShelfTable
           items={filteredItems}
           onQuickIncrement={handleQuickIncrement}
-          onOpenCycle={(i) => setClosingCycleItem(i)}
           onOpenEdit={(i) => setEditingItem(i)}
           onUnlink={handleUnlink}
           onRemove={handleRemove}
@@ -132,12 +128,6 @@ export const ShelfPage: React.FC = () => {
         onSaved={updateItemInList}
       />
 
-      <ShelfCloseCycleModal
-        item={closingCycleItem}
-        isOpen={Boolean(closingCycleItem)}
-        onClose={() => setClosingCycleItem(null)}
-        onCycleClosed={updateItemInList}
-      />
 
       <AddWorkToShelfModal
         isOpen={isAddModalOpen}

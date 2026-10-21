@@ -5,7 +5,6 @@ import {
   LocalShelfRepository,
   LOCAL_SHELF_STORAGE_KEY,
 } from "./storage/localShelfRepository";
-import * as httpClient from "./api/httpClient";
 import type { ItemCatalogoResponse } from "../types/catalog.types";
 
 vi.mock("./api", () => ({
@@ -44,8 +43,7 @@ describe("CatalogService - Exclusão e Resiliência da Estante", () => {
     localStorage.setItem(LOCAL_SHELF_STORAGE_KEY, JSON.stringify(items));
   };
 
-  it("remove item da estante no modo local sem chamar api.delete", async () => {
-    vi.spyOn(httpClient, "isLocalMode").mockReturnValue(true);
+  it("remove item da estante pessoal soberana sem chamar api.delete", async () => {
     populateLocalShelf([mockItem]);
     expect(LocalShelfRepository.getById(101)).toBeDefined();
 
@@ -55,48 +53,22 @@ describe("CatalogService - Exclusão e Resiliência da Estante", () => {
     expect(api.delete).not.toHaveBeenCalled();
   });
 
-  it("remove item do repositório local e da API quando em modo conectado", async () => {
-    vi.spyOn(httpClient, "isLocalMode").mockReturnValue(false);
+  it("não realiza exclusão remota silenciosa prevenindo divergência entre estante e API", async () => {
     populateLocalShelf([mockItem]);
-    vi.mocked(api.delete).mockResolvedValueOnce({ data: {} });
 
     await CatalogService.removeItemFromShelf(101);
 
     expect(LocalShelfRepository.getById(101)).toBeNull();
-    expect(api.delete).toHaveBeenCalledWith("/api/catalogo/101");
+    // Confirma que nenhuma chamada HTTP DELETE foi disparada para a API
+    expect(api.delete).not.toHaveBeenCalled();
   });
 
-  it("não quebra a exclusão local se a API estiver offline ou retornar erro de rede", async () => {
-    vi.spyOn(httpClient, "isLocalMode").mockReturnValue(false);
+  it("getMyShelf obtém itens diretamente da persistência soberana do usuário", async () => {
     populateLocalShelf([mockItem]);
-    vi.mocked(api.delete).mockRejectedValueOnce({
-      code: "ERR_NETWORK",
-      message: "Network Error",
-    });
-
-    await expect(CatalogService.removeItemFromShelf(101)).resolves.not.toThrow();
-    expect(LocalShelfRepository.getById(101)).toBeNull();
-  });
-
-  it("não quebra se a API retornar 404 (já excluída no servidor)", async () => {
-    vi.spyOn(httpClient, "isLocalMode").mockReturnValue(false);
-    populateLocalShelf([mockItem]);
-    vi.mocked(api.delete).mockRejectedValueOnce({
-      status: 404,
-      response: { status: 404 },
-    });
-
-    await expect(CatalogService.removeItemFromShelf(101)).resolves.not.toThrow();
-    expect(LocalShelfRepository.getById(101)).toBeNull();
-  });
-
-  it("getMyShelf faz fallback para LocalShelfRepository se a API falhar", async () => {
-    vi.spyOn(httpClient, "isLocalMode").mockReturnValue(false);
-    populateLocalShelf([mockItem]);
-    vi.mocked(api.get).mockRejectedValueOnce(new Error("API indisponível"));
 
     const items = await CatalogService.getMyShelf();
     expect(items).toHaveLength(1);
     expect(items[0].id).toBe(101);
+    expect(api.get).not.toHaveBeenCalled();
   });
 });

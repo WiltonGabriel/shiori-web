@@ -21,7 +21,6 @@ import {
 interface ShelfTableProps {
   items: ItemCatalogoResponse[];
   onQuickIncrement: (item: ItemCatalogoResponse) => void;
-  onOpenCycle?: (item: ItemCatalogoResponse) => void;
   onOpenEdit: (item: ItemCatalogoResponse) => void;
   onUnlink: (itemId: number) => void;
   onRemove: (itemId: number) => void;
@@ -31,7 +30,6 @@ interface ShelfTableProps {
 export const ShelfTable: React.FC<ShelfTableProps> = ({
   items,
   onQuickIncrement,
-  onOpenCycle: _onOpenCycle,
   onOpenEdit,
   onUnlink,
   onRemove,

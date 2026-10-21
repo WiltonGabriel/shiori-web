@@ -8,7 +8,6 @@ import {
   UnlinkedBadge,
   NewChaptersNotificationBadge,
 } from "./components/ShelfBadges";
-import { ShelfCloseCycleModal } from "./components/ShelfCloseCycleModal";
 import { CatalogService } from "../../services/catalog.service";
 import { ReadingStatusSelect, getReadingStatusLabel } from "../../components/ui/ReadingStatusSelect";
 import type { ItemCatalogoResponse, StatusLeitura } from "../../types/catalog.types";
@@ -32,7 +31,6 @@ import {
   Star,
   Check,
   Edit,
-  Sparkles,
   GitPullRequest,
   Compass,
   X,
@@ -59,8 +57,6 @@ export const PersonalWorkDetailsPage: React.FC = () => {
   // Privacy veil for notes
   const [showNotesContent, setShowNotesContent] = useState(true);
 
-  // Modal de conclusão de ciclo
-  const [isCycleModalOpen, setIsCycleModalOpen] = useState(false);
 
   // Edição rápida de URL
   const [isEditingUrl, setIsEditingUrl] = useState(false);
@@ -860,6 +856,7 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                         value={chapterInput}
                         onChange={(e) => setChapterInput(Number(e.target.value))}
                         className={styles.chapterInput}
+                        aria-label="Ajustar capítulo atual"
                       />
                     </div>
 
@@ -883,14 +880,6 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                     </Button>
                   </div>
 
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setIsCycleModalOpen(true)}
-                  >
-                    <Sparkles size={14} />
-                    <span>Concluir Ciclo de Leitura</span>
-                  </Button>
                 </div>
               </div>
 
@@ -991,14 +980,6 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                   </button>
                 </div>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsCycleModalOpen(true)}
-                >
-                  <Plus size={13} />
-                  <span>Registrar Ciclo</span>
-                </Button>
               </div>
 
               {/* Tab Content: Cycles */}
@@ -1072,7 +1053,7 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                       <History size={32} style={{ marginBottom: "0.5rem", opacity: 0.5 }} />
                       <p>Nenhum ciclo de releitura finalizado até o momento.</p>
                       <p style={{ fontSize: "var(--font-size-xs)" }}>
-                        Quando você terminar de ler ou quiser registrar uma releitura, clique em "Concluir Ciclo de Leitura".
+                        Os ciclos de leitura são registrados e administrados automaticamente pelo sistema conforme suas atualizações de progresso e conclusões.
                       </p>
                     </div>
                   )}
@@ -1209,18 +1190,6 @@ export const PersonalWorkDetailsPage: React.FC = () => {
         </>
       )}
 
-      {/* Modals de Ações Separadas */}
-      {isCycleModalOpen && (
-        <ShelfCloseCycleModal
-          item={item}
-          isOpen={isCycleModalOpen}
-          onClose={() => setIsCycleModalOpen(false)}
-          onCycleClosed={(updated) => {
-            setItem(updated);
-            setIsCycleModalOpen(false);
-          }}
-        />
-      )}
 
       {isSuggestModalOpen && globalWorkData && (
         <SuggestEditModal

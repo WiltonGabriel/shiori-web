@@ -137,7 +137,7 @@ export class LocalShelfRepository {
       latest.capituloLido === novoCapitulo &&
       (latest.volumeLido || undefined) === (novoVolume || undefined) &&
       (latest.notaMomento || undefined) === (novaNota || undefined) &&
-      (latest.anotacao || undefined) === (req.anotacao || undefined) &&
+      (!req.anotacao || latest.anotacao === req.anotacao) &&
       current.statusLeitura === novoStatus &&
       current.progressoAtual === novoCapitulo;
 
@@ -162,6 +162,8 @@ export class LocalShelfRepository {
         let anotacaoRegistro = req.anotacao;
         if (!anotacaoRegistro && novoCapitulo < current.progressoAtual) {
           anotacaoRegistro = `Correção de progresso: capítulo ${current.progressoAtual} para ${novoCapitulo}`;
+        } else if (!anotacaoRegistro && novoStatus === "TERMINOU" && current.statusLeitura !== "TERMINOU") {
+          anotacaoRegistro = "Leitura concluída (Ciclo finalizado)";
         }
 
         const novoHistorico: HistoricoLeituraResponse = {
@@ -218,27 +220,55 @@ export class LocalShelfRepository {
     }
 
     const historicos = [...(current.historicosLeitura || [])];
-    const isProgressChange =
-      (patch.progressoAtual !== undefined && patch.progressoAtual !== current.progressoAtual) ||
-      (patch.volumeAtual !== undefined && patch.volumeAtual !== current.volumeAtual) ||
-      (patch.statusLeitura !== undefined && patch.statusLeitura !== current.statusLeitura) ||
-      (patch.avaliacaoPessoal !== undefined && patch.avaliacaoPessoal !== current.avaliacaoPessoal) ||
-      Boolean(patch.anotacao);
+    const latest = historicos[0];
+    const isExactDuplicate =
+      latest &&
+      latest.capituloLido === novoCapitulo &&
+      (latest.volumeLido || undefined) === (novoVolume || undefined) &&
+      (latest.notaMomento || undefined) === (novaNota || undefined) &&
+      (!patch.anotacao || latest.anotacao === patch.anotacao) &&
+      current.statusLeitura === novoStatus &&
+      current.progressoAtual === novoCapitulo;
 
-    if (isProgressChange) {
-      let anotacaoRegistro = patch.anotacao;
-      if (!anotacaoRegistro && patch.progressoAtual !== undefined && patch.progressoAtual < current.progressoAtual) {
-        anotacaoRegistro = `Correção de progresso: capítulo ${current.progressoAtual} para ${novoCapitulo}`;
+    if (!isExactDuplicate) {
+      const isProgressChange =
+        (patch.progressoAtual !== undefined && patch.progressoAtual !== current.progressoAtual) ||
+        (patch.volumeAtual !== undefined && patch.volumeAtual !== current.volumeAtual) ||
+        (patch.statusLeitura !== undefined && patch.statusLeitura !== current.statusLeitura) ||
+        (patch.avaliacaoPessoal !== undefined && patch.avaliacaoPessoal !== current.avaliacaoPessoal) ||
+        Boolean(patch.anotacao);
+
+      if (isProgressChange) {
+        if (
+          latest &&
+          latest.capituloLido === novoCapitulo &&
+          (latest.volumeLido || undefined) === (novoVolume || undefined) &&
+          (patch.anotacao || patch.avaliacaoPessoal !== undefined)
+        ) {
+          historicos[0] = {
+            ...latest,
+            notaMomento: novaNota !== undefined ? novaNota : latest.notaMomento,
+            anotacao: patch.anotacao !== undefined ? patch.anotacao : latest.anotacao,
+            dataLeitura: now,
+          };
+        } else {
+          let anotacaoRegistro = patch.anotacao;
+          if (!anotacaoRegistro && patch.progressoAtual !== undefined && patch.progressoAtual < current.progressoAtual) {
+            anotacaoRegistro = `Correção de progresso: capítulo ${current.progressoAtual} para ${novoCapitulo}`;
+          } else if (!anotacaoRegistro && novoStatus === "TERMINOU" && current.statusLeitura !== "TERMINOU") {
+            anotacaoRegistro = "Leitura concluída (Ciclo finalizado)";
+          }
+
+          historicos.unshift({
+            id: historicos.length + 1,
+            capituloLido: novoCapitulo,
+            volumeLido: novoVolume,
+            notaMomento: novaNota,
+            anotacao: anotacaoRegistro,
+            dataLeitura: now,
+          });
+        }
       }
-
-      historicos.unshift({
-        id: historicos.length + 1,
-        capituloLido: novoCapitulo,
-        volumeLido: novoVolume,
-        notaMomento: novaNota,
-        anotacao: anotacaoRegistro,
-        dataLeitura: now,
-      });
     }
 
     const updated: ItemCatalogoResponse = {

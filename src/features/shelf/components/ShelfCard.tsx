@@ -20,7 +20,6 @@ import {
 interface ShelfCardProps {
   item: ItemCatalogoResponse;
   onQuickIncrement: (item: ItemCatalogoResponse) => void;
-  onOpenCycle?: (item: ItemCatalogoResponse) => void;
   onOpenEdit: (item: ItemCatalogoResponse) => void;
   onUnlink: (itemId: number) => void;
   onRemove: (itemId: number) => void;
@@ -30,7 +29,6 @@ interface ShelfCardProps {
 export const ShelfCard: React.FC<ShelfCardProps> = ({
   item,
   onQuickIncrement,
-  onOpenCycle: _onOpenCycle,
   onOpenEdit,
   onUnlink,
   onRemove,

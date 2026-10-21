@@ -163,4 +163,59 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     expect(mockOnWorkAdded).toHaveBeenCalled();
     expect(mockOnClose).toHaveBeenCalled();
   });
+
+  it("garante isolamento estrito: proposta ao Catálogo Global NUNCA transmite progresso, status ou URL privada", async () => {
+    vi.mocked(CatalogService.addItemToShelf).mockResolvedValueOnce({
+      id: 4,
+      titulo: "Tower of God",
+      statusLeitura: "LENDO",
+      progressoAtual: 50,
+      visibilidade: "PRIVADO",
+      dataAdicao: new Date().toISOString(),
+      ultimaAtualizacao: new Date().toISOString(),
+      historicosLeitura: [],
+      obraTitulo: "Tower of God",
+    });
+    vi.mocked(WorkService.createWork).mockResolvedValueOnce({
+      id: 400,
+      tituloPrincipal: "Tower of God",
+      tipoObra: "MANHWA",
+      statusCatalogo: "COMUNITARIO",
+      generos: [],
+      tags: [],
+    });
+
+    render(
+      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+    );
+
+    const titleInput = screen.getByLabelText(/Título Principal \*/i);
+    fireEvent.change(titleInput, { target: { value: "Tower of God" } });
+
+    const privateUrlInput = screen.getByLabelText(/URL Privada de Leitura/i);
+    fireEvent.change(privateUrlInput, { target: { value: "https://minha-leitura-secreta.local/cap/50" } });
+
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+
+    const submitBtn = screen.getByRole("button", { name: /adicionar à minha estante/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(WorkService.createWork).toHaveBeenCalledTimes(1);
+    });
+
+    const callArgs = vi.mocked(WorkService.createWork).mock.calls[0][0] as unknown as Record<string, unknown>;
+    // Isolamento de dados pessoais: Proposta transmite apenas metadados canônicos frios
+    expect(callArgs.tituloPrincipal).toBe("Tower of God");
+    expect(callArgs.tipoObra).toBeDefined();
+    expect(callArgs).not.toHaveProperty("urlLeitura");
+    expect(callArgs).not.toHaveProperty("statusLeitura");
+    expect(callArgs).not.toHaveProperty("capituloAtual");
+    expect(callArgs).not.toHaveProperty("progressoAtual");
+    expect(callArgs).not.toHaveProperty("volumeAtual");
+    expect(callArgs).not.toHaveProperty("avaliacaoPessoal");
+    expect(callArgs).not.toHaveProperty("anotacao");
+  });
 });
+

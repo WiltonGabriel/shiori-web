@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { isLocalMode } from "./api/httpClient";
 import { LocalShelfRepository } from "./storage/localShelfRepository";
 import type {
   ItemCatalogoResponse,
@@ -71,32 +70,7 @@ export class CatalogService {
   }
 
   public static async removeItemFromShelf(itemId: number): Promise<void> {
-    const itemInLocal = LocalShelfRepository.getById(itemId);
-    if (itemInLocal) {
-      LocalShelfRepository.remove(itemId);
-    }
-
-    if (isLocalMode()) {
-      return;
-    }
-
-    try {
-      await api.delete(`/api/catalogo/${itemId}`);
-    } catch (err: unknown) {
-      const errorObj = err as { status?: number; response?: { status?: number }; code?: string; message?: string };
-      const is404 = errorObj?.status === 404 || errorObj?.response?.status === 404;
-      const isNetworkOrOffline =
-        !errorObj?.response ||
-        errorObj?.code === "ERR_NETWORK" ||
-        errorObj?.message?.includes("Network") ||
-        errorObj?.status === 500 ||
-        errorObj?.response?.status === 500;
-
-      if (itemInLocal || is404 || isNetworkOrOffline) {
-        return;
-      }
-      throw err;
-    }
+    LocalShelfRepository.remove(itemId);
   }
 
   public static async desvincularObra(itemId: number): Promise<ItemCatalogoResponse> {
