@@ -42,9 +42,13 @@ export const HomePage: React.FC = () => {
     "Gerencie sua estante pessoal de mangás, novels, manhwas e livros. Acompanhe seu progresso de leitura e interaja com conexões no feed social."
   );
 
-  const { isAuthenticated, openAuthModal } = useAuthStore();
+  const { isAuthenticated, user, openAuthModal } = useAuthStore();
   const { openModal: openEndpointModal } = useApiEndpointStore();
   const navigate = useNavigate();
+
+  const isApiAccountLoggedIn = Boolean(
+    isAuthenticated && user && user.id > 0 && user.token && user.token !== "shiori-local-session"
+  );
 
   // Estados dos Destaques (Hero)
   const [highlightWorks, setHighlightWorks] = useState<ObraResponse[]>([]);
@@ -129,7 +133,7 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchFeed = async () => {
-      if (!isAuthenticated || isLocalMode()) {
+      if (!isApiAccountLoggedIn || isLocalMode()) {
         setFeedItems([]);
         return;
       }
@@ -152,7 +156,7 @@ export const HomePage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated]);
+  }, [isApiAccountLoggedIn]);
 
   // Navegação do Carrossel Hero
   const nextSlide = () => {
@@ -553,13 +557,13 @@ export const HomePage: React.FC = () => {
               variant: "secondary",
             }}
           />
-        ) : !isAuthenticated ? (
+        ) : !isApiAccountLoggedIn ? (
           <EmptyState
             icon={<Users size={32} />}
-            title="Conecte-se com outros leitores"
-            description="Faça login para acompanhar o progresso de leitura em tempo real dos seus amigos, ver notas avaliadas e trocar impressões sobre obras."
+            title="Feed Social da Comunidade"
+            description="Conecte uma conta na Shiori API para acompanhar o progresso em tempo real de outros leitores e interagir com o feed social."
             action={{
-              label: "Entrar com Minha Conta",
+              label: "Entrar ou Criar Conta Shiori",
               onClick: openAuthModal,
               variant: "primary",
             }}

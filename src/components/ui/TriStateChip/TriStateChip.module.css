@@ -26,17 +26,17 @@
 }
 
 .include {
-  background: rgba(16, 185, 129, 0.18) !important;
-  color: #34D399 !important;
+  background: var(--status-terminou-bg) !important;
+  color: var(--accent-emerald) !important;
   border-color: rgba(16, 185, 129, 0.45) !important;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 10px var(--accent-emerald-glow);
 }
 
 .exclude {
-  background: rgba(244, 63, 94, 0.18) !important;
-  color: #FDA4AF !important;
+  background: var(--status-abdicou-bg) !important;
+  color: var(--accent-rose) !important;
   border-color: rgba(244, 63, 94, 0.45) !important;
-  box-shadow: 0 0 10px rgba(244, 63, 94, 0.2);
+  box-shadow: 0 0 10px var(--accent-rose-glow);
 }
 
 .icon {

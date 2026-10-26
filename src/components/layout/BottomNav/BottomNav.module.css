@@ -41,6 +41,6 @@
 }
 
 .active {
-  color: var(--brand-light) !important;
+  color: var(--sidebar-active-color) !important;
   font-weight: 700;
 }

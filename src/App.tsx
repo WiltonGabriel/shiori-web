@@ -54,6 +54,7 @@ export const App: React.FC = () => {
               <Route index element={<HomePage />} />
               <Route path="catalogo" element={<CatalogPage />} />
               <Route path="catalogo/:id" element={<WorkDetailsPage />} />
+              <Route path="obras/:id" element={<WorkDetailsPage />} />
               <Route path="explorar" element={<Navigate to="/catalogo" replace />} />
 
               {/* Rotas Protegidas de Leitor */}
@@ -63,6 +64,7 @@ export const App: React.FC = () => {
                 <Route path="meu-catalogo" element={<Navigate to="/minha-estante" replace />} />
                 <Route path="meu-catalogo/:id" element={<PersonalWorkDetailsPage />} />
                 <Route path="estante" element={<Navigate to="/minha-estante" replace />} />
+                <Route path="estante/:id" element={<PersonalWorkDetailsPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="configuracoes" element={<SettingsPage />} />
               </Route>

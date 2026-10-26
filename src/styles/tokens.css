@@ -76,6 +76,7 @@
   /* Tokens de Esqueleto e Carregamento Suave */
   --skeleton-base: rgba(255, 255, 255, 0.06);
   --skeleton-highlight: rgba(255, 255, 255, 0.12);
+  --hover-overlay: rgba(255, 255, 255, 0.06);
 
   /* Anéis de Foco e Acessibilidade */
   --focus-ring: 0 0 0 2px var(--bg-app), 0 0 0 4px var(--brand-primary);
@@ -176,5 +177,6 @@ html.light,
 
   --skeleton-base: rgba(15, 23, 42, 0.06);
   --skeleton-highlight: rgba(15, 23, 42, 0.12);
+  --hover-overlay: rgba(15, 23, 42, 0.05);
 }
 

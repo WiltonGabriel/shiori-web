@@ -85,7 +85,7 @@
   border-color: var(--border-light);
 }
 .outline:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover-overlay);
   border-color: var(--brand-primary);
 }
 
@@ -94,7 +94,7 @@
   color: var(--text-secondary);
 }
 .ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover-overlay);
   color: var(--text-primary);
 }
 
