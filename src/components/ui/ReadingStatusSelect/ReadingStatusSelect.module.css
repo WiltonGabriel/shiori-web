@@ -35,6 +35,11 @@
   cursor: not-allowed;
 }
 
+.select option {
+  background-color: var(--bg-surface, #181920);
+  color: var(--text-primary, #ffffff);
+}
+
 .iconWrapper {
   position: absolute;
   top: 50%;
