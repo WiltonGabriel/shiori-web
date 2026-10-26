@@ -1,6 +1,6 @@
 # Guia de Deploy no Portainer, GitOps e Cloudflare (Shiori Web)
 
-Este documento fornece as instruções oficiais para realizar o deploy contínuo do **Shiori Web** (front-end SPA) utilizando **Portainer CE**, esteira **GitOps** com GitHub Actions e exposição segura através do **Cloudflare** no subdomínio oficial `shiori.wnzk.dev.br`.
+Este documento fornece as instruções oficiais para realizar o deploy contínuo do **Shiori Web** (front-end SPA) utilizando **Portainer CE**, esteira **GitOps** com GitHub Actions e exposição segura através de Proxy Reverso / Cloudflare em subdomínio configurável (ex.: `shiori.exemplo.org`).
 
 ---
 
@@ -22,7 +22,7 @@ O Shiori Web é construído como uma Single Page Application (SPA) com React 19,
 > **POLÍTICA ESTRITA DE ACESSO OPERACIONAL AO SERVIDOR DE PRODUÇÃO:**
 >
 > 1. **Ambiente de Produção Gerenciado por GitOps:** O ambiente de produção opera sob automação estrita via **Portainer**.
-> 2. **Acesso SSH Restrito:** O acesso direto via SSH ao servidor (através da malha de rede privada Tailscale no host `ubuntu@100.127.79.49`) é **estritamente restrito a fins de auditoria de infraestrutura, inspeção de logs e gerenciamento de containers** no diretório de serviços `/srv/services/shiori`.
+> 2. **Acesso SSH Restrito:** O acesso direto via SSH ao servidor (no host `usuario@seu-servidor-ip`) é **estritamente restrito a fins de auditoria de infraestrutura, inspeção de logs e gerenciamento de containers** no diretório de serviços do projeto.
 > 3. **Proibição de Alterações Manuais:** É terminantemente proibido editar código-fonte, alterar assets estáticos ou aplicar correções manuais diretamente no servidor de produção. **Toda e qualquer alteração de código deve ser submetida via commit no repositório GitHub e passar obrigatoriamente pelos testes automatizados e pela esteira do GitHub Actions.**
 
 ---
@@ -61,11 +61,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy_network"
-      - "traefik.http.routers.shiori-web.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web.rule=Host(`${DOMAIN:-shiori.exemplo.org}`)"
       - "traefik.http.routers.shiori-web.entrypoints=websecure"
       - "traefik.http.routers.shiori-web.tls=true"
       - "traefik.http.routers.shiori-web.tls.certresolver=leresolver"
-      - "traefik.http.routers.shiori-web-http.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web-http.rule=Host(`${DOMAIN:-shiori.exemplo.org}`)"
       - "traefik.http.routers.shiori-web-http.entrypoints=web"
       - "traefik.http.services.shiori-web.loadbalancer.server.port=80"
 
@@ -82,35 +82,35 @@ Na seção **Environment variables** da Stack no Portainer, adicione as seguinte
 
 ```env
 PORT=3000
-VITE_API_BASE_URL=http://100.127.79.49:8088
+VITE_API_BASE_URL=https://api.exemplo.org
 ```
 
 > **Nota de Produção:**
 > - `PORT`: Porta exposta no host onde o container atenderá o tráfego HTTP.
-> - `VITE_API_BASE_URL`: URL pública ou de rede acessível pelo navegador do usuário final para dialogar com a Shiori API. Se a API estiver exposta com SSL/HTTPS em subdomínio próprio (ex: `https://api.wnzk.dev.br`), informe essa URL.
+> - `VITE_API_BASE_URL`: URL pública ou de rede acessível pelo navegador do usuário final para dialogar com a Shiori API. Se a API estiver exposta com SSL/HTTPS em subdomínio próprio (ex: `https://api.exemplo.org`), informe essa URL.
 
 Após preencher, clique em **Deploy the stack**.
 
 ---
 
-## 4. Configuração do Subdomínio no Cloudflare (`shiori.wnzk.dev.br`)
+## 4. Configuração do Subdomínio com SSL (Cloudflare ou Proxy Reverso)
 
-Para disponibilizar o front-end sob o subdomínio oficial `shiori.wnzk.dev.br` com certificado SSL/TLS automático:
+Para disponibilizar o front-end sob um subdomínio próprio (ex.: `shiori.exemplo.org`) com certificado SSL/TLS automático:
 
 ### Opção A: Cloudflare Tunnel (Zero Trust) - Mais Seguro
 1. Acesse o **Cloudflare Zero Trust Dashboard** -> **Networks** -> **Tunnels**.
 2. No seu túnel ativo, crie um novo **Public Hostname**:
    - **Subdomain:** `shiori`
-   - **Domain:** `wnzk.dev.br`
+   - **Domain:** `seu-dominio.org`
    - **Service Type:** `HTTP`
    - **URL:** `localhost:3000` (ou `<IP_DA_MAQUINA>:3000`)
 3. Salve o hostname. O Cloudflare gerenciará a borda HTTPS, proteção contra DDoS e o roteamento diretamente para a porta do container.
 
 ### Opção B: Cloudflare Proxy DNS (A / CNAME Record)
-1. No painel DNS da sua zona `wnzk.dev.br`:
+1. No painel DNS da sua zona:
    - Crie uma entrada do tipo `A` apontando `shiori` para o IP público do seu servidor (com proxy ativado / nuvem laranja).
 2. No servidor ou Proxy Reverso frontal (Nginx Proxy Manager, Traefik ou Caddy):
-   - Encaminhe as requisições com host `shiori.wnzk.dev.br` para `http://localhost:3000`.
+   - Encaminhe as requisições com host `shiori.seu-dominio.org` para `http://localhost:3000`.
 3. No Cloudflare SSL/TLS, configure o modo como **Full** ou **Full (Strict)**.
 
 ---
@@ -118,11 +118,11 @@ Para disponibilizar o front-end sob o subdomínio oficial `shiori.wnzk.dev.br` c
 ## 5. Validação e Testes de Deploy
 
 Após a inicialização do container:
-1. Acesse `http://<IP_DO_SERVIDOR>:3000` ou `https://shiori.wnzk.dev.br`.
+1. Acesse `http://<IP_DO_SERVIDOR>:3000` ou `https://shiori.exemplo.org`.
 2. Abra as Ferramentas de Desenvolvedor (F12) -> aba **Console**:
    - Verifique se a aplicação carregou sem erros de CORS ou certificados.
    - Navegue para `/catalogo` e recarregue a página (F5) para atestar que o Nginx SPA fallback está ativo.
-3. Acesse `https://shiori.wnzk.dev.br/env-config.js` no navegador:
+3. Acesse `https://shiori.exemplo.org/env-config.js` no navegador:
    - O arquivo deve retornar o JSON com o valor configurado na variável `VITE_API_BASE_URL`.
 
 ---

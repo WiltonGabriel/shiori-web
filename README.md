@@ -9,7 +9,7 @@
 
 > Front-end oficial do **Catálogo de Leituras Shiori**, uma Single Page Application (SPA) moderna, responsiva e de alta performance voltada ao acompanhamento privado, descentralizado e curadoria de obras literárias (mangás, web novels, light novels, manhwas, manhuas e quadrinhos).
 
-Exposto publicamente em: **[shiori.wnzk.dev.br](https://shiori.wnzk.dev.br)**
+Exemplo de implantação em produção: **shiori.exemplo.org**
 
 ---
 
@@ -103,7 +103,7 @@ VITE_API_BASE_URL=http://localhost:8080
 ## 🛡️ Infraestrutura e Acesso Operacional
 
 - **Esteira GitOps:** Toda atualização em produção é realizada automaticamente através de **GitOps** com o **Portainer** a partir da branch `main`.
-- **Acesso SSH Restrito:** O acesso SSH direto ao servidor operacional via rede privada Tailscale (`ubuntu@100.127.79.49`) é reservado unicamente para auditoria e manutenção de containers em `/srv/services/shiori`. Nenhuma modificação manual de código é executada diretamente em produção.
+- **Acesso SSH Restrito:** O acesso SSH direto ao servidor operacional (`usuario@seu-servidor-ip`) é reservado unicamente para auditoria e manutenção de containers. Nenhuma modificação manual de código é executada diretamente em produção.
 
 ---
 

@@ -8,6 +8,8 @@ import { Avatar } from "../../ui/Avatar/Avatar";
 import { Button } from "../../ui/Button/Button";
 import { LogIn, LogOut, Sun, Moon, Settings, Server, Search } from "lucide-react";
 
+import { APP_VERSION } from "../../../config/version";
+
 interface NavbarProps {
   onOpenAuthModal: () => void;
   onOpenQuickSearch?: () => void;
@@ -26,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal, onOpenQuickSear
           <span className={styles.brandName}>Shiori</span>
         </Link>
         <span className={styles.versionBadge} title="Versão Alpha em desenvolvimento">
-          v0.0.12-alpha
+          v{APP_VERSION}
         </span>
       </div>
 
