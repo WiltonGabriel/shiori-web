@@ -13,11 +13,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy_network"
-      - "traefik.http.routers.shiori-web.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web.rule=Host(`${DOMAIN:-shiori.exemplo.org}`)"
       - "traefik.http.routers.shiori-web.entrypoints=websecure"
       - "traefik.http.routers.shiori-web.tls=true"
       - "traefik.http.routers.shiori-web.tls.certresolver=leresolver"
-      - "traefik.http.routers.shiori-web-http.rule=Host(`shiori.wnzk.dev.br`)"
+      - "traefik.http.routers.shiori-web-http.rule=Host(`${DOMAIN:-shiori.exemplo.org}`)"
       - "traefik.http.routers.shiori-web-http.entrypoints=web"
       - "traefik.http.services.shiori-web.loadbalancer.server.port=80"
 
