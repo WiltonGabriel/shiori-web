@@ -1,7 +1,7 @@
 # Shiori Web 栞 (Front-end Oficial)
 
 [![CI/CD Docker Multi-Arch](https://github.com/wiltongabriel/shiori-web/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/wiltongabriel/shiori-web/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/version-0.0.12--alpha-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.0.13--alpha-blue.svg)](package.json)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
