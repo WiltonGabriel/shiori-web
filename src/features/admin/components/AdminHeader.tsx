@@ -9,6 +9,7 @@ import {
   AlertOctagon,
   Users,
   Tags,
+  Tag,
   Server,
   ToggleLeft,
   Megaphone,
@@ -22,6 +23,7 @@ import {
 export type AdminTab =
   | "DASHBOARD"
   | "SUGESTOES"
+  | "TAGS"
   | "DENUNCIAS"
   | "USUARIOS"
   | "GENEROS"
@@ -36,6 +38,7 @@ interface AdminHeaderProps {
   setActiveTab: (tab: AdminTab) => void;
   counts: {
     sugestoes: number;
+    tags?: number;
     denuncias: number;
     broadcasts: number;
     integracoes: number;
@@ -117,6 +120,16 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             <FileQuestion size={14} />
             <span>Sugestões</span>
             {counts.sugestoes > 0 && <span className={styles.badgeCount}>{counts.sugestoes}</span>}
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.adminTab} ${activeTab === "TAGS" ? styles.adminTabActive : ""}`}
+            onClick={() => setActiveTab("TAGS")}
+          >
+            <Tag size={14} />
+            <span>Tags Comunitárias</span>
+            {counts.tags !== undefined && counts.tags > 0 && <span className={styles.badgeCount}>{counts.tags}</span>}
           </button>
 
           <button

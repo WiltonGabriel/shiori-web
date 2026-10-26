@@ -13,6 +13,7 @@ import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
 import { AdminHeader, type AdminTab } from "./components/AdminHeader";
 import { AdminBroadcastsTab } from "./components/AdminBroadcastsTab";
+import { AdminTagsTab } from "./components/AdminTagsTab";
 import type {
   AdminDashboardResponse,
   ProvedorIntegracaoResponse,
@@ -576,6 +577,17 @@ export const AdminDashboardPage: React.FC = () => {
               ))}
             </div>
           )}
+        </section>
+      )}
+
+      {/* Curadoria de Tags Comunitárias */}
+      {activeTab === "TAGS" && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            <Tags size={18} style={{ color: "var(--primary)" }} />
+            <span>Fila de Curadoria de Tags Comunitárias</span>
+          </h2>
+          <AdminTagsTab onCountsChanged={loadAdminData} />
         </section>
       )}
 

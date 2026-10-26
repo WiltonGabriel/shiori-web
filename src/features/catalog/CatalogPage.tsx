@@ -7,25 +7,22 @@ import { toast } from "../../store/toastStore";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { HorizontalScroller } from "../../components/ui/HorizontalScroller/HorizontalScroller";
 import { Button } from "../../components/ui/Button/Button";
-import { Input } from "../../components/ui/Input/Input";
 import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
 import { CatalogCardSkeleton } from "../../components/ui/Skeleton/Skeleton";
 import {
   TIPO_OBRA_LABELS,
   type ObraResponse,
-  type SortOption,
 } from "../../types/work.types";
 import { IncorporationModal } from "./components/IncorporationModal";
 import { CatalogCard } from "./components/CatalogCard";
+import { AdvancedSearchFilter } from "./AdvancedSearchFilter/AdvancedSearchFilter";
 import type { AdicionarItemCatalogoRequest } from "../../types/catalog.types";
 import {
   useCatalog,
   QUICK_TYPES,
-  QUICK_STATUSES,
 } from "./hooks/useCatalog";
 import {
   Search,
-  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   EyeOff,
@@ -50,19 +47,13 @@ export const CatalogPage: React.FC = () => {
     paginatedWorks,
     isLoading,
     assistedNotice,
-    searchInput,
-    setSearchInput,
+    filters,
+    setFilters,
     selectedType,
     setSelectedType,
-    selectedStatus,
-    setSelectedStatus,
-    sortBy,
-    setSortBy,
     currentPage,
     setCurrentPage,
     totalPages,
-    isAdvancedOpen,
-    setIsAdvancedOpen,
     handleResetFilters,
   } = useCatalog();
 
@@ -170,46 +161,15 @@ export const CatalogPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* 1. Barra de Busca Central com Debounce */}
-          <div className={styles.searchSection}>
-          <div className={styles.searchBarWrapper}>
-            <div className={styles.searchInputArea}>
-              <Input
-                placeholder="Buscar por título, autor ou gênero..."
-                leadingIcon={<Search size={16} />}
-                value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
+          {/* Series Finder / Busca Avançada */}
+          <AdvancedSearchFilter
+            filters={filters}
+            onChange={setFilters}
+            onReset={handleResetFilters}
+          />
 
-            <select
-              className={styles.sortSelect}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              title="Ordenar catálogo"
-            >
-              <option value="NOTA_DESC">Maior Avaliação</option>
-              <option value="CAPITULOS_DESC">Mais Capítulos</option>
-              <option value="TITULO_ASC">Título (A-Z)</option>
-              <option value="RECENTES">Recentes</option>
-            </select>
-
-            <button
-              type="button"
-              className={`${styles.filterToggleBtn} ${isAdvancedOpen ? styles.filterToggleActive : ""}`}
-              onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-              title="Filtros avançados"
-            >
-              <SlidersHorizontal size={15} />
-              <span>Filtros</span>
-            </button>
-          </div>
-
-          {/* 2. Filtros por Facetas com Rolagem Horizontal Suave */}
-          <div className={styles.quickFiltersRow}>
+          {/* Barra rápida por formato literário */}
+          <div className={styles.quickFiltersRow} style={{ marginBottom: "1.5rem" }}>
             <HorizontalScroller step={240} ariaLabel="Filtro rápido por formato literário">
               {QUICK_TYPES.map((type) => (
                 <button
@@ -218,49 +178,13 @@ export const CatalogPage: React.FC = () => {
                   className={`${styles.quickChip} ${
                     selectedType === type.value ? styles.quickChipActive : ""
                   }`}
-                  onClick={() => {
-                    setSelectedType(type.value);
-                    setCurrentPage(1);
-                  }}
+                  onClick={() => setSelectedType(type.value)}
                 >
                   {type.label}
                 </button>
               ))}
             </HorizontalScroller>
           </div>
-
-          {/* Painel Avançado Expandido */}
-          {isAdvancedOpen && (
-            <div className={styles.advancedPanel}>
-              <div className={styles.panelSection}>
-                <span className={styles.panelSectionTitle}>Status de Publicação</span>
-                <div className={styles.chipGroup}>
-                  {QUICK_STATUSES.map((status) => (
-                    <button
-                      key={status.value}
-                      type="button"
-                      className={`${styles.quickChip} ${
-                        selectedStatus === status.value ? styles.quickChipActive : ""
-                      }`}
-                      onClick={() => {
-                        setSelectedStatus(status.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      {status.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button variant="ghost" size="sm" onClick={handleResetFilters}>
-                  Limpar Todos os Filtros
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
 
       {/* 3. Grade de Resultados de Cartões de Obra */}
       {isLoading ? (

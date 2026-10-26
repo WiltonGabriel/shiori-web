@@ -185,6 +185,60 @@
   padding: 0.25rem 0.5rem;
 }
 
+.modeToggleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.modeToggleBtn {
+  padding: 0.2rem 0.6rem;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modeToggleBtnActive {
+  background: var(--brand-glow) !important;
+  color: var(--brand-light) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+.rangeInputsRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rangeInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.numberInput {
+  width: 80px;
+  padding: 0.35rem 0.5rem;
+  font-size: var(--text-xs);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.numberInput:focus {
+  border-color: var(--brand-primary);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

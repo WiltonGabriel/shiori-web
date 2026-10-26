@@ -84,7 +84,38 @@ export interface IntegracaoMetadadosObra {
 }
 
 export type TriState = 0 | 1 | -1;
-export type SortOption = "NOTA_DESC" | "CAPITULOS_DESC" | "TITULO_ASC" | "RECENTES";
+export type SortOption = "NOTA_DESC" | "CAPITULOS_DESC" | "TITULO_ASC" | "TITULO_DESC" | "RECENTES" | "ANTIGAS" | "RELEVANCIA";
+export type ModoFiltroColecao = "AND" | "OR";
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export interface ObraBuscaAvancadaFiltro {
+  termo?: string;
+  tipos?: TipoObra[];
+  status?: StatusPublicacao[];
+  minCapitulos?: number;
+  maxCapitulos?: number;
+  minNota?: number;
+  maxNota?: number;
+  generosIncluidos?: string[];
+  generosExcluidos?: string[];
+  generosModo?: ModoFiltroColecao;
+  tagsIncluidas?: string[];
+  tagsExcluidas?: string[];
+  tagsModo?: ModoFiltroColecao;
+  ordenacao?: SortOption;
+  pagina?: number;
+  itensPorPagina?: number;
+}
 
 export interface CatalogSearchFilters {
   searchQuery: string;

@@ -5,6 +5,8 @@ import type {
   StatusCatalogo,
   ResultadoBuscaObrasResponse,
   IntegracaoMetadadosObra,
+  ObraBuscaAvancadaFiltro,
+  PaginatedResponse,
 } from "../types/work.types";
 
 export class WorkService {
@@ -52,6 +54,52 @@ export class WorkService {
 
   public static async getExternalWorkDetails(provedor: string, idExterno: string): Promise<IntegracaoMetadadosObra> {
     const response = await api.get<IntegracaoMetadadosObra>(`/obras/externas/${provedor}/obras/${idExterno}`);
+    return response.data;
+  }
+
+  public static async searchWorksAdvanced(
+    filtro: ObraBuscaAvancadaFiltro
+  ): Promise<PaginatedResponse<ObraResponse>> {
+    const params = new URLSearchParams();
+
+    if (filtro.termo?.trim()) params.append("termo", filtro.termo.trim());
+    filtro.tipos?.forEach((t) => params.append("tipos", t));
+    filtro.status?.forEach((s) => params.append("status", s));
+    if (filtro.minCapitulos !== undefined && filtro.minCapitulos > 0) {
+      params.append("minCapitulos", String(filtro.minCapitulos));
+    }
+    if (filtro.maxCapitulos !== undefined && filtro.maxCapitulos > 0) {
+      params.append("maxCapitulos", String(filtro.maxCapitulos));
+    }
+    if (filtro.minNota !== undefined && filtro.minNota > 0) {
+      params.append("minNota", String(filtro.minNota));
+    }
+    if (filtro.maxNota !== undefined && filtro.maxNota > 0) {
+      params.append("maxNota", String(filtro.maxNota));
+    }
+    filtro.generosIncluidos?.forEach((g) => params.append("generosIncluidos", g));
+    filtro.generosExcluidos?.forEach((g) => params.append("generosExcluidos", g));
+    if (filtro.generosModo) {
+      params.append("generosModo", filtro.generosModo);
+    }
+    filtro.tagsIncluidas?.forEach((t) => params.append("tagsIncluidas", t));
+    filtro.tagsExcluidas?.forEach((t) => params.append("tagsExcluidas", t));
+    if (filtro.tagsModo) {
+      params.append("tagsModo", filtro.tagsModo);
+    }
+    if (filtro.ordenacao) {
+      params.append("ordenacao", filtro.ordenacao);
+    }
+    if (filtro.pagina !== undefined) {
+      params.append("pagina", String(filtro.pagina));
+    }
+    if (filtro.itensPorPagina !== undefined) {
+      params.append("itensPorPagina", String(filtro.itensPorPagina));
+    }
+
+    const response = await api.get<PaginatedResponse<ObraResponse>>("/obras/busca-avancada", {
+      params,
+    });
     return response.data;
   }
 }

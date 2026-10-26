@@ -185,4 +185,60 @@ describe("useCatalog", () => {
     expect(result.current.sortBy).toBe("NOTA_DESC");
     expect(result.current.currentPage).toBe(1);
   });
+
+  it("filtra por gêneros com lógica AND e exclusão NOT", async () => {
+    service.listWorks.mockResolvedValue([
+      buildWork({ tituloPrincipal: "Obra 1", generos: ["Ação", "Fantasia"] }),
+      buildWork({ tituloPrincipal: "Obra 2", generos: ["Ação", "Romance"] }),
+      buildWork({ tituloPrincipal: "Obra 3", generos: ["Fantasia", "Drama"] }),
+    ]);
+
+    const { result } = renderHook(() => useCatalog());
+    await waitFor(() => expect(result.current.works).toHaveLength(3));
+
+    // Exige Ação e Fantasia (AND)
+    act(() => {
+      result.current.setFilters({
+        ...result.current.filters,
+        genresState: { Ação: 1, Fantasia: 1 },
+        generosModo: "AND",
+      });
+    });
+
+    expect(result.current.filteredWorks.map((w) => w.tituloPrincipal)).toEqual(["Obra 1"]);
+
+    // Exclui Romance (NOT)
+    act(() => {
+      result.current.setFilters({
+        ...result.current.filters,
+        genresState: { Ação: 1, Romance: -1 },
+        generosModo: "AND",
+      });
+    });
+
+    expect(result.current.filteredWorks.map((w) => w.tituloPrincipal)).toEqual(["Obra 1"]);
+  });
+
+  it("filtra por tags da comunidade e intervalos numéricos", async () => {
+    service.listWorks.mockResolvedValue([
+      buildWork({ tituloPrincipal: "Obra 1", tags: ["Protagonista Forte"], totalCapitulosLancados: 120, notaGeral: 8.5 }),
+      buildWork({ tituloPrincipal: "Obra 2", tags: ["Sistema"], totalCapitulosLancados: 30, notaGeral: 9.0 }),
+      buildWork({ tituloPrincipal: "Obra 3", tags: ["Protagonista Forte", "Vilão"], totalCapitulosLancados: 200, notaGeral: 6.0 }),
+    ]);
+
+    const { result } = renderHook(() => useCatalog());
+    await waitFor(() => expect(result.current.works).toHaveLength(3));
+
+    // Tag Protagonista Forte, minCapitulos 100, minNota 7.0
+    act(() => {
+      result.current.setFilters({
+        ...result.current.filters,
+        tagsState: { "Protagonista Forte": 1 },
+        minChapters: 100,
+        minRating: 7.0,
+      });
+    });
+
+    expect(result.current.filteredWorks.map((w) => w.tituloPrincipal)).toEqual(["Obra 1"]);
+  });
 });

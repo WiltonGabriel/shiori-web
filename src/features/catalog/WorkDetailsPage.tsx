@@ -12,6 +12,7 @@ import { Spinner } from "../../components/ui/Spinner/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState/EmptyState";
 import { IncorporationModal } from "./components/IncorporationModal";
 import { SuggestEditModal } from "./components/SuggestEditModal";
+import { WorkTagsSection } from "./components/WorkTagsSection";
 import type { ObraResponse } from "../../types/work.types";
 import type { ItemCatalogoResponse, AdicionarItemCatalogoRequest } from "../../types/catalog.types";
 import {
@@ -312,6 +313,8 @@ export const WorkDetailsPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          <WorkTagsSection obraId={work.id} obraTitulo={work.tituloPrincipal} />
         </section>
       )}
 
