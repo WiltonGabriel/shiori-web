@@ -5,6 +5,7 @@ export type UserRole = "ROLE_USER" | "ROLE_ADMIN" | "ROLE_CURADOR";
 export interface LoginRequest {
   email: string;
   senha: string;
+  lembrarDeMim?: boolean;
 }
 
 export interface RegistroRequest {

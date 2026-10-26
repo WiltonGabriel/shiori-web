@@ -16,6 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [apelido, setApelido] = useState("");
+  const [lembrarDeMim, setLembrarDeMim] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +32,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         await register({ email, senha, apelido });
         toast.success("Conta criada com sucesso!", `Bem-vindo, @${apelido}!`);
       } else {
-        await login({ email, senha });
+        await login({ email, senha, lembrarDeMim });
         toast.success("Login efetuado com sucesso!", "Sessão Iniciada");
       }
       onClose();
@@ -97,6 +98,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           onChange={(e) => setSenha(e.target.value)}
           required
         />
+
+        {!isRegister && (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.6rem",
+              fontSize: "var(--font-size-xs)",
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              userSelect: "none",
+              marginTop: "0.25rem",
+            }}
+          >
+            <input
+              type="checkbox"
+              id="auth-remember-me-checkbox"
+              checked={lembrarDeMim}
+              onChange={(e) => setLembrarDeMim(e.target.checked)}
+              style={{
+                marginTop: "0.15rem",
+                cursor: "pointer",
+                accentColor: "var(--brand-primary)",
+              }}
+            />
+            <div>
+              <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                Lembrar de mim neste dispositivo
+              </span>
+              <p style={{ margin: "0.15rem 0 0 0", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                Mantém sua sessão por 30 dias via cookies seguros. Desmarque se estiver usando um dispositivo público.
+              </p>
+            </div>
+          </label>
+        )}
 
         <Button type="submit" variant="primary" size="md" isLoading={isLoading} style={{ marginTop: "0.5rem" }}>
           {isRegister ? "Concluir Cadastro" : "Acessar Conta"}

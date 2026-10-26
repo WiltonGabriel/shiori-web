@@ -28,8 +28,12 @@ import {
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { SettingsRepository } from "../../services/storage/settingsRepository";
-import { TODOS_FORMATOS, TIPO_OBRA_LABELS, type TipoObra } from "../../types/work.types";
 import { HubPairingSection } from "./components/HubPairingSection";
+import { FormatPreferenceSelector } from "../preferences/FormatPreferenceSelector";
+import {
+  FormatPreferencesRepository,
+  type FormatPreferencesMap,
+} from "../../services/storage/formatPreferencesRepository";
 
 type SettingsCategory = "SERVIDOR_SYNC" | "CONTA" | "LEITURA" | "BACKUP" | "CRIPTOGRAFIA";
 
@@ -68,35 +72,27 @@ export const SettingsPage: React.FC = () => {
     );
   };
 
-  // Formatos Literários Preferidos
-  const [preferredFormats, setPreferredFormats] = useState<TipoObra[]>(() => {
-    return user?.formatosPreferidos && user.formatosPreferidos.length > 0
-      ? user.formatosPreferidos
-      : TODOS_FORMATOS;
-  });
+  // Formatos Literários e Preferências de Conteúdo (Sistema de 3 Estados)
+  const [formatPreferences, setFormatPreferences] = useState<FormatPreferencesMap>(() =>
+    FormatPreferencesRepository.getPreferences()
+  );
   const [isSavingFormats, setIsSavingFormats] = useState(false);
 
-  const handleToggleFormat = (format: TipoObra) => {
-    setPreferredFormats((prev) =>
-      prev.includes(format)
-        ? prev.filter((f) => f !== format)
-        : [...prev, format]
-    );
-  };
-
-  const handleSelectAllFormats = () => setPreferredFormats(TODOS_FORMATOS);
-  const handleClearFormats = () => setPreferredFormats([]);
-
   const handleSaveFormats = async () => {
-    if (preferredFormats.length === 0) {
-      toast.warning("Selecione ao menos um formato literário.");
-      return;
-    }
     try {
       setIsSavingFormats(true);
-      const res = await UserService.updatePreferredFormats(preferredFormats);
-      updateUser({ formatosPreferidos: res.formatosPreferidos || preferredFormats });
-      toast.success("Suas preferências de formatos foram salvas e aplicadas a todo o catálogo!");
+      FormatPreferencesRepository.savePreferences(formatPreferences);
+
+      const interested = FormatPreferencesRepository.getInterestedFormats();
+      if (user && user.id > 0 && interested.length > 0) {
+        try {
+          const res = await UserService.updatePreferredFormats(interested);
+          updateUser({ formatosPreferidos: res.formatosPreferidos || interested });
+        } catch {
+          // Mantém persistência local mesmo se offline
+        }
+      }
+      toast.success("Suas preferências de formatos em 3 estados foram atualizadas com sucesso!");
     } catch (err: any) {
       toast.error(err, "Falha ao Salvar Preferências de Formatos");
     } finally {
@@ -494,55 +490,22 @@ export const SettingsPage: React.FC = () => {
 
                 <div className={styles.settingRow}>
                   <div className={styles.settingInfo}>
-                    <span className={styles.settingLabel}>Formatos Literários Visíveis</span>
+                    <span className={styles.settingLabel}>Preferências de Conteúdo (Sistema de 3 Estados)</span>
                     <span className={styles.settingDesc}>
-                      Filtro estrito aplicado globalmente ao catálogo e recomendações da Home.
+                      Personalize os formatos que você gosta de acompanhar. 1º clique: Verde (Interesse), 2º clique: Vermelho (Ignorar e ocultar das recomendações), 3º clique: Neutro.
                     </span>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <Button variant="outline" size="sm" onClick={handleSelectAllFormats}>
-                      Todos
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleClearFormats}>
-                      Nenhum
-                    </Button>
-                  </div>
                 </div>
 
-                {/* Grid de Formatos */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "0.5rem" }}>
-                  {TODOS_FORMATOS.map((format) => {
-                    const isSelected = preferredFormats.includes(format);
-                    return (
-                      <button
-                        key={format}
-                        type="button"
-                        onClick={() => handleToggleFormat(format)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "0.6rem 0.8rem",
-                          borderRadius: "var(--radius-md)",
-                          fontSize: "var(--text-xs)",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          border: isSelected ? "1px solid var(--brand-primary)" : "1px solid var(--border-subtle)",
-                          background: isSelected ? "rgba(99, 102, 241, 0.15)" : "var(--bg-surface)",
-                          color: isSelected ? "var(--brand-light)" : "var(--text-muted)",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <span>{TIPO_OBRA_LABELS[format]}</span>
-                        {isSelected && <Check size={14} />}
-                      </button>
-                    );
-                  })}
-                </div>
+                <FormatPreferenceSelector
+                  preferences={formatPreferences}
+                  onChange={(updated) => setFormatPreferences(updated)}
+                  showHelpNotice={true}
+                />
 
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
                   <Button variant="primary" size="sm" onClick={handleSaveFormats} disabled={isSavingFormats}>
-                    <span>{isSavingFormats ? "Salvando..." : "Salvar Formatos"}</span>
+                    <span>{isSavingFormats ? "Salvando..." : "Salvar Preferências"}</span>
                   </Button>
                 </div>
               </Card>

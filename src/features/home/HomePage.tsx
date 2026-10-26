@@ -34,6 +34,7 @@ import {
 
 import { isLocalMode } from "../../services/api/httpClient";
 import { useApiEndpointStore } from "../../store/apiEndpointStore";
+import { FormatPreferencesRepository } from "../../services/storage/formatPreferencesRepository";
 
 export const HomePage: React.FC = () => {
   useDocumentTitle(
@@ -75,7 +76,10 @@ export const HomePage: React.FC = () => {
         setIsLoadingHighlights(true);
         const data = await WorkService.listHomeWorks();
         if (isMounted) {
-          setHighlightWorks(data || []);
+          const filtered = (data || []).filter((w) =>
+            FormatPreferencesRepository.shouldShowInDiscovery(w.tipoObra, false)
+          );
+          setHighlightWorks(filtered);
         }
       } catch (err) {
         console.error("Falha ao carregar destaques da Home:", err);

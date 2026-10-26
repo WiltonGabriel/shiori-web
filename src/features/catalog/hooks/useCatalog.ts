@@ -10,6 +10,7 @@ import type {
 } from "../../../types/work.types";
 
 import { isLocalMode } from "../../../services/api/httpClient";
+import { FormatPreferencesRepository } from "../../../services/storage/formatPreferencesRepository";
 
 export const PAGE_SIZE = 15;
 
@@ -132,7 +133,17 @@ export function useCatalog() {
 
   // Filtragem e ordenação
   const filteredWorks = useMemo(() => {
+    const isManualSearch = Boolean(debouncedSearch.trim());
+
     const result = works.filter((w) => {
+      // Regra de Conteúdo: Formatos indesejados (EXCLUDE) são ocultados na descoberta,
+      // mas permanecem localizáveis em buscas manuais por texto ou filtro direto de tipo
+      if (!isManualSearch && selectedType === "TODOS") {
+        if (!FormatPreferencesRepository.shouldShowInDiscovery(w.tipoObra, false)) {
+          return false;
+        }
+      }
+
       if (debouncedSearch.trim()) {
         const q = debouncedSearch.toLowerCase().trim();
         const matchTitle = w.tituloPrincipal.toLowerCase().includes(q);

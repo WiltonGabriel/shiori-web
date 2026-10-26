@@ -1,7 +1,6 @@
 import { api, setHttpBearerToken } from "./api";
 import type { LoginRequest, RegistroRequest, AuthResponse, AuthenticatedUser } from "../types/auth.types";
-
-const AUTH_USER_STORAGE_KEY = "auth_session_user";
+import { SessionManager } from "./storage/sessionManager";
 
 export class AuthService {
   public static async login(credentials: LoginRequest): Promise<AuthenticatedUser> {
@@ -18,11 +17,8 @@ export class AuthService {
     };
 
     setHttpBearerToken(user.token);
-    try {
-      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
-    } catch (e) {
-      console.warn("Falha ao salvar sessão de usuário no localStorage:", e);
-    }
+    const rememberMe = Boolean(credentials.lembrarDeMim);
+    SessionManager.saveUserSession(user, rememberMe);
     return user;
   }
 
@@ -40,44 +36,26 @@ export class AuthService {
     };
 
     setHttpBearerToken(user.token);
-    try {
-      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
-    } catch (e) {
-      console.warn("Falha ao salvar sessão de usuário no localStorage:", e);
-    }
+    // Registro padrão mantém sessão ativa
+    SessionManager.saveUserSession(user, true);
     return user;
   }
 
   public static getStoredUser(): AuthenticatedUser | null {
-    try {
-      const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
-      if (!raw) return null;
-      const user = JSON.parse(raw) as AuthenticatedUser;
-      if (user?.token) {
-        setHttpBearerToken(user.token);
-      }
-      return user;
-    } catch (e) {
-      console.warn("Falha ao recuperar sessão do localStorage:", e);
-      return null;
+    const { user } = SessionManager.getStoredUserSession();
+    if (user?.token) {
+      setHttpBearerToken(user.token);
     }
+    return user;
   }
 
   public static updateUserSession(partial: Partial<AuthenticatedUser>): void {
-    const current = AuthService.getStoredUser();
-    if (current) {
-      const updated = { ...current, ...partial };
-      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updated));
-    }
+    SessionManager.updateUserSession(partial);
   }
 
   public static clearSession(): void {
     setHttpBearerToken(null);
-    try {
-      localStorage.removeItem(AUTH_USER_STORAGE_KEY);
-    } catch {
-      // Ignora erro ao limpar
-    }
+    SessionManager.clearSession();
   }
 
   public static async logout(): Promise<void> {
