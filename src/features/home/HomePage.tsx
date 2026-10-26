@@ -29,7 +29,11 @@ import {
   MessageSquare,
   Sparkles,
   Users,
+  Server,
 } from "lucide-react";
+
+import { isLocalMode } from "../../services/api/httpClient";
+import { useApiEndpointStore } from "../../store/apiEndpointStore";
 
 export const HomePage: React.FC = () => {
   useDocumentTitle(
@@ -38,6 +42,7 @@ export const HomePage: React.FC = () => {
   );
 
   const { isAuthenticated, openAuthModal } = useAuthStore();
+  const { openModal: openEndpointModal } = useApiEndpointStore();
   const navigate = useNavigate();
 
   // Estados dos Destaques (Hero)
@@ -47,6 +52,7 @@ export const HomePage: React.FC = () => {
 
   // Estados do Bloco Continuar Lendo
   const [readingItems, setReadingItems] = useState<ItemCatalogoResponse[]>([]);
+  const [allShelfItems, setAllShelfItems] = useState<ItemCatalogoResponse[]>([]);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
   const displayedReadingItems = isAuthenticated ? readingItems : [];
 
@@ -57,10 +63,14 @@ export const HomePage: React.FC = () => {
   // Reações locais do feed (curtidas interativas)
   const [likedActivities, setLikedActivities] = useState<Record<number, boolean>>({});
 
-  // 1. Carregar Obras em Destaque do Servidor
+  // 1. Carregar Obras em Destaque do Servidor (apenas se conectado)
   useEffect(() => {
     let isMounted = true;
     const fetchHighlights = async () => {
+      if (isLocalMode()) {
+        setIsLoadingHighlights(false);
+        return;
+      }
       try {
         setIsLoadingHighlights(true);
         const data = await WorkService.listHomeWorks();
@@ -80,7 +90,7 @@ export const HomePage: React.FC = () => {
     };
   }, []);
 
-  // 2. Carregar Continuar Lendo (quando autenticado)
+  // 2. Carregar Continuar Lendo (quando autenticado ou modo local)
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -90,8 +100,9 @@ export const HomePage: React.FC = () => {
     const fetchReading = async () => {
       try {
         setIsLoadingReading(true);
-        const shelf = await CatalogService.getMyShelf(0, 40);
+        const shelf = await CatalogService.getMyShelf(0, 100);
         if (isMounted) {
+          setAllShelfItems(shelf || []);
           const lendo = (shelf || []).filter(
             (item) => item.statusLeitura === "LENDO" || item.progressoAtual > 0
           );
@@ -114,7 +125,7 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchFeed = async () => {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || isLocalMode()) {
         setFeedItems([]);
         return;
       }
@@ -263,7 +274,7 @@ export const HomePage: React.FC = () => {
                 <Button
                   variant="secondary"
                   size="md"
-                  onClick={() => navigate("/meu-catalogo")}
+                  onClick={() => navigate("/minha-estante")}
                 >
                   <Bookmark size={18} />
                   <span>Minha Estante</span>
@@ -312,7 +323,81 @@ export const HomePage: React.FC = () => {
             </div>
           )}
         </section>
-      ) : null}
+      ) : (
+        <section className={styles.heroCarouselWrapper} aria-label="Boas-vindas ao Shiori">
+          <div className={styles.welcomeHeroSlide}>
+            <div className={styles.heroDetails}>
+              <div className={styles.heroBadgesRow}>
+                <span className={styles.heroHighlightBadge}>
+                  <Sparkles size={12} />
+                  Plataforma Pessoal de Leituras
+                </span>
+              </div>
+
+              <h1 className={styles.heroTitle}>Sua Estante Pessoal e Privada de Leituras</h1>
+
+              <p className={styles.heroSynopsis}>
+                Acompanhe o ritmo de leitura de seus mangás, novels, webtoons e livros favoritos. Registre seu progresso capítulo a capítulo com total autonomia no seu navegador.
+              </p>
+
+              <div className={styles.heroActions}>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => navigate("/minha-estante")}
+                >
+                  <Bookmark size={18} />
+                  <span>Acessar Minha Estante</span>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => navigate("/catalogo")}
+                >
+                  <Compass size={18} />
+                  <span>Explorar Catálogo</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className={styles.welcomeStatsCard}>
+              <div className={styles.welcomeStatsHeader}>
+                <h3 className={styles.welcomeStatsTitle}>Resumo da Sua Estante</h3>
+                <Link to="/minha-estante" style={{ textDecoration: "none", color: "var(--brand-primary)", fontSize: "var(--text-xs)", fontWeight: 600 }}>
+                  Ver tudo
+                </Link>
+              </div>
+              <div className={styles.welcomeStatsGrid}>
+                <div className={styles.welcomeStatItem}>
+                  <span className={styles.welcomeStatNumber}>{allShelfItems.length}</span>
+                  <span className={styles.welcomeStatLabel}>Total</span>
+                </div>
+                <div className={styles.welcomeStatItem}>
+                  <span className={styles.welcomeStatNumber}>
+                    {allShelfItems.filter((i) => i.statusLeitura === "LENDO").length}
+                  </span>
+                  <span className={styles.welcomeStatLabel}>Lendo</span>
+                </div>
+                <div className={styles.welcomeStatItem}>
+                  <span className={styles.welcomeStatNumber}>
+                    {allShelfItems.filter((i) => i.statusLeitura === "TERMINOU").length}
+                  </span>
+                  <span className={styles.welcomeStatLabel}>Concluídos</span>
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate("/minha-estante")}
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                <Plus size={14} />
+                <span>Gerenciar Minha Estante</span>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===================================================================
        * 2. BLOCO "CONTINUAR LENDO" (Exclusivo para Usuários Autenticados)
@@ -324,7 +409,7 @@ export const HomePage: React.FC = () => {
               <h2 className={styles.sectionTitle}>Continuar Lendo</h2>
               <Badge variant="neutral">{displayedReadingItems.length}</Badge>
             </div>
-            <Link to="/meu-catalogo" className={styles.sectionLink}>
+            <Link to="/minha-estante" className={styles.sectionLink}>
               <span>Ver estante completa</span>
               <ArrowRight size={14} />
             </Link>
@@ -341,52 +426,70 @@ export const HomePage: React.FC = () => {
               enableMouseDrag
             >
               {displayedReadingItems.map((item) => {
-                const totalCap = item.obraTotalCapitulos || 0;
+                const totalCap = item.obraTotalCapitulos || item.totalCapitulos || 0;
                 const progresso = item.progressoAtual || 0;
-                const percent =
-                  totalCap > 0 ? Math.min(100, Math.round((progresso / totalCap) * 100)) : 0;
+                const hasTotal = totalCap > 0;
+                const percent = hasTotal ? Math.min(100, Math.round((progresso / totalCap) * 100)) : 0;
 
                 return (
                   <div key={item.id} className={styles.readingCard}>
-                    <div className={styles.readingCoverWrapper}>
-                      {item.obraCapaUrl ? (
-                        <img
-                          src={item.obraCapaUrl}
-                          alt={item.obraTitulo}
-                          className={styles.readingCoverImg}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <BookOpen size={20} style={{ color: "var(--text-muted)" }} />
-                      )}
-                    </div>
-
-                    <div className={styles.readingInfo}>
-                      <h3 className={styles.readingTitle} title={item.obraTitulo}>
-                        {item.obraTitulo}
-                      </h3>
-
-                      <div className={styles.readingProgressRow}>
-                        <span>
-                          {totalCap > 0
-                            ? `Cap. ${progresso} / ${totalCap}`
-                            : `Cap. ${progresso} lidos`}
-                        </span>
-                        {totalCap > 0 && <span>{percent}%</span>}
+                    <Link
+                      to={`/minha-estante/${item.id}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        flex: 1,
+                        textDecoration: "none",
+                        color: "inherit",
+                        minWidth: 0,
+                      }}
+                    >
+                      <div className={styles.readingCoverWrapper}>
+                        {item.obraCapaUrl || item.capaUrl ? (
+                          <img
+                            src={item.obraCapaUrl || item.capaUrl}
+                            alt={item.obraTitulo || item.titulo}
+                            className={styles.readingCoverImg}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <BookOpen size={20} style={{ color: "var(--text-muted)" }} />
+                        )}
                       </div>
 
-                      <div className={styles.progressBarContainer}>
-                        <div
-                          className={styles.progressBarFill}
-                          style={{ width: totalCap > 0 ? `${percent}%` : "100%" }}
-                        />
+                      <div className={styles.readingInfo}>
+                        <h3 className={styles.readingTitle} title={item.obraTitulo || item.titulo}>
+                          {item.obraTitulo || item.titulo}
+                        </h3>
+
+                        <div className={styles.readingProgressRow}>
+                          <span>
+                            {hasTotal
+                              ? `Cap. ${progresso} / ${totalCap}`
+                              : `Cap. ${progresso} lidos`}
+                          </span>
+                          {hasTotal && <span>{percent}%</span>}
+                        </div>
+
+                        {hasTotal && (
+                          <div className={styles.progressBarContainer}>
+                            <div
+                              className={styles.progressBarFill}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </Link>
 
                     <button
                       type="button"
                       className={styles.readingPlusBtn}
-                      onClick={() => handleQuickIncrement(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickIncrement(item);
+                      }}
                       title={`Incrementar +1 capítulo de ${item.obraTitulo}`}
                       aria-label={`Incrementar capítulo de ${item.obraTitulo}`}
                     >
@@ -434,6 +537,18 @@ export const HomePage: React.FC = () => {
           <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}>
             <Spinner size="md" />
           </div>
+        ) : isLocalMode() ? (
+          <EmptyState
+            icon={<Users size={32} />}
+            title="Feed da Comunidade"
+            description="O feed social exibe atividades e avaliações de leitores quando conectado a um servidor Shiori."
+            action={{
+              label: "Conectar a um Servidor",
+              onClick: openEndpointModal,
+              icon: <Server size={16} />,
+              variant: "secondary",
+            }}
+          />
         ) : !isAuthenticated ? (
           <EmptyState
             icon={<Users size={32} />}

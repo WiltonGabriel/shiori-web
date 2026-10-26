@@ -17,7 +17,7 @@ export const AdminAccessDenied: React.FC = () => {
           Esta área é restrita à governança do Shiori. Apenas administradores com papel <code>ROLE_ADMIN</code> possuem autorização de acesso.
         </p>
         <div className={styles.actions}>
-          <Link to="/meu-catalogo">
+          <Link to="/minha-estante">
             <Button variant="secondary" size="md">
               <ArrowLeft size={16} />
               <span>Voltar à Minha Estante</span>

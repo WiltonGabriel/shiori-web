@@ -1,30 +1,29 @@
 import { api } from "./api";
+import { LocalShelfRepository } from "./storage/localShelfRepository";
 import type {
   ItemCatalogoResponse,
   AdicionarItemCatalogoRequest,
   RegistrarProgressoRequest,
   AtualizarVisibilidadeRequest,
+  EstanteExportDTO,
+  EstanteImportRequest,
+  StatusLeitura,
 } from "../types/catalog.types";
 
 export class CatalogService {
   /**
-   * Obtém as obras na estante do usuário autenticado.
-   * Suporta o formato Spring Data Page<ItemCatalogoResponse> ({ content: [...] }) e Array direto.
+   * Obtém as obras na estante do usuário diretamente da persistência soberana e local.
    */
-  public static async getMyShelf(page = 0, size = 100): Promise<ItemCatalogoResponse[]> {
-    const response = await api.get<any>("/api/catalogo/minha-estante", {
-      params: { page, size },
-    });
-    if (response.data && Array.isArray(response.data.content)) {
-      return response.data.content;
-    }
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    return [];
+  public static async getMyShelf(_page?: number, _size?: number): Promise<ItemCatalogoResponse[]> {
+    return LocalShelfRepository.getAll();
   }
 
   public static async getCatalogItem(id: number): Promise<ItemCatalogoResponse> {
+    const local = LocalShelfRepository.getById(id);
+    if (local) {
+      return local;
+    }
+
     const response = await api.get<ItemCatalogoResponse>(`/api/catalogo/${id}`);
     return response.data;
   }
@@ -32,57 +31,73 @@ export class CatalogService {
   public static async addItemToShelf(
     data: AdicionarItemCatalogoRequest
   ): Promise<ItemCatalogoResponse> {
-    const response = await api.post<ItemCatalogoResponse>("/api/catalogo", data);
-    return response.data;
+    return LocalShelfRepository.add(data);
   }
 
   public static async updateProgress(
     itemId: number,
     data: RegistrarProgressoRequest
   ): Promise<ItemCatalogoResponse> {
-    const response = await api.post<ItemCatalogoResponse>(
-      `/api/catalogo/${itemId}/progresso`,
-      data
-    );
-    return response.data;
+    return LocalShelfRepository.updateProgress(itemId, data);
+  }
+
+  public static async updatePersonalWork(
+    itemId: number,
+    data: {
+      titulo?: string;
+      capaUrl?: string;
+      tipoObra?: string;
+      totalCapitulos?: number;
+      totalVolumes?: number;
+      progressoAtual?: number;
+      volumeAtual?: number;
+      statusLeitura?: StatusLeitura;
+      avaliacaoPessoal?: number;
+      urlLeitura?: string;
+      anotacao?: string;
+      sincronizarMetadados?: boolean;
+      generos?: string[];
+    }
+  ): Promise<ItemCatalogoResponse> {
+    return LocalShelfRepository.updateItem(itemId, data);
   }
 
   public static async updateVisibility(
     itemId: number,
     data: AtualizarVisibilidadeRequest
   ): Promise<void> {
-    await api.patch(`/api/catalogo/${itemId}/visibilidade`, data);
+    LocalShelfRepository.updateVisibility(itemId, data.visibilidade);
   }
 
   public static async removeItemFromShelf(itemId: number): Promise<void> {
-    await api.delete(`/api/catalogo/${itemId}`);
+    LocalShelfRepository.remove(itemId);
   }
 
   public static async desvincularObra(itemId: number): Promise<ItemCatalogoResponse> {
-    const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/desvincular`);
-    return response.data;
+    return LocalShelfRepository.unlink(itemId);
   }
 
   public static async vincularObra(itemId: number, obraId: number, sincronizarMetadados = true): Promise<ItemCatalogoResponse> {
-    const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/vincular`, {
+    const current = LocalShelfRepository.getById(itemId);
+    if (!current) throw new Error("Item não encontrado");
+    return LocalShelfRepository.updateItem(itemId, {
       obraId,
+      desvinculado: false,
       sincronizarMetadados,
     });
-    return response.data;
   }
 
   public static async atualizarMetaCapitulos(itemId: number): Promise<ItemCatalogoResponse> {
-    const response = await api.post<ItemCatalogoResponse>(`/api/catalogo/${itemId}/atualizar-meta`);
-    return response.data;
+    const item = LocalShelfRepository.getById(itemId);
+    if (!item) throw new Error("Item não encontrado");
+    return item;
   }
 
-  public static async exportarEstante(): Promise<import("../types/catalog.types").EstanteExportDTO> {
-    const response = await api.get<import("../types/catalog.types").EstanteExportDTO>("/api/catalogo/exportar");
-    return response.data;
+  public static async exportarEstante(): Promise<EstanteExportDTO> {
+    return LocalShelfRepository.exportData();
   }
 
-  public static async importarEstante(data: import("../types/catalog.types").EstanteImportRequest): Promise<{ mensagem: string; totalImportados: number }> {
-    const response = await api.post<{ mensagem: string; totalImportados: number }>("/api/catalogo/importar", data);
-    return response.data;
+  public static async importarEstante(data: EstanteImportRequest): Promise<{ mensagem: string; totalImportados: number }> {
+    return LocalShelfRepository.importData(data);
   }
 }

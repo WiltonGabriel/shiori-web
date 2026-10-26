@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import styles from "../ShelfPage.module.css";
 import { HorizontalScroller } from "../../../components/ui/HorizontalScroller/HorizontalScroller";
 import { Button } from "../../../components/ui/Button/Button";
-import { Download, Upload, Compass, LayoutGrid, List } from "lucide-react";
+import { Download, Upload, Compass, LayoutGrid, List, Plus } from "lucide-react";
 import { STATUS_TABS, type FilterTab } from "../hooks/useShelf";
 
 interface ShelfHeaderProps {
@@ -14,6 +14,7 @@ interface ShelfHeaderProps {
   setViewMode: (mode: "grid" | "list") => void;
   onExport: () => void;
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAddManual?: () => void;
 }
 
 export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
@@ -24,6 +25,7 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
   setViewMode,
   onExport,
   onImport,
+  onAddManual,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -31,13 +33,24 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
     <div className={styles.header}>
       <div className={styles.titleArea}>
         <div>
-          <h1 className={styles.title}>Meu Catálogo</h1>
+          <h1 className={styles.title}>Minha Estante</h1>
           <p className={styles.subtitle}>
             Sua estante pessoal e diário de leitura. Acompanhe seu ritmo capítulo a capítulo, registre anotações e conclua ciclos.
           </p>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+          {onAddManual && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onAddManual}
+              title="Cadastrar obra manualmente na sua estante pessoal"
+            >
+              <Plus size={14} />
+              <span>Adicionar Obra</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

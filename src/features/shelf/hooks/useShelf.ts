@@ -3,16 +3,17 @@ import { CatalogService } from "../../../services/catalog.service";
 import { useAuthStore } from "../../../store/authStore";
 import { toast } from "../../../store/toastStore";
 import type { ItemCatalogoResponse } from "../../../types/catalog.types";
+import { countByTab, filterByTab, type FilterTab } from "../domain/shelfFilters";
 
-export type FilterTab = "TODOS" | "LENDO" | "ENGAVETADO" | "TERMINOU" | "PLANEJADO" | "ABDICOU";
+export type { FilterTab };
 
 export const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "TODOS", label: "Todos" },
   { value: "LENDO", label: "Lendo" },
-  { value: "PLANEJADO", label: "Planejado" },
+  { value: "PLANEJADO", label: "Quero ler" },
   { value: "ENGAVETADO", label: "Engavetado" },
-  { value: "TERMINOU", label: "Terminou" },
-  { value: "ABDICOU", label: "Abdicou" },
+  { value: "TERMINOU", label: "Concluído" },
+  { value: "ABDICOU", label: "Abandonado" },
 ];
 
 export function useShelf() {
@@ -34,7 +35,7 @@ export function useShelf() {
       setLoadError(null);
       const res = await CatalogService.getMyShelf(0, 100);
       setItems(res || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Falha ao carregar estante:", err);
       setLoadError("Não foi possível carregar sua estante no momento.");
       toast.error(err, "Falha ao Carregar Estante");
@@ -53,7 +54,7 @@ export function useShelf() {
         setItems(res || []);
         setIsLoading(false);
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         if (!isMounted) return;
         console.error("Falha ao carregar estante:", err);
         setLoadError("Não foi possível carregar sua estante no momento.");
@@ -66,34 +67,9 @@ export function useShelf() {
     };
   }, [isAuthenticated]);
 
-  const filteredItems = useMemo(() => {
-    if (activeTab === "TODOS") return items;
-    if (activeTab === "ABDICOU") {
-      return items.filter(
-        (i) => i.statusLeitura === "DROPOU" || (i.statusLeitura as any) === "ABDICOU"
-      );
-    }
-    return items.filter((i) => i.statusLeitura === activeTab);
-  }, [items, activeTab]);
+  const filteredItems = useMemo(() => filterByTab(items, activeTab), [items, activeTab]);
 
-  const tabCounts = useMemo(() => {
-    const counts: Record<FilterTab, number> = {
-      TODOS: items.length,
-      LENDO: 0,
-      ENGAVETADO: 0,
-      TERMINOU: 0,
-      PLANEJADO: 0,
-      ABDICOU: 0,
-    };
-    items.forEach((item) => {
-      if (item.statusLeitura === "LENDO") counts.LENDO++;
-      else if (item.statusLeitura === "ENGAVETADO") counts.ENGAVETADO++;
-      else if (item.statusLeitura === "TERMINOU") counts.TERMINOU++;
-      else if (item.statusLeitura === "PLANEJADO") counts.PLANEJADO++;
-      else if (item.statusLeitura === "DROPOU" || (item.statusLeitura as any) === "ABDICOU") counts.ABDICOU++;
-    });
-    return counts;
-  }, [items]);
+  const tabCounts = useMemo(() => countByTab(items), [items]);
 
   const handleQuickIncrement = async (item: ItemCatalogoResponse) => {
     const proximoCap = (item.progressoAtual || 0) + 1;
@@ -113,7 +89,7 @@ export function useShelf() {
 
       setItems((prev) => prev.map((i) => (i.id === item.id ? atualizado : i)));
       toast.success(`Capítulo ${proximoCap} registrado para ${item.titulo || item.obraTitulo}!`);
-    } catch (err: any) {
+    } catch (err) {
       setItems((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, progressoAtual: anterior } : i))
       );
@@ -129,7 +105,7 @@ export function useShelf() {
         "Capítulos Atualizados"
       );
       loadShelf();
-    } catch (err: any) {
+    } catch (err) {
       toast.error(err, "Falha ao Atualizar Meta");
     }
   };
@@ -149,7 +125,7 @@ export function useShelf() {
         "Isolamento Local Ativo"
       );
       loadShelf();
-    } catch (err: any) {
+    } catch (err) {
       toast.error(err, "Falha ao Desvincular Obra");
     }
   };
@@ -162,7 +138,7 @@ export function useShelf() {
       await CatalogService.removeItemFromShelf(id);
       setItems((prev) => prev.filter((i) => i.id !== id));
       toast.info("Obra removida da estante.");
-    } catch (err: any) {
+    } catch (err) {
       toast.error(err, "Erro ao Remover");
     }
   };

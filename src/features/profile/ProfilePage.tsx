@@ -213,9 +213,9 @@ export const ProfilePage: React.FC = () => {
         <div className={styles.sectionHeader}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <Bookmark size={20} style={{ color: "var(--brand-primary)" }} />
-            <h2 className={styles.sectionTitle}>Estante do Usuário</h2>
+            <h2 className={styles.sectionTitle}>Minha Estante</h2>
           </div>
-          <Link to="/meu-catalogo" style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--brand-light)", fontSize: "var(--text-sm)", fontWeight: 600 }}>
+          <Link to="/minha-estante" style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--brand-light)", fontSize: "var(--text-sm)", fontWeight: 600 }}>
             <span>Ver estante completa</span>
             <ArrowRight size={16} />
           </Link>
@@ -236,28 +236,34 @@ export const ProfilePage: React.FC = () => {
         ) : (
           <div className={styles.shelfGrid}>
             {shelfItems.slice(0, 4).map((item) => (
-              <Card key={item.id} interactive style={{ padding: "0.75rem", display: "flex", flexDirection: "column" }}>
-                <div style={{ aspectRatio: "2/3", borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--bg-elevated)", marginBottom: "0.75rem" }}>
-                  {item.obraCapaUrl ? (
-                    <img src={item.obraCapaUrl} alt={item.obraTitulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>
-                      Sem capa
-                    </div>
-                  )}
-                </div>
-                <h4 style={{ fontSize: "var(--text-xs)", fontWeight: 700, margin: "0 0 0.25rem 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {item.obraTitulo}
-                </h4>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-                  <Badge variant={item.statusLeitura === "TERMINOU" ? "success" : "brand"}>
-                    {item.statusLeitura}
-                  </Badge>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 600 }}>
-                    Cap. {item.progressoAtual || 0}
-                  </span>
-                </div>
-              </Card>
+              <Link
+                key={item.id}
+                to={`/minha-estante/${item.id}`}
+                style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column" }}
+              >
+                <Card interactive style={{ padding: "0.75rem", display: "flex", flexDirection: "column", height: "100%" }}>
+                  <div style={{ aspectRatio: "2/3", borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--bg-elevated)", marginBottom: "0.75rem" }}>
+                    {item.obraCapaUrl ? (
+                      <img src={item.obraCapaUrl} alt={item.obraTitulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>
+                        Sem capa
+                      </div>
+                    )}
+                  </div>
+                  <h4 style={{ fontSize: "var(--text-xs)", fontWeight: 700, margin: "0 0 0.25rem 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {item.obraTitulo}
+                  </h4>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
+                    <Badge variant={item.statusLeitura === "TERMINOU" ? "success" : "brand"}>
+                      {item.statusLeitura}
+                    </Badge>
+                    <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                      Cap. {item.progressoAtual || 0}
+                    </span>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

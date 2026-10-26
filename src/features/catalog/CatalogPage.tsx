@@ -17,7 +17,6 @@ import {
 } from "../../types/work.types";
 import { IncorporationModal } from "./components/IncorporationModal";
 import { CatalogCard } from "./components/CatalogCard";
-import { SuggestWorkModal } from "./components/SuggestWorkModal";
 import type { AdicionarItemCatalogoRequest } from "../../types/catalog.types";
 import {
   useCatalog,
@@ -27,11 +26,14 @@ import {
 import {
   Search,
   SlidersHorizontal,
-  BookPlus,
   ChevronLeft,
   ChevronRight,
   EyeOff,
+  Server,
+  Bookmark,
 } from "lucide-react";
+import { isLocalMode } from "../../services/api/httpClient";
+import { useApiEndpointStore } from "../../store/apiEndpointStore";
 
 export const CatalogPage: React.FC = () => {
   useDocumentTitle(
@@ -41,6 +43,7 @@ export const CatalogPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { isAuthenticated, openAuthModal } = useAuthStore();
+  const { openModal: openEndpointModal } = useApiEndpointStore();
 
   const {
     filteredWorks,
@@ -60,14 +63,12 @@ export const CatalogPage: React.FC = () => {
     totalPages,
     isAdvancedOpen,
     setIsAdvancedOpen,
-    fetchWorks,
     handleResetFilters,
   } = useCatalog();
 
   // Estados dos Modais
   const [selectedWork, setSelectedWork] = useState<ObraResponse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   const handleOpenAddModal = (work: ObraResponse) => {
     if (!isAuthenticated) {
@@ -103,25 +104,74 @@ export const CatalogPage: React.FC = () => {
               Explore e descubra obras catalogadas pela comunidade. Pesquise por títulos, filtre por tipo ou sugira novas obras.
             </p>
           </div>
+        </div>
+      </div>
 
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => {
-              if (!isAuthenticated) {
-                openAuthModal();
-                return;
-              }
-              setIsSuggestModalOpen(true);
+      {isLocalMode() ? (
+        <div style={{ maxWidth: 640, margin: "2.5rem auto", textAlign: "center", width: "100%" }}>
+          <div
+            style={{
+              padding: "3rem 2rem",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-xl)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1.25rem",
+              boxShadow: "var(--shadow-lg)",
             }}
           >
-            <BookPlus size={17} />
-            <span>Sugerir Obra Manual</span>
-          </Button>
-        </div>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(99, 102, 241, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--brand-primary)",
+              }}
+            >
+              <Server size={32} />
+            </div>
 
-        {/* 1. Barra de Busca Central com Debounce */}
-        <div className={styles.searchSection}>
+            <div>
+              <h2 style={{ fontSize: "var(--font-size-lg)", fontWeight: 700, margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
+                Conexão Necessária para o Catálogo Global
+              </h2>
+              <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+                Você está utilizando o Shiori em <strong>Modo Local</strong>. Sua estante pessoal, anotações e acompanhamento de leitura funcionam com total autonomia e privacidade no seu dispositivo.
+                <br />
+                Para pesquisar, explorar e importar obras públicas do Catálogo Global, conecte-se a uma instância da <strong>Shiori API</strong>.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", flexWrap: "wrap", justifyContent: "center" }}>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => openEndpointModal()}
+              >
+                <Server size={16} />
+                <span>Configurar Conexão com Servidor</span>
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => navigate("/minha-estante")}
+              >
+                <Bookmark size={16} />
+                <span>Voltar à Minha Estante</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 1. Barra de Busca Central com Debounce */}
+          <div className={styles.searchSection}>
           <div className={styles.searchBarWrapper}>
             <div className={styles.searchInputArea}>
               <Input
@@ -211,7 +261,6 @@ export const CatalogPage: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
 
       {/* 3. Grade de Resultados de Cartões de Obra */}
       {isLoading ? (
@@ -264,22 +313,15 @@ export const CatalogPage: React.FC = () => {
         <EmptyState
           icon={<Search size={32} />}
           title="Nenhuma obra encontrada"
-          description="Não encontramos resultados para os filtros e termos selecionados. Tente ajustar os termos de busca ou sugira o cadastro manual desta obra!"
+          description="Não encontramos resultados para os filtros e termos selecionados. Tente ajustar os termos de busca ou limpar os filtros aplicados."
           action={{
-            label: "Sugerir Obra Manual",
-            onClick: () => {
-              if (!isAuthenticated) {
-                openAuthModal();
-                return;
-              }
-              setIsSuggestModalOpen(true);
-            },
-            icon: <BookPlus size={16} />,
+            label: "Limpar Filtros",
+            onClick: handleResetFilters,
             variant: "primary",
           }}
           secondaryAction={{
-            label: "Limpar Filtros",
-            onClick: handleResetFilters,
+            label: "Ir para Minha Estante",
+            href: "/minha-estante",
             variant: "secondary",
           }}
         />
@@ -325,6 +367,8 @@ export const CatalogPage: React.FC = () => {
           )}
         </>
       )}
+        </>
+      )}
 
       {/* MODAL 1: INCORPORAR AO MEU CATÁLOGO */}
       {selectedWork && (
@@ -336,13 +380,6 @@ export const CatalogPage: React.FC = () => {
           isSubmitting={isAdding}
         />
       )}
-
-      {/* MODAL 2: SUGERIR OBRA MANUAL */}
-      <SuggestWorkModal
-        isOpen={isSuggestModalOpen}
-        onClose={() => setIsSuggestModalOpen(false)}
-        onWorkCreated={fetchWorks}
-      />
     </div>
   );
 };

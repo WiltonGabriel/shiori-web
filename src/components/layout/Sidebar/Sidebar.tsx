@@ -31,7 +31,7 @@ export const Sidebar: React.FC = () => {
       </NavLink>
 
       <NavLink
-        to="/meu-catalogo"
+        to="/minha-estante"
         className={({ isActive }) =>
           `${styles.navLink} ${isActive ? styles.active : ""}`
         }

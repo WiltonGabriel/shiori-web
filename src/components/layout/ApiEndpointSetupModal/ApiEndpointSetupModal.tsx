@@ -21,8 +21,8 @@ const ApiEndpointSetupModalContent: React.FC = () => {
     isTesting,
     lastCheckResult,
     closeModal,
+    setLocalMode,
     saveEndpoint,
-    dismissModal,
     testConnection,
   } = useApiEndpointStore();
 
@@ -55,7 +55,7 @@ const ApiEndpointSetupModalContent: React.FC = () => {
   };
 
   const handleConfirmLocal = () => {
-    dismissModal();
+    setLocalMode();
     toast.success("Modo Local ativado. Seus dados estão salvos com isolamento no navegador.");
   };
 

@@ -28,6 +28,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import { isLocalMode } from "./services/api/httpClient";
+
 export const App: React.FC = () => {
   const { initAuth } = useAuthStore();
   const { setBroadcasts } = useBroadcastStore();
@@ -35,10 +37,12 @@ export const App: React.FC = () => {
   useEffect(() => {
     initAuth();
 
-    // Carregar comunicados ativos do sistema
-    BroadcastService.getActiveBroadcasts()
-      .then((data) => setBroadcasts(data))
-      .catch(() => {});
+    // Carregar comunicados ativos do sistema apenas se não for modo puramente local
+    if (!isLocalMode()) {
+      BroadcastService.getActiveBroadcasts()
+        .then((data) => setBroadcasts(data))
+        .catch(() => {});
+    }
   }, [initAuth, setBroadcasts]);
 
   return (
@@ -54,9 +58,11 @@ export const App: React.FC = () => {
 
               {/* Rotas Protegidas de Leitor */}
               <Route element={<ProtectedRoute />}>
-                <Route path="meu-catalogo" element={<ShelfPage />} />
+                <Route path="minha-estante" element={<ShelfPage />} />
+                <Route path="minha-estante/:id" element={<PersonalWorkDetailsPage />} />
+                <Route path="meu-catalogo" element={<Navigate to="/minha-estante" replace />} />
                 <Route path="meu-catalogo/:id" element={<PersonalWorkDetailsPage />} />
-                <Route path="estante" element={<Navigate to="/meu-catalogo" replace />} />
+                <Route path="estante" element={<Navigate to="/minha-estante" replace />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="configuracoes" element={<SettingsPage />} />
               </Route>

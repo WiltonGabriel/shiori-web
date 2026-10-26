@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal } from "../../../components/ui/Modal/Modal";
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
+import { ReadingStatusSelect } from "../../../components/ui/ReadingStatusSelect";
 import type { ItemCatalogoResponse, StatusLeitura, Visibilidade } from "../../../types/catalog.types";
 import { CatalogService } from "../../../services/catalog.service";
 import { toast } from "../../../store/toastStore";
@@ -49,10 +50,18 @@ const ShelfEditModalContent: React.FC<ShelfEditModalProps & { item: ItemCatalogo
     e.preventDefault();
     try {
       setIsSaving(true);
+      const totalCaps = item.totalCapitulos !== undefined ? item.totalCapitulos : item.obraTotalCapitulos;
+      let finalStatus = statusLeitura;
+
+      // Automação: se atingir ou ultrapassar o total de capítulos, conclui o ciclo
+      if (totalCaps && totalCaps > 0 && capituloAtual >= totalCaps && finalStatus === "LENDO") {
+        finalStatus = "TERMINOU";
+      }
+
       const atualizado = await CatalogService.updateProgress(item.id, {
         capituloAtual,
         volumeAtual: volumeAtual > 0 ? volumeAtual : undefined,
-        statusLeitura,
+        statusLeitura: finalStatus,
         nota: nota > 0 ? nota : undefined,
         anotacao: anotacao.trim() || undefined,
       });
@@ -62,7 +71,7 @@ const ShelfEditModalContent: React.FC<ShelfEditModalProps & { item: ItemCatalogo
         atualizado.visibilidade = visibilidade;
       }
 
-      toast.success("Progresso e preferências atualizados com sucesso!");
+      toast.success("Progresso atualizado com sucesso!");
       onSaved(atualizado);
       onClose();
     } catch (err: any) {
@@ -103,28 +112,14 @@ const ShelfEditModalContent: React.FC<ShelfEditModalProps & { item: ItemCatalogo
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <label style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
+            <label htmlFor="reading-status-select" style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontWeight: 600 }}>
               Status de Leitura
             </label>
-            <select
+            <ReadingStatusSelect
+              id="reading-status-select"
               value={statusLeitura}
-              onChange={(e) => setStatusLeitura(e.target.value as StatusLeitura)}
-              style={{
-                padding: "0.65rem 0.95rem",
-                background: "var(--bg-surface)",
-                border: "1px solid var(--border-light)",
-                borderRadius: "var(--radius-md)",
-                color: "var(--text-primary)",
-                minHeight: "var(--touch-target-min)",
-                outline: "none",
-              }}
-            >
-              <option value="LENDO">Lendo</option>
-              <option value="PLANEJADO">Planejado</option>
-              <option value="ENGAVETADO">Engavetado</option>
-              <option value="TERMINOU">Terminou</option>
-              <option value="ABDICOU">Abdicou</option>
-            </select>
+              onChange={setStatusLeitura}
+            />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>

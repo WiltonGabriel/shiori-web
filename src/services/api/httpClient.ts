@@ -10,6 +10,27 @@ declare global {
 
 export const STORAGE_KEY_API_ENDPOINT = "shiori_api_endpoint";
 export const STORAGE_KEY_ENDPOINT_SETUP_DONE = "shiori_endpoint_setup_completed";
+export const STORAGE_KEY_OPERATION_MODE = "shiori_operation_mode";
+
+export type OperationMode = "local" | "connected";
+
+export const getOperationMode = (): OperationMode => {
+  if (typeof window !== "undefined") {
+    const mode = localStorage.getItem(STORAGE_KEY_OPERATION_MODE);
+    if (mode === "local" || mode === "connected") {
+      return mode;
+    }
+  }
+  return "connected";
+};
+
+export const setOperationModeStorage = (mode: OperationMode): void => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEY_OPERATION_MODE, mode);
+  }
+};
+
+export const isLocalMode = (): boolean => getOperationMode() === "local";
 
 /**
  * Retorna se o usuário ou o ambiente especificou explicitamente um endpoint para a API.
@@ -20,13 +41,14 @@ export const isApiEndpointConfigured = (): boolean => {
     if (stored) return true;
     if (window.__ENV__?.VITE_API_BASE_URL?.trim()) return true;
   }
-  const buildTimeUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  return Boolean(buildTimeUrl);
+  return false;
 };
 
 export const isInitialSetupDismissed = (): boolean => {
   if (typeof window !== "undefined") {
-    return localStorage.getItem(STORAGE_KEY_ENDPOINT_SETUP_DONE) === "true";
+    const hasMode = localStorage.getItem(STORAGE_KEY_OPERATION_MODE);
+    const dismissed = localStorage.getItem(STORAGE_KEY_ENDPOINT_SETUP_DONE) === "true";
+    return Boolean(hasMode) || dismissed;
   }
   return false;
 };

@@ -15,13 +15,25 @@ export const errorResponseInterceptor = (error: AxiosError): Promise<never> => {
   }
 
   // Fallback para problemas de conexão de rede ou erros não RFC 9457
+  const isTimeout = error.code === "ECONNABORTED" || Boolean(error.message?.toLowerCase().includes("timeout"));
+  const isNetwork = !isTimeout && (error.code === "ERR_NETWORK" || !error.response);
+
   const fallbackProblem: ProblemDetail = {
-    title: error.message || "Erro de Conexão",
-    status: error.response?.status || 500,
-    detail:
-      error.code === "ERR_NETWORK"
-        ? "Não foi possível conectar ao servidor Shiori. Verifique sua conexão ou se a API está online."
-        : error.message || "Ocorreu uma falha inesperada na requisição.",
+    title: isTimeout
+      ? "Tempo Limite Excedido"
+      : isNetwork
+      ? "Falha na Conexão"
+      : error.response?.status === 500
+      ? "Instabilidade no Servidor"
+      : error.message || "Erro na Requisição",
+    status: error.response?.status,
+    detail: isTimeout
+      ? "O servidor demorou muito para responder. Tente novamente em instantes."
+      : isNetwork
+      ? "Não foi possível conectar ao servidor Shiori. Verifique sua conexão ou se a API está online."
+      : error.response?.status === 500
+      ? "O servidor Shiori encontrou um erro interno temporário ao processar sua requisição."
+      : error.message || "Ocorreu uma falha inesperada na requisição.",
   };
 
   return Promise.reject(new ShioriApiError(fallbackProblem));

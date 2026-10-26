@@ -1,0 +1,48 @@
+.selectWrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 0.55rem 2.25rem 0.55rem 0.85rem;
+  font-size: var(--text-sm, 0.875rem);
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+  background-color: var(--card-bg, #1e1e24);
+  border: 1px solid var(--border-color, #2d2d38);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--border-hover, #424252);
+}
+
+.select:focus {
+  border-color: var(--brand-primary, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.iconWrapper {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

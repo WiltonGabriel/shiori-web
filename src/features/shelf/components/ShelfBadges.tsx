@@ -9,14 +9,16 @@ export const StatusBadge: React.FC<{ status: StatusLeitura }> = ({ status }) => 
     case "LENDO":
       return <Badge variant="brand">Lendo</Badge>;
     case "TERMINOU":
-      return <Badge variant="success">Terminou</Badge>;
+      return <Badge variant="success">Concluído</Badge>;
+    case "PAUSADO":
+      return <Badge variant="warning">Em pausa</Badge>;
     case "ENGAVETADO":
       return <Badge variant="warning">Engavetado</Badge>;
     case "PLANEJADO":
-      return <Badge variant="neutral">Planejado</Badge>;
+      return <Badge variant="neutral">Quero ler</Badge>;
     case "DROPOU":
     case "ABDICOU":
-      return <Badge variant="neutral">Abdicou</Badge>;
+      return <Badge variant="neutral">Abandonado</Badge>;
     default:
       return <Badge variant="neutral">{status}</Badge>;
   }

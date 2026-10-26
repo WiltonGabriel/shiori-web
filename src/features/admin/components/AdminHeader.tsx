@@ -71,7 +71,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         </div>
 
         <div className={styles.actions}>
-          <Link to="/meu-catalogo">
+          <Link to="/minha-estante">
             <Button variant="secondary" size="sm" title="Retornar à estante pessoal">
               <Compass size={14} />
               <span>Voltar à Minha Estante</span>

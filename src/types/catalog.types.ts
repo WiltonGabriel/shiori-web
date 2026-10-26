@@ -36,6 +36,7 @@ export interface ItemCatalogoResponse {
   temNovosCapitulos?: boolean;
   totalCapitulosGlobal?: number;
   desvinculado?: boolean;
+  generos?: string[];
 }
 
 export interface AdicionarItemCatalogoRequest {
@@ -57,6 +58,7 @@ export interface AdicionarItemCatalogoRequest {
   statusLeitura?: StatusLeitura;
   urlLeitura?: string;
   sincronizarMetadados?: boolean;
+  generos?: string[];
 }
 
 export interface RegistrarProgressoRequest {
@@ -90,6 +92,7 @@ export interface EstanteItemExportDTO {
   urlLeitura?: string;
   sincronizarMetadados?: boolean;
   obraGlobalId?: number;
+  desvinculado?: boolean;
   historicos?: {
     capituloInicial: number;
     capituloFinal: number;

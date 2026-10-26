@@ -4,7 +4,6 @@ import styles from "../ShelfPage.module.css";
 import { Button } from "../../../components/ui/Button/Button";
 import {
   StatusBadge,
-  VisibilityBadge,
   UnlinkedBadge,
   NewChaptersNotificationBadge,
 } from "./ShelfBadges";
@@ -12,7 +11,6 @@ import type { ItemCatalogoResponse } from "../../../types/catalog.types";
 import {
   BookOpen,
   Star,
-  CheckCircle,
   Edit3,
   Unlink,
   ExternalLink,
@@ -22,7 +20,6 @@ import {
 interface ShelfCardProps {
   item: ItemCatalogoResponse;
   onQuickIncrement: (item: ItemCatalogoResponse) => void;
-  onOpenCycle: (item: ItemCatalogoResponse) => void;
   onOpenEdit: (item: ItemCatalogoResponse) => void;
   onUnlink: (itemId: number) => void;
   onRemove: (itemId: number) => void;
@@ -32,7 +29,6 @@ interface ShelfCardProps {
 export const ShelfCard: React.FC<ShelfCardProps> = ({
   item,
   onQuickIncrement,
-  onOpenCycle,
   onOpenEdit,
   onUnlink,
   onRemove,
@@ -49,7 +45,7 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
 
   return (
     <div className={styles.shelfCard}>
-      <Link to={`/meu-catalogo/${item.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+      <Link to={`/minha-estante/${item.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
         {capaExibida ? (
           <img
             src={capaExibida}
@@ -65,13 +61,12 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
       <div className={styles.cardBody}>
         <div className={styles.cardHeaderRow}>
           <h3 className={styles.cardTitle} title={tituloExibido}>
-            <Link to={`/meu-catalogo/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <Link to={`/minha-estante/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
               {tituloExibido}
             </Link>
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
             {item.desvinculado && <UnlinkedBadge />}
-            <VisibilityBadge visibility={item.visibilidade} />
           </div>
         </div>
 
@@ -84,13 +79,15 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
           </span>
         </div>
 
-        {/* Barra de Progresso Visual */}
-        <div className={styles.progressBarContainer}>
-          <div
-            className={styles.progressBarFill}
-            style={{ width: hasTotalCap ? `${percentCap}%` : "100%" }}
-          />
-        </div>
+        {/* Barra de Progresso Visual (apenas se o total for conhecido) */}
+        {hasTotalCap && (
+          <div className={styles.progressBarContainer}>
+            <div
+              className={styles.progressBarFill}
+              style={{ width: `${percentCap}%` }}
+            />
+          </div>
+        )}
 
         {/* Notificação Sutil de Novos Capítulos Globais */}
         {item.temNovosCapitulos && (
@@ -127,16 +124,6 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
             aria-label={`Incrementar +1 capítulo de ${tituloExibido}`}
           >
             +1
-          </button>
-
-          <button
-            type="button"
-            className={styles.cycleBtn}
-            onClick={() => onOpenCycle(item)}
-            title="Registrar conclusão de ciclo com nota e anotação"
-          >
-            <CheckCircle size={13} />
-            <span>Registro de Ciclo</span>
           </button>
 
           <Button

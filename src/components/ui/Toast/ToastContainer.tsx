@@ -41,7 +41,7 @@ const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({
       <div className={styles.content}>
         <div className={styles.headerRow}>
           <span className={styles.title}>{toast.title}</span>
-          {toast.status && (
+          {typeof toast.status === "number" && toast.status >= 100 && toast.status <= 599 && (
             <span className={styles.statusBadge}>HTTP {toast.status}</span>
           )}
         </div>

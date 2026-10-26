@@ -9,6 +9,8 @@ import type {
   SortOption,
 } from "../../../types/work.types";
 
+import { isLocalMode } from "../../../services/api/httpClient";
+
 export const PAGE_SIZE = 15;
 
 export interface AssistedNotice {
@@ -36,19 +38,24 @@ export const QUICK_STATUSES: { value: StatusPublicacao | "TODOS"; label: string 
 
 export function useCatalog() {
   const [works, setWorks] = useState<ObraResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => !isLocalMode());
   const [assistedNotice, setAssistedNotice] = useState<AssistedNotice | null>(null);
 
   // Filtros
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInputState] = useState("");
   const debouncedSearch = useDebounce(searchInput, 300);
-  const [selectedType, setSelectedType] = useState<TipoObra | "TODOS">("TODOS");
-  const [selectedStatus, setSelectedStatus] = useState<StatusPublicacao | "TODOS">("TODOS");
-  const [sortBy, setSortBy] = useState<SortOption>("NOTA_DESC");
+  const [selectedType, setSelectedTypeState] = useState<TipoObra | "TODOS">("TODOS");
+  const [selectedStatus, setSelectedStatusState] = useState<StatusPublicacao | "TODOS">("TODOS");
+  const [sortBy, setSortByState] = useState<SortOption>("NOTA_DESC");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const fetchWorks = useCallback(async () => {
+    if (isLocalMode()) {
+      setWorks([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       if (debouncedSearch.trim()) {
@@ -77,6 +84,10 @@ export function useCatalog() {
 
   useEffect(() => {
     let isMounted = true;
+    if (isLocalMode()) {
+      return;
+    }
+
     if (debouncedSearch.trim()) {
       WorkService.searchWorksAssisted(debouncedSearch.trim())
         .then((result) => {
@@ -117,7 +128,7 @@ export function useCatalog() {
     return () => {
       isMounted = false;
     };
-  }, [debouncedSearch, selectedType, selectedStatus]);
+  }, [debouncedSearch]);
 
   // Filtragem e ordenação
   const filteredWorks = useMemo(() => {
@@ -164,11 +175,31 @@ export function useCatalog() {
     return filteredWorks.slice(start, start + PAGE_SIZE);
   }, [filteredWorks, currentPage]);
 
+  const setSearchInput = (value: string) => {
+    setSearchInputState(value);
+    setCurrentPage(1);
+  };
+
+  const setSelectedType = (value: TipoObra | "TODOS") => {
+    setSelectedTypeState(value);
+    setCurrentPage(1);
+  };
+
+  const setSelectedStatus = (value: StatusPublicacao | "TODOS") => {
+    setSelectedStatusState(value);
+    setCurrentPage(1);
+  };
+
+  const setSortBy = (value: SortOption) => {
+    setSortByState(value);
+    setCurrentPage(1);
+  };
+
   const handleResetFilters = () => {
-    setSearchInput("");
-    setSelectedType("TODOS");
-    setSelectedStatus("TODOS");
-    setSortBy("NOTA_DESC");
+    setSearchInputState("");
+    setSelectedTypeState("TODOS");
+    setSelectedStatusState("TODOS");
+    setSortByState("NOTA_DESC");
     setCurrentPage(1);
   };
 

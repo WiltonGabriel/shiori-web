@@ -12,7 +12,6 @@ import type { ItemCatalogoResponse } from "../../../types/catalog.types";
 import {
   BookOpen,
   Star,
-  CheckCircle,
   Edit3,
   Unlink,
   ExternalLink,
@@ -22,7 +21,6 @@ import {
 interface ShelfTableProps {
   items: ItemCatalogoResponse[];
   onQuickIncrement: (item: ItemCatalogoResponse) => void;
-  onOpenCycle: (item: ItemCatalogoResponse) => void;
   onOpenEdit: (item: ItemCatalogoResponse) => void;
   onUnlink: (itemId: number) => void;
   onRemove: (itemId: number) => void;
@@ -32,7 +30,6 @@ interface ShelfTableProps {
 export const ShelfTable: React.FC<ShelfTableProps> = ({
   items,
   onQuickIncrement,
-  onOpenCycle,
   onOpenEdit,
   onUnlink,
   onRemove,
@@ -64,7 +61,7 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
             return (
               <tr key={item.id}>
                 <td>
-                  <Link to={`/meu-catalogo/${item.id}`} style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
+                  <Link to={`/minha-estante/${item.id}`} style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
                     {capaExibida ? (
                       <img
                         src={capaExibida}
@@ -92,7 +89,7 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                   <div className={styles.tableObraCell}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                        <Link to={`/meu-catalogo/${item.id}`} className={styles.tableTitle} style={{ textDecoration: "none", color: "inherit" }}>
+                        <Link to={`/minha-estante/${item.id}`} className={styles.tableTitle} style={{ textDecoration: "none", color: "inherit" }}>
                           {tituloExibido}
                         </Link>
                         {item.desvinculado && <UnlinkedBadge />}
@@ -130,16 +127,18 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                         ? `Cap. ${item.progressoAtual || 0} / ${totalCaps}`
                         : `Cap. ${item.progressoAtual || 0}`}
                     </span>
-                    <div className={styles.progressBarContainer} style={{ height: 4 }}>
-                      <div
-                        className={styles.progressBarFill}
-                        style={{ width: hasTotalCap ? `${percentCap}%` : "100%" }}
-                      />
-                    </div>
+                    {hasTotalCap && (
+                      <div className={styles.progressBarContainer} style={{ height: 4 }}>
+                        <div
+                          className={styles.progressBarFill}
+                          style={{ width: `${percentCap}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td>
-                  <VisibilityBadge visibility={item.visibilidade} />
+                  <VisibilityBadge visibility="PRIVADO" />
                 </td>
                 <td style={{ textAlign: "right" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
@@ -151,16 +150,6 @@ export const ShelfTable: React.FC<ShelfTableProps> = ({
                       aria-label={`Incrementar +1 capítulo de ${tituloExibido}`}
                     >
                       +1
-                    </button>
-
-                    <button
-                      type="button"
-                      className={styles.cycleBtn}
-                      onClick={() => onOpenCycle(item)}
-                      title="Registro de ciclo"
-                    >
-                      <CheckCircle size={12} />
-                      <span>Ciclo</span>
                     </button>
 
                     <Button
