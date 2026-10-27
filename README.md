@@ -1,27 +1,29 @@
 # Shiori Web 栞 (Front-end Oficial)
 
 [![CI/CD Docker Multi-Arch](https://github.com/wiltongabriel/shiori-web/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/wiltongabriel/shiori-web/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/version-0.0.14--alpha-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.0.16--alpha-blue.svg)](package.json)
+[![Status](https://img.shields.io/badge/status-active%20alpha-orange.svg)](docs/memory/roadmap_e_escalonamento.md)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> Front-end oficial do **Catálogo de Leituras Shiori**, uma Single Page Application (SPA) moderna, responsiva e de alta performance voltada ao acompanhamento privado, descentralizado e curadoria de obras literárias (mangás, web novels, light novels, manhwas, manhuas e quadrinhos).
+> Front-end oficial do **Shiori**, uma Single Page Application (SPA) moderna, fluida e responsiva voltada ao acompanhamento soberano, privado e comunitário de leituras (mangás, web novels, light novels, manhwas, manhuas e livros).
 
-Exemplo de implantação em produção: **shiori.exemplo.org**
+O **Shiori Web** foi concebido como um cliente **totalmente desacoplado** e autônomo. O leitor pode começar a usar o aplicativo imediatamente no modo local sem barreiras ou configurações obrigatórias, com a opção flexível de conectar-se a qualquer instância do **Shiori API** a qualquer momento para explorar o catálogo global e recursos de sincronização.
+
+> [!NOTE]
+> **Estágio do Projeto:** O Shiori Web encontra-se em fase **Alpha ativa**. A interface, os fluxos de estante pessoal, busca avançada e moderação comunitária já estão funcionais, mas novos refinamentos de UI/UX, acessibilidade e paridade mobile continuam em desenvolvimento ativo.
 
 ---
 
-## 📖 Visão Geral e Filosofia
+## 📖 Visão Geral e Princípios
 
-O **Shiori Web** foi construído como um cliente **totalmente desacoplado** da API, projetado para operar em modelo estático com máxima flexibilidade de implantação (*Deployment Flexibility*):
-
-1. **Cliente Web Desacoplado & Portável:** Pode ser hospedado em qualquer servidor estático, Nginx, Docker ou CDNs (Cloudflare Pages, Vercel, Netlify).
-2. **Seletor de API em Tempo de Execução:** Permite ao usuário ou operador configurar a URL da Shiori API (Hub) diretamente pelo navegador (`localStorage`) ou injetá-la via Docker (`window.__ENV__`), sem necessidade de recompilar os assets estáticos.
-3. **Modal de Boas-Vindas e Teste de Conexão Ativo:** Ao abrir a aplicação pela primeira vez sem endpoint predefinido, um assistente leve permite informar a URL do Hub e testar latência e conectividade em tempo real.
-4. **Soberania do Leitor:** Exportação e importação completa da estante pessoal em formato JSON padronizado, garantindo que o leitor nunca perca seu histórico.
-5. **Design System Obsidian Glassmorphism:** Interface fluida, tema escuro e claro dinâmicos, paleta HSL e micro-animações com CSS Modules sem vazamento de escopo.
+1. **Soberania do Leitor (Offline-First):** Seus registros pessoais de leitura são seus. Toda a estante opera localmente com suporte a importação/exportação JSON e proteção de acesso por senha local.
+2. **Conexão Desacoplada e Opcional:** O leitor pode usar o Shiori puramente local ou conectar-se dinamicamente a uma instância da Shiori API informando a URL no navegador ou no assistente inicial.
+3. **Busca Avançada Multicritério (Series Finder):** Filtros combináveis com lógica tri-state (interessado, neutro, evitar), busca por capítulos, notas e tags comunitárias.
+4. **Governança Comunitária de Tags:** Visualização, votação e sugestão de novas tags para obras, com painel administrativo de aprovação/rejeição.
+5. **Design System Fluido:** Interface com temas dinâmicos Escuro e Claro, paleta de alto contraste, suporte a monitores verticais (*portrait*) e adaptação completa a dispositivos móveis.
 
 ---
 
@@ -29,22 +31,21 @@ O **Shiori Web** foi construído como um cliente **totalmente desacoplado** da A
 
 | Camada | Tecnologia | Descrição |
 |:---|:---|:---|
-| **Core** | React 19 + TypeScript | Interface declarativa com tipagem estrita de ponta a ponta |
-| **Bundler & Dev** | Vite 6 | HMR ultrarrápido e compilação otimizada para produção |
-| **Estado Global** | Zustand | Gerenciamento de estado leve, atômico e desacoplado |
-| **Comunicação HTTP**| Axios | Cliente tipado com interceptores para injeção de JWT e baseURL dinâmica |
-| **Estilização** | CSS Modules + Vanilla CSS | Design system sem Tailwind, com variáveis CSS HSL e tokens semânticos |
-| **Ícones** | Lucide React | Conjunto moderno e coeso de ícones vetoriais |
-| **Servidor Produção**| Nginx Alpine | Servidor estático multi-stage ultra-leve (< 25MB) com SPA fallback |
+| **Core** | React 19 + TypeScript | Interface reativa com tipagem estrita de ponta a ponta |
+| **Bundler & Build** | Vite 6 | Fast Refresh ultrarrápido e compilação otimizada para produção |
+| **Estado Global** | Zustand | Gerenciamento de estado leve, atômico e sem boilerplate |
+| **Comunicação HTTP** | Axios | Cliente tipado com interceptores para injeção de JWT e tratamento RFC 9457 |
+| **Estilização** | CSS Modules + Vanilla CSS | Design system sem Tailwind, com variáveis HSL e tokens semânticos |
+| **Ícones** | Lucide React | Biblioteca moderna e coesa de ícones vetoriais |
+| **Servidor de Produção** | Nginx Alpine | Servidor estático multi-stage ultra-leve (< 25MB) com SPA fallback |
 
 ---
 
-## 🚀 Como Executar Localmente
+## 🚀 Como Executar Localmente (Quickstart)
 
 ### Pré-requisitos
 - **Node.js:** Versão 20 LTS ou superior (recomendado Node 22).
 - **npm:** Versão 10 ou superior.
-- **Shiori API:** Instância em execução local (`http://localhost:8080`) ou em nuvem.
 
 ### Passo a Passo
 
@@ -58,24 +59,25 @@ O **Shiori Web** foi construído como um cliente **totalmente desacoplado** da A
    ```bash
    cp .env.example .env
    ```
-   *(Ajuste `VITE_API_BASE_URL` para o endereço da sua API local).*
+   *(Por padrão, aponta para `http://localhost:8080` se você tiver a Shiori API rodando localmente).*
 
 3. **Instalar dependências:**
    ```bash
    npm install
    ```
 
-4. **Verificar qualidade do código (Linter & TypeScript):**
+4. **Verificar testes automatizados e compilação:**
    ```bash
    npm run lint
+   npm test
    npm run build
    ```
 
-5. **Iniciar servidor de desenvolvimento:**
+5. **Iniciar o servidor de desenvolvimento:**
    ```bash
    npm run dev
    ```
-   Acesse a aplicação no navegador em `http://localhost:3000`.
+   Acesse a aplicação no seu navegador em: `http://localhost:3000`.
 
 ---
 
@@ -85,25 +87,19 @@ O **Shiori Web** foi construído como um cliente **totalmente desacoplado** da A
 # Porta do servidor local de desenvolvimento
 PORT=3000
 
-# Endpoint da Shiori API padrão para build local
+# Endpoint padrão da Shiori API (opcional; pode ser alterado em tempo de execução na UI)
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-> **Dica:** Em produção via Docker, o script `docker-entrypoint.sh` injeta a variável `VITE_API_BASE_URL` diretamente no `window.__ENV__` em tempo de execução, permitindo alterar a URL do Hub sem rebuild da imagem Docker.
+> **Dica para Containers:** Em produção via Docker, o script `docker-entrypoint.sh` injeta a variável `VITE_API_BASE_URL` em tempo de execução via `window.__ENV__`, permitindo apontar para um novo Hub de API sem precisar recompilar a imagem estática.
 
 ---
 
 ## 📚 Documentação Técnica
 
-- 🏛️ **[Arquitetura do Cliente Web](docs/ARQUITETURA_WEB.md):** Padrões de projeto, SRP (Uncle Bob), hierarquia de resolução do endpoint de API e gerenciamento de estado.
-- 🚢 **[Deploy no Portainer & GitOps](docs/DEPLOY_PORTAINER.md):** Manual completo de deploy contínuo em containers Docker, Nginx SPA fallback e Cloudflare.
-
----
-
-## 🛡️ Infraestrutura e Acesso Operacional
-
-- **Esteira GitOps:** Toda atualização em produção é realizada automaticamente através de **GitOps** com o **Portainer** a partir da branch `main`.
-- **Acesso SSH Restrito:** O acesso SSH direto ao servidor operacional (`usuario@seu-servidor-ip`) é reservado unicamente para auditoria e manutenção de containers. Nenhuma modificação manual de código é executada diretamente em produção.
+- 🏛️ **[Arquitetura do Cliente Web](docs/ARQUITETURA_WEB.md):** Padrões de projeto, segregação de responsabilidades (SRP), fluxo de autenticação e gerenciamento de estado.
+- 🚢 **[Guia de Deploy no Portainer & GitOps](docs/DEPLOY_PORTAINER.md):** Manual completo de deploy contínuo em containers Docker com Nginx e SPA fallback.
+- 🗺️ **[Roadmap Tecnológico e Diretrizes](docs/memory/roadmap_e_escalonamento.md):** Planejamento da arquitetura de auto-tracking (`shiori-detect.js`), app Flutter e abertura open source.
 
 ---
 
