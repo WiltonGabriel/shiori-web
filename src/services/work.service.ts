@@ -7,6 +7,7 @@ import type {
   IntegracaoMetadadosObra,
   ObraBuscaAvancadaFiltro,
   PaginatedResponse,
+  TipoObra,
 } from "../types/work.types";
 
 export class WorkService {
@@ -100,6 +101,22 @@ export class WorkService {
     const response = await api.get<PaginatedResponse<ObraResponse>>("/obras/busca-avancada", {
       params,
     });
+    return response.data;
+  }
+
+  public static async suggestEdit(
+    obraId: number,
+    data: {
+      tituloPrincipal?: string;
+      tituloOriginal?: string;
+      capaUrl?: string;
+      sinopse?: string;
+      totalCapitulosLancados?: number;
+      tipoObra?: TipoObra;
+      justificativa: string;
+    }
+  ): Promise<any> {
+    const response = await api.post(`/obras/${obraId}/sugestoes-edicao`, data);
     return response.data;
   }
 }

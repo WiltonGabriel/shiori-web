@@ -7,9 +7,14 @@ import {
   GitPullRequest,
   ShieldCheck,
   Info,
+  LogIn,
 } from "lucide-react";
 import type { ObraResponse, TipoObra } from "../../../types/work.types";
 import { TODOS_FORMATOS, TIPO_OBRA_LABELS } from "../../../types/work.types";
+import { WorkService } from "../../../services/work.service";
+import { useAuthStore } from "../../../store/authStore";
+import { isLocalMode } from "../../../services/api/httpClient";
+import { toast } from "../../../store/toastStore";
 
 interface SuggestEditModalProps {
   work: ObraResponse;
@@ -29,14 +34,51 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
   const [sinopse, setSinopse] = useState(work.sinopse || "");
   const [commitMessage, setCommitMessage] = useState("");
   const [fonteReferencia, setFonteReferencia] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { isAuthenticated, openAuthModal } = useAuthStore();
+  const localMode = isLocalMode();
 
   if (!isOpen) return null;
 
-  // A API ainda não expõe endpoint para leitores criarem sugestões de edição
-  // (só existem rotas administrativas em /api/admin/sugestoes). Por isso o envio
-  // permanece indisponível e nenhum sucesso é declarado.
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!commitMessage.trim()) {
+      toast.error("Por favor, informe uma justificativa para a alteração.");
+      return;
+    }
+
+    if (localMode) {
+      toast.info("Modo local ativo: conecte-se a uma Shiori API para submeter propostas ao Catálogo Global.");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+
+    const payload = {
+      tituloPrincipal: tituloPrincipal.trim() !== (work.tituloPrincipal || "").trim() ? tituloPrincipal.trim() : undefined,
+      tituloOriginal: tituloOriginal.trim() !== (work.tituloOriginal || "").trim() ? tituloOriginal.trim() : undefined,
+      tipoObra: tipoObra !== work.tipoObra ? tipoObra : undefined,
+      totalCapitulosLancados: totalCapitulos !== (work.totalCapitulosLancados || 0) ? totalCapitulos : undefined,
+      sinopse: sinopse.trim() !== (work.sinopse || "").trim() ? sinopse.trim() : undefined,
+      justificativa: commitMessage.trim() + (fonteReferencia.trim() ? ` | Fonte: ${fonteReferencia.trim()}` : ""),
+    };
+
+    try {
+      setIsSubmitting(true);
+      await WorkService.suggestEdit(work.id, payload);
+      toast.success("Sugestão de edição enviada com sucesso para a moderação!");
+      onClose();
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || "Erro ao submeter sugestão de edição.";
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -46,14 +88,33 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
       title="Propor Sugestão de Edição ao Catálogo Global"
     >
       <form onSubmit={handleSubmit} className={styles.modalContent}>
-        {/* Banner de Isolamento da Área Privada */}
-        <div className={styles.warningBanner} role="status">
-          <Info size={20} style={{ color: "var(--accent-amber, #f59e0b)", flexShrink: 0 }} />
-          <div>
-            <strong>Envio indisponível nesta instância:</strong> a API ainda não oferece endpoint para leitores
-            proporem alterações ao Catálogo Global. Nada será enviado ou salvo por este formulário.
+        {/* Banner de Status e Requisitos */}
+        {localMode ? (
+          <div className={styles.warningBanner} role="status">
+            <Info size={20} style={{ color: "var(--accent-amber, #f59e0b)", flexShrink: 0 }} />
+            <div>
+              <strong>Modo Local:</strong> para submeter propostas de edição ao Catálogo Global compartilhado,
+              conecte-se a uma instância Shiori API.
+            </div>
           </div>
-        </div>
+        ) : !isAuthenticated ? (
+          <div className={styles.warningBanner} role="status">
+            <LogIn size={20} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "0.5rem" }}>
+              <span>Autenticação necessária para enviar propostas de edição.</span>
+              <Button size="sm" variant="primary" type="button" onClick={openAuthModal}>
+                Entrar ou Cadastrar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.warningBanner} role="status">
+            <Info size={20} style={{ color: "var(--accent-emerald, #10b981)", flexShrink: 0 }} />
+            <div>
+              <strong>Governança Colaborativa:</strong> sua proposta passará por revisão da curadoria antes de ser aplicada ao Catálogo Canônico.
+            </div>
+          </div>
+        )}
 
         <div className={styles.warningBanner}>
           <ShieldCheck size={20} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
@@ -256,12 +317,16 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
 
         {/* Barra de Ações */}
         <div className={styles.actionsBar}>
-          <Button variant="secondary" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onClose} disabled={isSubmitting}>
             Descartar
           </Button>
-          <Button variant="primary" type="submit" disabled>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={isSubmitting || localMode || !isAuthenticated || !commitMessage.trim()}
+          >
             <GitPullRequest size={15} />
-            <span>Envio indisponível</span>
+            <span>{isSubmitting ? "Enviando Proposta..." : "Enviar Sugestão para Moderação"}</span>
           </Button>
         </div>
       </form>
