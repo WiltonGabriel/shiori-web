@@ -352,7 +352,7 @@
 }
 
 .sectionLink:hover {
-  color: #ffffff;
+  color: var(--brand-primary);
   text-decoration: underline;
 }
 

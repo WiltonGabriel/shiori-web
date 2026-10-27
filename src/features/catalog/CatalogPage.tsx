@@ -14,6 +14,7 @@ import {
   type ObraResponse,
 } from "../../types/work.types";
 import { IncorporationModal } from "./components/IncorporationModal";
+import { SuggestWorkModal } from "./components/SuggestWorkModal";
 import { CatalogCard } from "./components/CatalogCard";
 import { AdvancedSearchFilter } from "./AdvancedSearchFilter/AdvancedSearchFilter";
 import type { AdicionarItemCatalogoRequest } from "../../types/catalog.types";
@@ -28,6 +29,7 @@ import {
   EyeOff,
   Server,
   Bookmark,
+  Plus,
 } from "lucide-react";
 import { isLocalMode } from "../../services/api/httpClient";
 import { useApiEndpointStore } from "../../store/apiEndpointStore";
@@ -55,11 +57,13 @@ export const CatalogPage: React.FC = () => {
     setCurrentPage,
     totalPages,
     handleResetFilters,
+    fetchWorks,
   } = useCatalog();
 
   // Estados dos Modais
   const [selectedWork, setSelectedWork] = useState<ObraResponse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   const handleOpenAddModal = (work: ObraResponse) => {
     if (!isAuthenticated) {
@@ -95,6 +99,25 @@ export const CatalogPage: React.FC = () => {
               Explore e descubra obras catalogadas pela comunidade. Pesquise por títulos, filtre por tipo ou sugira novas obras.
             </p>
           </div>
+          <Button
+            id="catalog-suggest-work-btn"
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              if (isLocalMode()) {
+                setIsSuggestModalOpen(true);
+              } else if (!isAuthenticated) {
+                toast.info("Faça login na sua conta para enviar sugestões ao Catálogo Global.");
+                openAuthModal();
+              } else {
+                setIsSuggestModalOpen(true);
+              }
+            }}
+            style={{ gap: "0.4rem" }}
+          >
+            <Plus size={16} />
+            <span>Sugerir Nova Obra</span>
+          </Button>
         </div>
       </div>
 
@@ -244,8 +267,17 @@ export const CatalogPage: React.FC = () => {
             variant: "primary",
           }}
           secondaryAction={{
-            label: "Ir para Minha Estante",
-            href: "/minha-estante",
+            label: "Sugerir Obra ao Catálogo",
+            onClick: () => {
+              if (isLocalMode()) {
+                setIsSuggestModalOpen(true);
+              } else if (!isAuthenticated) {
+                toast.info("Faça login na sua conta para enviar sugestões ao Catálogo Global.");
+                openAuthModal();
+              } else {
+                setIsSuggestModalOpen(true);
+              }
+            },
             variant: "secondary",
           }}
         />
@@ -302,6 +334,17 @@ export const CatalogPage: React.FC = () => {
           onClose={() => setSelectedWork(null)}
           onConfirm={handleConfirmIncorporation}
           isSubmitting={isAdding}
+        />
+      )}
+
+      {/* MODAL 2: SUGERIR NOVA OBRA MANUAL OU VIA PROVEDORES */}
+      {isSuggestModalOpen && (
+        <SuggestWorkModal
+          isOpen={isSuggestModalOpen}
+          onClose={() => setIsSuggestModalOpen(false)}
+          onWorkCreated={() => {
+            fetchWorks();
+          }}
         />
       )}
     </div>

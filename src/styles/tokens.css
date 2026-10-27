@@ -5,6 +5,14 @@
   --bg-app: #090B10;
   --bg-surface: #10141E;
   --bg-elevated: #161B29;
+  --bg-surface-elevated: #161B29;
+  --card-bg: #10141E;
+  --surface: #10141E;
+  --surface-hover: #161B29;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --bg-surface-hover: rgba(255, 255, 255, 0.06);
   --bg-glass: rgba(16, 20, 30, 0.82);
   --bg-glass-card: rgba(22, 27, 41, 0.72);
   --bg-glass-input: rgba(14, 18, 28, 0.90);
@@ -20,6 +28,7 @@
 
   /* Cores de Ação e Semânticas (Dark) */
   --brand-primary: #6366F1;
+  --primary: #6366F1;
   --brand-light: #818CF8;
   --brand-dark: #4F46E5;
   --brand-glow: rgba(99, 102, 241, 0.28);
@@ -131,7 +140,15 @@ html.light,
 [data-theme="light"] {
   --bg-app: #F8FAFC;
   --bg-surface: #FFFFFF;
-  --bg-elevated: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --bg-surface-elevated: #F1F5F9;
+  --card-bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-hover: #F1F5F9;
+  --border-color: #E2E8F0;
+  --border: #E2E8F0;
+  --border-hover: #CBD5E1;
+  --bg-surface-hover: #E2E8F0;
   --bg-glass: rgba(255, 255, 255, 0.92);
   --bg-glass-card: #FFFFFF;
   --bg-glass-input: #F8FAFC;
@@ -146,6 +163,7 @@ html.light,
   --text-on-brand: #FFFFFF;
 
   --brand-primary: #4F46E5;
+  --primary: #4F46E5;
   --brand-light: #6366F1;
   --brand-dark: #3730A3;
   --brand-glow: rgba(79, 70, 229, 0.18);

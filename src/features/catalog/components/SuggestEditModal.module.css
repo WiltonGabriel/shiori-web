@@ -56,24 +56,24 @@
 }
 
 .diffOriginal {
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  background: var(--accent-rose-glow);
+  border: 1px solid rgba(244, 63, 94, 0.25);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
   font-size: var(--text-xs);
-  color: #fda4af;
+  color: var(--accent-rose);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
 .diffProposed {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--accent-emerald-glow);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
   font-size: var(--text-xs);
-  color: #6ee7b7;
+  color: var(--accent-emerald);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;

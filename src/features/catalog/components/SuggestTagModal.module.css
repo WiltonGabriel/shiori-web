@@ -36,20 +36,21 @@
   width: 100%;
   min-height: 80px;
   max-height: 160px;
-  padding: var(--space-2) var(--space-3);
+  padding: 0.6rem 0.85rem;
   font-size: var(--text-sm);
   font-family: inherit;
   color: var(--text-primary);
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   resize: vertical;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--transition-fast);
 }
 
 .textarea:focus {
-  border-color: var(--primary);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 2px var(--brand-glow);
 }
 
 .charCount {
@@ -65,10 +66,10 @@
   right: 0;
   max-height: 160px;
   overflow-y: auto;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow);
   z-index: 50;
   margin-top: 4px;
 }
@@ -81,11 +82,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--transition-fast);
 }
 
 .autocompleteItem:hover {
-  background-color: var(--surface-hover);
+  background-color: var(--hover-overlay);
 }
 
 .actionsRow {

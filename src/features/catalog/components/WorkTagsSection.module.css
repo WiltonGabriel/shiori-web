@@ -1,12 +1,12 @@
 .container {
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 0.75rem;
 }
 
 .headerRow {
@@ -14,13 +14,13 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 0.5rem;
 }
 
 .titleGroup {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 0.5rem;
 }
 
 .title {
@@ -40,25 +40,25 @@
 .tagsGrid {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 0.5rem;
   align-items: center;
 }
 
 .tagCard {
   display: inline-flex;
   align-items: center;
-  background-color: var(--surface-hover);
-  border: 1px solid var(--border);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 2px 6px;
+  padding: 3px 8px;
   gap: 6px;
   font-size: var(--text-xs);
   color: var(--text-secondary);
-  transition: all 0.15s ease-in-out;
+  transition: all var(--transition-fast);
 }
 
 .tagCard:hover {
-  border-color: var(--border-hover);
+  border-color: var(--border-light);
 }
 
 .tagName {
@@ -71,15 +71,15 @@
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 9999px;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
   color: var(--text-muted);
 }
 
 .scorePositive {
-  color: #10B981;
+  color: var(--accent-emerald);
   border-color: rgba(16, 185, 129, 0.3);
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: var(--accent-emerald-glow);
 }
 
 .voteButtons {
@@ -93,27 +93,27 @@
   border: none;
   cursor: pointer;
   padding: 3px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .voteBtn:hover:not(:disabled) {
-  background-color: var(--surface);
+  background-color: var(--hover-overlay);
   color: var(--text-primary);
 }
 
 .voteBtnUpActive {
-  color: #10B981 !important;
-  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: var(--accent-emerald) !important;
+  background-color: var(--accent-emerald-glow) !important;
 }
 
 .voteBtnDownActive {
-  color: #EF4444 !important;
-  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: var(--accent-rose) !important;
+  background-color: var(--accent-rose-glow) !important;
 }
 
 .emptyState {
