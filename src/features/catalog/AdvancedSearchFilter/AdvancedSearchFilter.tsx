@@ -2,40 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import styles from "./AdvancedSearchFilter.module.css";
 import { TriStateChip } from "../../../components/ui/TriStateChip/TriStateChip";
 import { Input } from "../../../components/ui/Input/Input";
-import type { TipoObra, StatusPublicacao, TriState, SortOption, ModoFiltroColecao } from "../../../types/work.types";
+import type { TipoObra, StatusPublicacao, TriState, SortOption } from "../../../types/work.types";
 import { TIPO_OBRA_LABELS, TODOS_FORMATOS } from "../../../types/work.types";
 import { TagService } from "../../../services/tag.service";
 import { Search, SlidersHorizontal, X, Plus } from "lucide-react";
+import type { FilterState } from "./types";
 
-export interface FilterState {
-  searchQuery: string;
-  selectedTypes: TipoObra[];
-  selectedStatuses: StatusPublicacao[];
-  minChapters: number | "";
-  maxChapters: number | "";
-  minRating: number | "";
-  maxRating: number | "";
-  genresState: Record<string, TriState>;
-  generosModo: ModoFiltroColecao;
-  tagsState: Record<string, TriState>;
-  tagsModo: ModoFiltroColecao;
-  sortBy: SortOption;
-}
-
-export const INITIAL_FILTER_STATE: FilterState = {
-  searchQuery: "",
-  selectedTypes: [],
-  selectedStatuses: [],
-  minChapters: "",
-  maxChapters: "",
-  minRating: "",
-  maxRating: "",
-  genresState: {},
-  generosModo: "AND",
-  tagsState: {},
-  tagsModo: "AND",
-  sortBy: "NOTA_DESC",
-};
+export type { FilterState };
 
 interface AdvancedSearchFilterProps {
   filters: FilterState;

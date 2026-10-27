@@ -1,10 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import {
-  AdvancedSearchFilter,
-  INITIAL_FILTER_STATE,
-} from "./AdvancedSearchFilter";
+import { AdvancedSearchFilter } from "./AdvancedSearchFilter";
+import { INITIAL_FILTER_STATE } from "./types";
 
 vi.mock("../../../services/tag.service", () => ({
   TagService: {

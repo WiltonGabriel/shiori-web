@@ -8,8 +8,8 @@ import type {
   StatusPublicacao,
   SortOption,
 } from "../../../types/work.types";
-import type { FilterState } from "../AdvancedSearchFilter/AdvancedSearchFilter";
-import { INITIAL_FILTER_STATE } from "../AdvancedSearchFilter/AdvancedSearchFilter";
+import type { FilterState } from "../AdvancedSearchFilter/types";
+import { INITIAL_FILTER_STATE } from "../AdvancedSearchFilter/types";
 import { isLocalMode } from "../../../services/api/httpClient";
 import { FormatPreferencesRepository } from "../../../services/storage/formatPreferencesRepository";
 
