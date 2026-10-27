@@ -71,27 +71,28 @@
 .body {
   padding: 1.5rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (orientation: portrait) and (max-width: 900px) {
   .backdrop {
-    padding: 1rem;
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
     align-items: center;
     justify-content: center;
   }
 
   .dialog {
-    max-height: 88dvh;
-    border-radius: var(--radius-xl);
+    max-height: calc(100dvh - 1.5rem);
+    border-radius: var(--radius-lg);
   }
 
   .header {
-    padding: 1.1rem 1.25rem;
+    padding: 1rem 1.25rem;
   }
 
   .body {
-    padding: 1.25rem;
+    padding: 1rem 1.15rem;
   }
 }
 

@@ -86,6 +86,13 @@
   animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+@media (max-width: 640px) {
+  .panel {
+    padding: 1rem 0.85rem;
+    gap: 1.15rem;
+  }
+}
+
 .filterSection {
   display: flex;
   flex-direction: column;

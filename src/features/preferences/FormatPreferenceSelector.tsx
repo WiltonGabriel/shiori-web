@@ -90,7 +90,7 @@ export const FormatPreferenceSelector: React.FC<FormatPreferenceSelectorProps> =
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(125px, 1fr))",
           gap: "0.5rem",
         }}
       >

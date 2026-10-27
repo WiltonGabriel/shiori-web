@@ -7,6 +7,13 @@
   gap: 2rem;
 }
 
+@media (max-width: 640px) {
+  .page {
+    padding: 0.5rem 0.25rem;
+    gap: 1.25rem;
+  }
+}
+
 .backRow {
   display: flex;
   align-items: center;
@@ -62,6 +69,13 @@
   gap: 1.5rem;
   padding: 2rem;
   background: linear-gradient(180deg, rgba(16, 20, 30, 0.4) 0%, rgba(16, 20, 30, 0.95) 100%);
+}
+
+@media (max-width: 640px) {
+  .heroContent {
+    padding: 1.25rem 1rem;
+    gap: 1.25rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -200,6 +214,13 @@
   gap: 1.5rem;
 }
 
+@media (max-width: 640px) {
+  .contentCard {
+    padding: 1.15rem 1rem;
+    gap: 1.15rem;
+  }
+}
+
 .sectionTitle {
   font-family: var(--font-display);
   font-size: var(--text-lg);
@@ -216,8 +237,8 @@
 
 .techGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.85rem;
   margin-top: 1rem;
 }
 

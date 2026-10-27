@@ -19,6 +19,13 @@
   width: 100%;
 }
 
+@media (max-width: 640px) {
+  .mainContent {
+    padding: 1rem 0.85rem;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1.5rem);
+  }
+}
+
 @media (min-width: 1024px) {
   .mainContent {
     padding-bottom: 3rem;
