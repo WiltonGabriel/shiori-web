@@ -1,7 +1,7 @@
 # ===================================================================
-# Estágio 1: Build da aplicação React + Vite (Node 22 Alpine)
+# Estágio 1: Build da aplicação React + Vite (Node 22 Slim Debian)
 # ===================================================================
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
