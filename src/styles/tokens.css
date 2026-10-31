@@ -1,4 +1,6 @@
 :root {
+  color-scheme: dark;
+
   /* ===================================================================
    * PALETA DE CORES DARK OBSIDIAN (Padrão Sofisticado para Leitura Noturna)
    * =================================================================== */
@@ -74,6 +76,7 @@
   --hero-badge-bg: rgba(99, 102, 241, 0.18);
   --hero-badge-border: rgba(99, 102, 241, 0.35);
   --hero-badge-text: #C7D2FE;
+  --work-hero-overlay: linear-gradient(180deg, rgba(16, 20, 30, 0.4) 0%, rgba(16, 20, 30, 0.95) 100%);
 
   --sidebar-active-bg: rgba(99, 102, 241, 0.18);
   --sidebar-active-color: #A5B4FC;
@@ -138,6 +141,7 @@
  * =================================================================== */
 html.light,
 [data-theme="light"] {
+  color-scheme: light;
   --bg-app: #F8FAFC;
   --bg-surface: #FFFFFF;
   --bg-elevated: #F1F5F9;
@@ -185,6 +189,7 @@ html.light,
   --hero-badge-bg: #EEF2FF;
   --hero-badge-border: #C7D2FE;
   --hero-badge-text: #4338CA;
+  --work-hero-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(248, 250, 252, 0.96) 100%);
 
   --sidebar-active-bg: #EEF2FF;
   --sidebar-active-color: #4338CA;

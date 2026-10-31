@@ -68,7 +68,7 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 2rem;
-  background: linear-gradient(180deg, rgba(16, 20, 30, 0.4) 0%, rgba(16, 20, 30, 0.95) 100%);
+  background: var(--work-hero-overlay);
 }
 
 @media (max-width: 640px) {
@@ -179,6 +179,13 @@
   gap: 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabsBar::-webkit-scrollbar {
+  display: none;
 }
 
 .tabBtn {
@@ -191,6 +198,8 @@
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
+  white-space: nowrap;
+  min-block-size: var(--touch-target-min);
   transition: all var(--transition-fast);
 }
 

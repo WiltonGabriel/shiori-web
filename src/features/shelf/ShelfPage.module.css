@@ -255,17 +255,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  min-inline-size: 32px;
+  min-block-size: 32px;
+  padding: 0 0.45rem;
   border-radius: var(--radius-sm);
   background: var(--brand-glow);
   border: 1px solid var(--hero-badge-border);
   color: var(--brand-light);
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   transition: all var(--transition-fast);
-  padding: 0;
+  touch-action: manipulation;
+}
+
+@media (pointer: coarse) {
+  .quickPlusBtn {
+    min-inline-size: 40px;
+    min-block-size: 38px;
+    font-size: 0.8rem;
+  }
+
+  .cycleBtn {
+    min-block-size: 38px;
+    padding: 0.35rem 0.7rem;
+  }
 }
 
 .quickPlusBtn:hover {

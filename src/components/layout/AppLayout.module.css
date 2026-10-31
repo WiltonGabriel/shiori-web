@@ -8,10 +8,12 @@
 .bodyWrapper {
   display: flex;
   flex: 1;
+  min-inline-size: 0;
 }
 
 .mainContent {
   flex: 1;
+  min-inline-size: 0;
   padding: 1.5rem;
   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 2rem);
   max-width: 1400px;
