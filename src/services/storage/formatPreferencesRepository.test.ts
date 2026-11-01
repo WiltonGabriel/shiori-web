@@ -63,4 +63,20 @@ describe("FormatPreferencesRepository - Sistema de 3 Estados de Formato", () => 
     expect(FormatPreferencesRepository.hasAnyFilter()).toBe(false);
     expect(FormatPreferencesRepository.getExcludedFormats()).toEqual([]);
   });
+
+  it("deve retornar apenas formatos permitidos respeitando EXCLUDE do usuário", () => {
+    FormatPreferencesRepository.setFormatState("MANGA", "EXCLUDE");
+    FormatPreferencesRepository.setFormatState("MANHUA", "EXCLUDE");
+
+    const allowed = FormatPreferencesRepository.getAllowedFormatsForCreation();
+    expect(allowed).not.toContain("MANGA");
+    expect(allowed).not.toContain("MANHUA");
+    expect(allowed).toContain("LIVRO");
+    expect(allowed).toContain("MANHWA");
+    expect(allowed).toContain("COMIC");
+
+    // Quando o usuário possui lista explícita no perfil remoto
+    const fromProfile = FormatPreferencesRepository.getAllowedFormatsForCreation(["LIVRO", "COMIC"]);
+    expect(fromProfile).toEqual(["COMIC", "LIVRO"]);
+  });
 });

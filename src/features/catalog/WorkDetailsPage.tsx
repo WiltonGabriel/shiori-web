@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import styles from "./WorkDetailsPage.module.css";
 import { WorkService } from "../../services/work.service";
 import { CatalogService } from "../../services/catalog.service";
@@ -21,12 +21,25 @@ import {
   Check,
   GitPullRequest,
   BookOpen,
-  Calendar,
   Layers,
-  ExternalLink,
+  MessageSquare,
+  Flag,
+  Eye,
+  Send,
 } from "lucide-react";
+import { Modal } from "../../components/ui/Modal/Modal";
 
-type DetailTab = "SINOPSE" | "HISTORICO" | "ONDE_LER";
+type DetailTab = "SINOPSE" | "COMENTARIOS";
+
+interface WorkComment {
+  id: number;
+  autorId: number | null;
+  autorApelido: string;
+  autorAvatarUrl?: string | null;
+  texto: string;
+  contemSpoiler: boolean;
+  dataCriacao: string;
+}
 
 export const WorkDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +58,26 @@ export const WorkDetailsPage: React.FC = () => {
   const [isSubmittingInc, setIsSubmittingInc] = useState(false);
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
+  // Comentários e Denúncias reais
+  const [comments, setComments] = useState<WorkComment[]>([]);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [newCommentSpoiler, setNewCommentSpoiler] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [revealedSpoilers, setRevealedSpoilers] = useState<Record<number, boolean>>({});
+  const [reportTarget, setReportTarget] = useState<{ type: "WORK" | "COMMENT"; commentId?: number } | null>(null);
+  const [reportMotivo, setReportMotivo] = useState("DADOS_FALSOS_OU_DUPLICADOS");
+  const [reportDetalhes, setReportDetalhes] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  const loadComments = useCallback(async (obraId: number) => {
+    try {
+      const page = await WorkService.listComments(obraId, 0, 30);
+      setComments(page.content || []);
+    } catch {
+      setComments([]);
+    }
+  }, []);
+
   useDocumentTitle(
     work ? `${work.tituloPrincipal} — Shiori Catálogo` : "Detalhes da Obra — Shiori",
     work?.sinopse || "Detalhes e metadados da obra no catálogo global Shiori."
@@ -62,6 +95,7 @@ export const WorkDetailsPage: React.FC = () => {
       setError(null);
       const workData = await WorkService.getWorkById(Number(id));
       setWork(workData);
+      loadComments(Number(id));
 
       // Se autenticado, verificar se já está na estante
       if (isAuthenticated) {
@@ -79,7 +113,7 @@ export const WorkDetailsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id, isAuthenticated]);
+  }, [id, isAuthenticated, loadComments]);
 
   useEffect(() => {
     let isMounted = true;
@@ -89,6 +123,7 @@ export const WorkDetailsPage: React.FC = () => {
       .then(async (workData) => {
         if (!isMounted) return;
         setWork(workData);
+        loadComments(Number(id));
         if (isAuthenticated) {
           try {
             const myShelf = await CatalogService.getMyShelf(0, 200);
@@ -111,7 +146,62 @@ export const WorkDetailsPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, isAuthenticated]);
+  }, [id, isAuthenticated, loadComments]);
+
+  const handleCreateComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!work || !newCommentText.trim()) return;
+    if (!isAuthenticated) {
+      toast.warning("Faça login na sua conta para publicar comentários.");
+      return;
+    }
+    try {
+      setIsSubmittingComment(true);
+      const created = await WorkService.createComment(work.id, {
+        texto: newCommentText.trim(),
+        contemSpoiler: newCommentSpoiler,
+      });
+      setComments((prev) => [created, ...prev]);
+      setNewCommentText("");
+      setNewCommentSpoiler(false);
+      toast.success("Comentário publicado com sucesso!");
+    } catch (err: any) {
+      toast.error(err, "Erro ao Publicar Comentário");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleConfirmReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!work || !reportTarget) return;
+    if (!isAuthenticated) {
+      toast.warning("Faça login para registrar uma denúncia à moderação.");
+      return;
+    }
+    try {
+      setIsSubmittingReport(true);
+      if (reportTarget.type === "WORK") {
+        await WorkService.reportWork(work.id, {
+          motivo: reportMotivo,
+          detalhes: reportDetalhes.trim() || undefined,
+        });
+        toast.success("Denúncia da obra enviada para a fila de moderação.");
+      } else if (reportTarget.commentId) {
+        await WorkService.reportComment(work.id, reportTarget.commentId, {
+          motivo: reportMotivo,
+          detalhes: reportDetalhes.trim() || undefined,
+        });
+        toast.success("Denúncia de comentário registrada para avaliação da curadoria.");
+      }
+      setReportTarget(null);
+      setReportDetalhes("");
+    } catch (err: any) {
+      toast.error(err, "Não foi possível registrar a denúncia");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
 
   const handleConfirmIncorporation = async (payload: AdicionarItemCatalogoRequest) => {
     try {
@@ -209,14 +299,9 @@ export const WorkDetailsPage: React.FC = () => {
                   <span>{work.totalVolumes} volumes</span>
                 </div>
               ) : null}
-
-              <div className={styles.metaItem}>
-                <Calendar size={16} />
-                <span>Atualizado recentemente</span>
-              </div>
             </div>
 
-            {/* Ações: Incorporar e Propor Edição */}
+            {/* Ações: Incorporar, Propor Edição e Reportar */}
             <div className={styles.actionsRow}>
               {shelfItem ? (
                 <Button
@@ -241,10 +326,22 @@ export const WorkDetailsPage: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => setIsSuggestModalOpen(true)}
-                title="Propor alteração ou correção nos metadados globais da obra (estilo Git)"
+                title="Propor alteração ou correção nos metadados globais da obra"
               >
                 <GitPullRequest size={16} />
                 <span>Propor Sugestão de Edição</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setReportMotivo("DADOS_FALSOS_OU_DUPLICADOS");
+                  setReportTarget({ type: "WORK" });
+                }}
+                title="Reportar problema ou duplicidade nesta obra à moderação"
+              >
+                <Flag size={15} />
+                <span>Reportar Obra</span>
               </Button>
             </div>
           </div>
@@ -260,25 +357,16 @@ export const WorkDetailsPage: React.FC = () => {
           className={`${styles.tabBtn} ${activeTab === "SINOPSE" ? styles.tabBtnActive : ""}`}
           onClick={() => setActiveTab("SINOPSE")}
         >
-          Sinopse & Detalhes
+          Sinopse & Ficha Técnica
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "HISTORICO"}
-          className={`${styles.tabBtn} ${activeTab === "HISTORICO" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("HISTORICO")}
+          aria-selected={activeTab === "COMENTARIOS"}
+          className={`${styles.tabBtn} ${activeTab === "COMENTARIOS" ? styles.tabBtnActive : ""}`}
+          onClick={() => setActiveTab("COMENTARIOS")}
         >
-          Histórico de Contribuições
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "ONDE_LER"}
-          className={`${styles.tabBtn} ${activeTab === "ONDE_LER" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("ONDE_LER")}
-        >
-          Onde Ler
+          Comentários da Comunidade ({comments.length})
         </button>
       </div>
 
@@ -300,8 +388,8 @@ export const WorkDetailsPage: React.FC = () => {
                 <span className={styles.techValue}>{work.tipoObra}</span>
               </div>
               <div className={styles.techItem}>
-                <span className={styles.techLabel}>Status da Publicação</span>
-                <span className={styles.techValue}>{work.statusCatalogo || "Em Andamento"}</span>
+                <span className={styles.techLabel}>Status no Catálogo</span>
+                <span className={styles.techValue}>{work.statusCatalogo || "OFICIAL"}</span>
               </div>
               <div className={styles.techItem}>
                 <span className={styles.techLabel}>Capítulos Lançados</span>
@@ -318,80 +406,211 @@ export const WorkDetailsPage: React.FC = () => {
         </section>
       )}
 
-      {/* Aba: Histórico de Contribuições (Estilo Git) */}
-      {activeTab === "HISTORICO" && (
+      {/* Aba: Comentários Reais da Comunidade */}
+      {activeTab === "COMENTARIOS" && (
         <section className={styles.contentCard}>
           <div>
-            <h2 className={styles.sectionTitle}>Histórico de Contribuições da Obra</h2>
+            <h2 className={styles.sectionTitle}>Comentários e Avaliações da Comunidade</h2>
             <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-              O Shiori adota um fluxo colaborativo auditável inspirado no controle de versão Git. Modificações no catálogo público passam por revisão e aprovação antes de serem mescladas.
+              Compartilhe sua análise sobre {work.tituloPrincipal}. Marque a opção de spoiler caso mencione eventos importantes do enredo.
             </p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <div className={styles.commitItem}>
-              <span className={styles.commitHash}>init</span>
-              <div>
-                <div className={styles.commitMsg}>Cadastro inicial da obra e metadados base</div>
-                <div className={styles.commitMeta}>Registrado pelo Shiori Hub Global</div>
-              </div>
-            </div>
-
-            {work.totalCapitulosLancados && (
-              <div className={styles.commitItem}>
-                <span className={styles.commitHash}>meta-sync</span>
-                <div>
-                  <div className={styles.commitMsg}>Atualização de total de capítulos ({work.totalCapitulosLancados})</div>
-                  <div className={styles.commitMeta}>Sincronizado via conectores federados</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Aba: Onde Ler */}
-      {activeTab === "ONDE_LER" && (
-        <section className={styles.contentCard}>
-          <div>
-            <h2 className={styles.sectionTitle}>Onde Ler</h2>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-              O Shiori é uma plataforma de catálogo e acompanhamento privado e descentralizado. Utilize os links abaixo para acessar os capítulos nas fontes oficiais ou provedores indexados.
-            </p>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <div
+          <form onSubmit={handleCreateComment} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <textarea
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              placeholder={
+                isAuthenticated
+                  ? "Escreva seu comentário sobre esta obra..."
+                  : "Faça login na sua conta para participar das discussões..."
+              }
+              rows={3}
+              disabled={!isAuthenticated || isSubmittingComment}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "1rem",
-                background: "var(--bg-elevated)",
+                width: "100%",
+                padding: "0.75rem",
                 borderRadius: "var(--radius-md)",
                 border: "1px solid var(--border-subtle)",
+                background: "var(--bg-elevated)",
+                color: "var(--text-primary)",
+                fontSize: "var(--text-sm)",
+                resize: "vertical",
               }}
-            >
-              <div>
-                <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>MangaDex</div>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                  Capítulos em português e outros idiomas
-                </div>
-              </div>
-              <a
-                href={`https://mangadex.org/title?q=${encodeURIComponent(work.tituloPrincipal)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="outline" size="sm">
-                  <span>Abrir</span>
-                  <ExternalLink size={14} />
-                </Button>
-              </a>
+            />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "var(--text-xs)", color: "var(--text-secondary)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={newCommentSpoiler}
+                  onChange={(e) => setNewCommentSpoiler(e.target.checked)}
+                  disabled={!isAuthenticated}
+                />
+                <span>Este comentário contém spoilers do enredo</span>
+              </label>
+              <Button type="submit" variant="primary" size="sm" isLoading={isSubmittingComment} disabled={!isAuthenticated || !newCommentText.trim()}>
+                <Send size={14} />
+                <span>Publicar Comentário</span>
+              </Button>
             </div>
-          </div>
+          </form>
+
+          {comments.length === 0 ? (
+            <div style={{ padding: "2rem 1rem", textAlign: "center", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
+              <MessageSquare size={28} style={{ margin: "0 auto 0.5rem auto", opacity: 0.5 }} />
+              <div>Nenhum comentário publicado ainda. Seja o primeiro a comentar!</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {comments.map((c) => {
+                const isSpoilerHidden = c.contemSpoiler && !revealedSpoilers[c.id];
+                return (
+                  <div
+                    key={c.id}
+                    style={{
+                      padding: "1rem",
+                      borderRadius: "var(--radius-md)",
+                      background: "var(--bg-elevated)",
+                      border: "1px solid var(--border-subtle)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <Link
+                          to={`/leitor/${c.autorApelido}`}
+                          style={{ fontSize: "var(--text-sm)", color: "var(--brand-primary)", fontWeight: 700, textDecoration: "none" }}
+                        >
+                          @{c.autorApelido}
+                        </Link>
+                        {c.contemSpoiler && <Badge variant="warning">Spoiler</Badge>}
+                        <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                          {new Date(c.dataCriacao).toLocaleDateString("pt-BR")}
+                        </span>
+                      </div>
+                      {isAuthenticated && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReportMotivo("SPOILER_NO_TITULO_OU_CAPA");
+                            setReportTarget({ type: "COMMENT", commentId: c.id });
+                          }}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--text-muted)",
+                            cursor: "pointer",
+                            fontSize: "var(--text-xs)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                          }}
+                          title="Denunciar comentário à moderação"
+                        >
+                          <Flag size={12} />
+                          <span>Denunciar</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {isSpoilerHidden ? (
+                      <button
+                        type="button"
+                        onClick={() => setRevealedSpoilers((prev) => ({ ...prev, [c.id]: true }))}
+                        style={{
+                          padding: "0.6rem 0.85rem",
+                          borderRadius: "var(--radius-sm)",
+                          border: "1px dashed var(--border-strong)",
+                          background: "var(--bg-surface)",
+                          color: "var(--text-secondary)",
+                          fontSize: "var(--text-xs)",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.4rem",
+                          alignSelf: "flex-start",
+                        }}
+                      >
+                        <Eye size={14} />
+                        <span>Comentário oculto por conter spoiler — Clique para revelar</span>
+                      </button>
+                    ) : (
+                      <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", whiteSpace: "pre-line", margin: 0 }}>
+                        {c.texto}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
+
+      {/* Modal de Denúncia (Obra ou Comentário) */}
+      <Modal
+        isOpen={Boolean(reportTarget)}
+        onClose={() => setReportTarget(null)}
+        title={reportTarget?.type === "WORK" ? "Reportar Obra à Moderação" : "Denunciar Comentário"}
+      >
+        <form onSubmit={handleConfirmReport} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            <label style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-secondary)" }}>
+              Motivo da Denúncia
+            </label>
+            <select
+              value={reportMotivo}
+              onChange={(e) => setReportMotivo(e.target.value)}
+              style={{
+                padding: "0.65rem 0.75rem",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-elevated)",
+                color: "var(--text-primary)",
+                fontSize: "var(--text-sm)",
+              }}
+            >
+              <option value="DADOS_FALSOS_OU_DUPLICADOS">Dados Falsos ou Obra Duplicada</option>
+              <option value="SPOILER_NO_TITULO_OU_CAPA">Spoiler sem Aviso</option>
+              <option value="CONTEUDO_IMPROPRIO">Conteúdo Impróprio / Ofensivo</option>
+              <option value="SPAM">Spam ou Propaganda</option>
+              <option value="OUTRO">Outro Motivo</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            <label style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-secondary)" }}>
+              Detalhes Adicionais (Opcional)
+            </label>
+            <textarea
+              value={reportDetalhes}
+              onChange={(e) => setReportDetalhes(e.target.value)}
+              rows={3}
+              placeholder="Descreva brevemente o problema para auxiliar os moderadores..."
+              style={{
+                padding: "0.65rem 0.75rem",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-elevated)",
+                color: "var(--text-primary)",
+                fontSize: "var(--text-sm)",
+                resize: "vertical",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setReportTarget(null)}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" size="sm" isLoading={isSubmittingReport}>
+              Enviar para Moderação
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal de Incorporação */}
       {isIncorporating && (

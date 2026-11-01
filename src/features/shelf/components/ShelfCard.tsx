@@ -15,6 +15,7 @@ import {
   Unlink,
   ExternalLink,
   Trash2,
+  Bookmark,
 } from "lucide-react";
 
 interface ShelfCardProps {
@@ -78,6 +79,32 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
               : `Cap. ${item.progressoAtual || 0} lidos`}
           </span>
         </div>
+
+        {item.marcadorOndeParou && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.3rem",
+              fontSize: "0.7rem",
+              color: "var(--brand-primary)",
+              background: "rgba(99, 102, 241, 0.1)",
+              padding: "0.15rem 0.45rem",
+              borderRadius: "6px",
+              marginTop: "0.15rem",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={`Onde parou: ${item.marcadorOndeParou}`}
+          >
+            <Bookmark size={11} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+              {item.marcadorOndeParou}
+            </span>
+          </div>
+        )}
 
         {/* Barra de Progresso Visual (apenas se o total for conhecido) */}
         {hasTotalCap && (

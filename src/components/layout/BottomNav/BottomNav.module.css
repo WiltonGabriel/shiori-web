@@ -31,8 +31,11 @@
   color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  min-height: var(--touch-target-min);
+  padding: 0.4rem 0.6rem;
+  min-width: 48px;
+  min-height: 48px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   transition: color var(--transition-fast);
 }
 

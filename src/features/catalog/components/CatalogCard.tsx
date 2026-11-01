@@ -15,22 +15,10 @@ interface CatalogCardProps {
 export const CatalogCard: React.FC<CatalogCardProps> = ({ work, onSelectWork }) => {
   const renderSourceBadge = (item: ObraResponse) => {
     const fonte = (item.origemFonte || "").toUpperCase();
-    if (fonte === "MANGADEX" || item.mangadexId) {
-      return <span className={styles.sourceBadgeMangaDex}>[MangaDex]</span>;
+    if (fonte && fonte !== "COMUNIDADE" && fonte !== "MANUAL" && fonte !== "SHIORI") {
+      return <span className={styles.sourceBadgeShiori}>[Conector Externo]</span>;
     }
-    if (fonte === "KITSU" || item.kitsuId) {
-      return <span className={styles.sourceBadgeKitsu}>[Kitsu]</span>;
-    }
-    if (fonte === "OPEN_LIBRARY" || item.isbn) {
-      return <span className={styles.sourceBadgeOpenLib}>[Open Library]</span>;
-    }
-    if (fonte === "ANILIST" || item.anilistId) {
-      return <span className={styles.sourceBadgeAniList}>[AniList]</span>;
-    }
-    if (fonte === "FEDERACAO") {
-      return <span className={styles.sourceBadgeFederacao}>[Federação Mesh]</span>;
-    }
-    return <span className={styles.sourceBadgeShiori}>[Base Interna Shiori]</span>;
+    return <span className={styles.sourceBadgeShiori}>[Acervo Shiori]</span>;
   };
 
   return (

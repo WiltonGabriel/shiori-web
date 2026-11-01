@@ -25,7 +25,7 @@ interface ApiEndpointState {
   closeModal: () => void;
   checkInitialSetup: () => void;
   setLocalMode: () => void;
-  saveEndpoint: (url: string) => void;
+  saveEndpoint: (url: string, closeModalAfter?: boolean) => void;
   resetToDefault: () => void;
   dismissModal: () => void;
   testConnection: (url: string) => Promise<HealthCheckResult>;
@@ -63,17 +63,17 @@ export const useApiEndpointStore = create<ApiEndpointState>((set) => ({
     });
   },
 
-  saveEndpoint: (url: string) => {
+  saveEndpoint: (url: string, closeModalAfter = true) => {
     setOperationModeStorage("connected");
     setCustomApiEndpoint(url);
     const updatedUrl = getApiBaseUrl();
-    set({
+    set((state) => ({
       currentEndpoint: updatedUrl,
       operationMode: "connected",
       isConfigured: true,
-      isModalOpen: false,
+      isModalOpen: closeModalAfter ? false : state.isModalOpen,
       lastCheckResult: null,
-    });
+    }));
   },
 
   resetToDefault: () => {

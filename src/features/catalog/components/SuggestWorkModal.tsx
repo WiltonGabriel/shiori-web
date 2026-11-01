@@ -148,7 +148,7 @@ export const SuggestWorkModal: React.FC<SuggestWorkModalProps> = ({
         <div className={styles.externalSearchSection}>
           <div className={styles.externalSearchHeader}>
             <span className={styles.externalSearchTitle}>
-              Preenchimento Automático via Provedores (AniList, MangaDex, Kitsu, Open Library)
+              Preenchimento Assistido via Conectores do Servidor
             </span>
             <Sparkles size={15} style={{ color: "var(--brand-light)" }} />
           </div>

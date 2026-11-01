@@ -273,19 +273,19 @@ export const HomePage: React.FC = () => {
                 <Button
                   variant="primary"
                   size="md"
-                  onClick={() => navigate("/catalogo")}
+                  onClick={() => navigate(`/catalogo/${currentHighlight.id}`)}
                 >
-                  <Compass size={18} />
-                  <span>Explorar no Catálogo</span>
+                  <BookOpen size={18} />
+                  <span>Ver Detalhes da Obra</span>
                 </Button>
 
                 <Button
                   variant="secondary"
                   size="md"
-                  onClick={() => navigate("/minha-estante")}
+                  onClick={() => navigate("/catalogo")}
                 >
-                  <Bookmark size={18} />
-                  <span>Minha Estante</span>
+                  <Compass size={18} />
+                  <span>Explorar Catálogo</span>
                 </Button>
               </div>
             </div>
@@ -598,7 +598,13 @@ export const HomePage: React.FC = () => {
                   <div className={styles.feedMain}>
                     <div className={styles.feedHeaderRow}>
                       <div className={styles.feedUserLine}>
-                        <span className={styles.feedUsername}>@{item.usuarioApelido}</span>{" "}
+                        <Link
+                          to={`/leitor/${item.usuarioApelido}`}
+                          className={styles.feedUsername}
+                          style={{ textDecoration: "none" }}
+                        >
+                          @{item.usuarioApelido}
+                        </Link>{" "}
                         <span className={styles.feedActionText}>
                           {item.descricao || "atualizou sua estante de leituras"}
                         </span>
@@ -642,17 +648,17 @@ export const HomePage: React.FC = () => {
                         <span>{isLiked ? 1 : 0}</span>
                       </button>
 
-                      <button
-                        type="button"
-                        className={styles.feedActionBtn}
-                        onClick={() =>
-                          toast.info("A funcionalidade de comentários na timeline está ativa!")
-                        }
-                        aria-label="Comentar atividade"
-                      >
-                        <MessageSquare size={14} />
-                        <span>Comentar</span>
-                      </button>
+                      {item.obraId && (
+                        <button
+                          type="button"
+                          className={styles.feedActionBtn}
+                          onClick={() => navigate(`/catalogo/${item.obraId}`)}
+                          aria-label="Comentar na obra"
+                        >
+                          <MessageSquare size={14} />
+                          <span>Discutir Obra</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>

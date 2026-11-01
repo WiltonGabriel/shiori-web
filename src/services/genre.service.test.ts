@@ -63,4 +63,40 @@ describe("GenreService - Taxonomia e Preservação de Gêneros Locais", () => {
     expect(stored.map((g: any) => g.nome)).toContain("Mecha Pessoal");
     expect(stored.map((g: any) => g.nome)).toContain("Fantasia Oficial");
   });
+
+  it("filtra dinamicamente os gêneros pertinentes ao formato da obra (LIVRO vs MANGA)", () => {
+    // 1. Gêneros para LIVRO
+    const bookGenres = GenreService.getGenresForFormat("LIVRO", DEFAULT_GENRES);
+    const bookNames = bookGenres.map((g) => g.nome);
+
+    expect(bookNames).toContain("Romance");
+    expect(bookNames).toContain("Ficção Científica");
+    expect(bookNames).toContain("Não-Ficção");
+    expect(bookNames).toContain("Poesia");
+    expect(bookNames).toContain("Filosofia");
+    expect(bookNames).not.toContain("Shounen");
+    expect(bookNames).not.toContain("Isekai");
+    expect(bookNames).not.toContain("Mecha");
+    expect(bookNames).not.toContain("Slice of Life");
+
+    // 2. Gêneros para MANGA
+    const mangaGenres = GenreService.getGenresForFormat("MANGA", DEFAULT_GENRES);
+    const mangaNames = mangaGenres.map((g) => g.nome);
+
+    expect(mangaNames).toContain("Shounen");
+    expect(mangaNames).toContain("Seinen");
+    expect(mangaNames).toContain("Isekai");
+    expect(mangaNames).toContain("Mecha");
+    expect(mangaNames).not.toContain("Não-Ficção");
+    expect(mangaNames).not.toContain("Poesia");
+    expect(mangaNames).not.toContain("Autoajuda");
+
+    // 3. Gêneros para MANHWA
+    const manhwaGenres = GenreService.getGenresForFormat("MANHWA", DEFAULT_GENRES);
+    const manhwaNames = manhwaGenres.map((g) => g.nome);
+
+    expect(manhwaNames).toContain("Dungeon / Portais");
+    expect(manhwaNames).toContain("Regressão");
+    expect(manhwaNames).toContain("Otome Isekai (Vilã)");
+  });
 });

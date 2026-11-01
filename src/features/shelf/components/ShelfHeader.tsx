@@ -3,8 +3,27 @@ import { Link } from "react-router-dom";
 import styles from "../ShelfPage.module.css";
 import { HorizontalScroller } from "../../../components/ui/HorizontalScroller/HorizontalScroller";
 import { Button } from "../../../components/ui/Button/Button";
-import { Download, Upload, Compass, LayoutGrid, List, Plus } from "lucide-react";
-import { STATUS_TABS, type FilterTab } from "../hooks/useShelf";
+import {
+  Download,
+  Upload,
+  Compass,
+  LayoutGrid,
+  List,
+  Plus,
+  Search,
+  Calendar,
+  Tag,
+  ArrowUpDown,
+  Filter,
+  X,
+} from "lucide-react";
+import {
+  STATUS_TABS,
+  type FilterTab,
+  type ReadingDateFilter,
+  type ShelfSortOption,
+} from "../hooks/useShelf";
+import { TODOS_FORMATOS, TIPO_OBRA_LABELS } from "../../../types/work.types";
 
 interface ShelfHeaderProps {
   activeTab: FilterTab;
@@ -14,7 +33,21 @@ interface ShelfHeaderProps {
   setViewMode: (mode: "grid" | "list") => void;
   onExport: () => void;
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onOpenPortabilityModal?: (initialTab: "EXPORT" | "IMPORT") => void;
   onAddManual?: () => void;
+  searchQuery?: string;
+  onSearchQueryChange?: (q: string) => void;
+  selectedCategory?: string;
+  onCategoryChange?: (c: string) => void;
+  selectedGenreOrTag?: string;
+  onGenreOrTagChange?: (g: string) => void;
+  dateFilter?: ReadingDateFilter;
+  onDateFilterChange?: (d: ReadingDateFilter) => void;
+  specificDate?: string;
+  onSpecificDateChange?: (d: string) => void;
+  sortBy?: ShelfSortOption;
+  onSortByChange?: (s: ShelfSortOption) => void;
+  availableGenresAndTags?: string[];
 }
 
 export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
@@ -25,9 +58,37 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
   setViewMode,
   onExport,
   onImport,
+  onOpenPortabilityModal,
   onAddManual,
+  searchQuery = "",
+  onSearchQueryChange,
+  selectedCategory = "ALL",
+  onCategoryChange,
+  selectedGenreOrTag = "ALL",
+  onGenreOrTagChange,
+  dateFilter = "ALL",
+  onDateFilterChange,
+  specificDate = "",
+  onSpecificDateChange,
+  sortBy = "LAST_READ",
+  onSortByChange,
+  availableGenresAndTags = [],
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) ||
+    selectedCategory !== "ALL" ||
+    selectedGenreOrTag !== "ALL" ||
+    dateFilter !== "ALL";
+
+  const handleClearFilters = () => {
+    onSearchQueryChange?.("");
+    onCategoryChange?.("ALL");
+    onGenreOrTagChange?.("ALL");
+    onDateFilterChange?.("ALL");
+    onSpecificDateChange?.("");
+  };
 
   return (
     <div className={styles.header}>
@@ -54,8 +115,10 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onExport}
-            title="Exportar estante pessoal completa com notas e links privados (.json)"
+            onClick={() =>
+              onOpenPortabilityModal ? onOpenPortabilityModal("EXPORT") : onExport()
+            }
+            title="Abrir pop-up para exportar estante em série ou uma obra individual (.json)"
           >
             <Download size={14} />
             <span>Exportar (.json)</span>
@@ -71,8 +134,12 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            title="Restaurar estante pessoal a partir de um backup .json"
+            onClick={() =>
+              onOpenPortabilityModal
+                ? onOpenPortabilityModal("IMPORT")
+                : fileInputRef.current?.click()
+            }
+            title="Abrir pop-up para importar 1 ou múltiplos backups .json"
           >
             <Upload size={14} />
             <span>Importar (.json)</span>
@@ -130,6 +197,121 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Barra Completa de Busca, Filtros (Categoria, Gênero/Tag, Data Lida) e Ordenação */}
+      {onSearchQueryChange && (
+        <div className="mt-3 p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
+          {/* Busca Rápida */}
+          <div className="lg:col-span-4 relative">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              placeholder="Buscar por título, tag ou onde parou..."
+              aria-label="Buscar na minha estante"
+              className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+            />
+          </div>
+
+          {/* Filtro por Categoria */}
+          <div className="lg:col-span-2 flex items-center gap-1.5">
+            <Filter size={13} className="text-[var(--text-muted)] shrink-0" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => onCategoryChange?.(e.target.value)}
+              aria-label="Filtrar por categoria"
+              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+            >
+              <option value="ALL">Todas as Categorias</option>
+              {TODOS_FORMATOS.map((f) => (
+                <option key={f} value={f}>
+                  {TIPO_OBRA_LABELS[f]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro por Gênero ou Tag */}
+          <div className="lg:col-span-2 flex items-center gap-1.5">
+            <Tag size={13} className="text-[var(--text-muted)] shrink-0" />
+            <select
+              value={selectedGenreOrTag}
+              onChange={(e) => onGenreOrTagChange?.(e.target.value)}
+              aria-label="Filtrar por gênero ou tag"
+              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+            >
+              <option value="ALL">Todos os Gêneros &amp; Tags</option>
+              {availableGenresAndTags.map((gt) => (
+                <option key={gt} value={gt}>
+                  {gt}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro por Data de Leitura */}
+          <div className="lg:col-span-2 flex items-center gap-1.5">
+            <Calendar size={13} className="text-[var(--text-muted)] shrink-0" />
+            <select
+              value={dateFilter}
+              onChange={(e) => onDateFilterChange?.(e.target.value as ReadingDateFilter)}
+              aria-label="Filtrar por data de leitura"
+              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+            >
+              <option value="ALL">Qualquer Data Lida</option>
+              <option value="TODAY">Lido Hoje</option>
+              <option value="LAST_7_DAYS">Últimos 7 Dias</option>
+              <option value="THIS_MONTH">Lido Este Mês</option>
+              <option value="THIS_YEAR">Lido Este Ano</option>
+              <option value="SPECIFIC_DATE">Data Específica...</option>
+            </select>
+          </div>
+
+          {/* Ordenação */}
+          <div className="lg:col-span-2 flex items-center gap-1.5">
+            <ArrowUpDown size={13} className="text-[var(--text-muted)] shrink-0" />
+            <select
+              value={sortBy}
+              onChange={(e) => onSortByChange?.(e.target.value as ShelfSortOption)}
+              aria-label="Ordenar estante"
+              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+            >
+              <option value="LAST_READ">Ordenar: Última Leitura</option>
+              <option value="RATING_DESC">Ordenar: Maior Nota</option>
+              <option value="PROGRESS_DESC">Ordenar: Maior Progresso</option>
+              <option value="TITLE_ASC">Ordenar: Nome (A-Z)</option>
+            </select>
+          </div>
+
+          {dateFilter === "SPECIFIC_DATE" && (
+            <div className="lg:col-span-4 flex items-center gap-2">
+              <span className="text-xs text-[var(--text-secondary)]">Data exata da leitura:</span>
+              <input
+                type="date"
+                value={specificDate}
+                onChange={(e) => onSpecificDateChange?.(e.target.value)}
+                className="px-2.5 py-1.5 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+              />
+            </div>
+          )}
+
+          {hasActiveFilters && (
+            <div className="lg:col-span-12 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent-primary)] hover:underline"
+              >
+                <X size={13} /> Limpar filtros ativos
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

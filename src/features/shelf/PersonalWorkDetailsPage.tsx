@@ -34,9 +34,19 @@ import {
   GitPullRequest,
   Compass,
   X,
+  Download,
+  Crop,
+  Bookmark,
+  Calendar,
+  Upload,
 } from "lucide-react";
 import { WorkService } from "../../services/work.service";
+import { GenreService, type GeneroItem } from "../../services/genre.service";
 import { SuggestEditModal } from "../catalog/components/SuggestEditModal";
+import {
+  ImageWebpCropModal,
+  type CropTargetMode,
+} from "../../components/ui/ImageWebpCropModal/ImageWebpCropModal";
 import type { ObraResponse } from "../../types/work.types";
 
 export const PersonalWorkDetailsPage: React.FC = () => {
@@ -49,7 +59,13 @@ export const PersonalWorkDetailsPage: React.FC = () => {
 
   // Scrubber & fine-tuning state
   const [chapterInput, setChapterInput] = useState<number>(0);
+  const [bookmarkInput, setBookmarkInput] = useState<string>("");
   const [isSavingProgress, setIsSavingProgress] = useState(false);
+
+  // Crop & WebP Modal state
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [cropInitialMode, setCropInitialMode] = useState<CropTargetMode>("AMBOS");
+  const [availableGenres, setAvailableGenres] = useState<GeneroItem[]>([]);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState<"cycles" | "notes">("cycles");
@@ -66,6 +82,25 @@ export const PersonalWorkDetailsPage: React.FC = () => {
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
   const [globalWorkData, setGlobalWorkData] = useState<ObraResponse | null>(null);
 
+  // Auto-Tracking ao retornar da aba de leitura externa
+  const [pendingAutoTrackCap, setPendingAutoTrackCap] = useState<number | null>(null);
+  const [showAutoTrackPrompt, setShowAutoTrackPrompt] = useState(false);
+
+  useEffect(() => {
+    if (pendingAutoTrackCap === null) return;
+    const handleReturnToTab = () => {
+      if (document.visibilityState === "visible") {
+        setShowAutoTrackPrompt(true);
+      }
+    };
+    window.addEventListener("focus", handleReturnToTab);
+    document.addEventListener("visibilitychange", handleReturnToTab);
+    return () => {
+      window.removeEventListener("focus", handleReturnToTab);
+      document.removeEventListener("visibilitychange", handleReturnToTab);
+    };
+  }, [pendingAutoTrackCap]);
+
   // ===================================================================
   // MODO DE EDIÇÃO INTEGRADO DA PÁGINA (Requisitos 2.2, 5.1 e 5.2)
   // ===================================================================
@@ -74,30 +109,62 @@ export const PersonalWorkDetailsPage: React.FC = () => {
 
   // Campos de Metadados da Obra
   const [editTitulo, setEditTitulo] = useState("");
+  const [editTituloOriginal, setEditTituloOriginal] = useState("");
+  const [editSinopse, setEditSinopse] = useState("");
   const [editCapaUrl, setEditCapaUrl] = useState("");
+  const [editBannerUrl, setEditBannerUrl] = useState("");
   const [editTipoObra, setEditTipoObra] = useState("MANGA");
   const [editTotalCapitulos, setEditTotalCapitulos] = useState<number | "">("");
   const [editTotalVolumes, setEditTotalVolumes] = useState<number | "">("");
+  const [editGeneros, setEditGeneros] = useState<string[]>([]);
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editTagInput, setEditTagInput] = useState("");
 
   // Campos de Dados Pessoais de Leitura
   const [editStatusLeitura, setEditStatusLeitura] = useState<StatusLeitura>("LENDO");
   const [editProgressoAtual, setEditProgressoAtual] = useState<number>(0);
   const [editVolumeAtual, setEditVolumeAtual] = useState<number | "">("");
+  const [editMarcadorOndeParou, setEditMarcadorOndeParou] = useState("");
+  const [editDataInicioLeitura, setEditDataInicioLeitura] = useState("");
+  const [editUltimaDataLida, setEditUltimaDataLida] = useState("");
+  const [editDataConclusaoLeitura, setEditDataConclusaoLeitura] = useState("");
   const [editAvaliacaoPessoal, setEditAvaliacaoPessoal] = useState<number>(0);
   const [editAnotacao, setEditAnotacao] = useState("");
   const [editUrlLeitura, setEditUrlLeitura] = useState("");
   const [editSincronizarMetadados, setEditSincronizarMetadados] = useState(true);
 
+  useEffect(() => {
+    GenreService.getGenres().then(setAvailableGenres).catch(() => {});
+  }, []);
+
+  const toDateInputValue = (iso?: string) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  };
+
   const handleEnterEditMode = () => {
     if (!item) return;
     setEditTitulo(item.titulo || item.obraTitulo || "");
+    setEditTituloOriginal(item.tituloOriginal || "");
+    setEditSinopse(item.sinopse || "");
     setEditCapaUrl(item.capaUrl || item.obraCapaUrl || "");
+    setEditBannerUrl(item.bannerUrl || "");
     setEditTipoObra(item.tipoObra || "MANGA");
     setEditTotalCapitulos(item.totalCapitulos !== undefined ? item.totalCapitulos : (item.obraTotalCapitulos ?? ""));
     setEditTotalVolumes(item.totalVolumes !== undefined ? item.totalVolumes : (item.obraTotalVolumes ?? ""));
+    setEditGeneros(item.generos || []);
+    setEditTags(item.tags || []);
     setEditStatusLeitura(item.statusLeitura || "LENDO");
     setEditProgressoAtual(item.progressoAtual || 0);
     setEditVolumeAtual(item.volumeAtual ?? "");
+    setEditMarcadorOndeParou(item.marcadorOndeParou || "");
+    setEditDataInicioLeitura(toDateInputValue(item.dataInicioLeitura));
+    setEditUltimaDataLida(toDateInputValue(item.ultimaDataLida));
+    setEditDataConclusaoLeitura(toDateInputValue(item.dataConclusaoLeitura));
     setEditAvaliacaoPessoal(item.avaliacaoPessoal || 0);
     const lastNote = item.historicosLeitura?.find((h) => h.anotacao)?.anotacao || "";
     setEditAnotacao(lastNote);
@@ -124,12 +191,21 @@ export const PersonalWorkDetailsPage: React.FC = () => {
       setIsSavingEdit(true);
       const updated = await CatalogService.updatePersonalWork(item.id, {
         titulo: cleanTitulo,
+        tituloOriginal: editTituloOriginal.trim() || undefined,
+        sinopse: editSinopse.trim() || undefined,
         capaUrl: editCapaUrl.trim() || undefined,
+        bannerUrl: editBannerUrl.trim() || undefined,
         tipoObra: editTipoObra,
         totalCapitulos: typeof editTotalCapitulos === "number" ? editTotalCapitulos : undefined,
         totalVolumes: typeof editTotalVolumes === "number" ? editTotalVolumes : undefined,
+        generos: editGeneros,
+        tags: editTags,
         progressoAtual: editProgressoAtual,
         volumeAtual: typeof editVolumeAtual === "number" ? editVolumeAtual : undefined,
+        marcadorOndeParou: editMarcadorOndeParou.trim() || undefined,
+        dataInicioLeitura: editDataInicioLeitura ? new Date(editDataInicioLeitura).toISOString() : undefined,
+        ultimaDataLida: editUltimaDataLida ? new Date(editUltimaDataLida).toISOString() : undefined,
+        dataConclusaoLeitura: editDataConclusaoLeitura ? new Date(editDataConclusaoLeitura).toISOString() : undefined,
         statusLeitura: editStatusLeitura,
         avaliacaoPessoal: editAvaliacaoPessoal > 0 ? editAvaliacaoPessoal : undefined,
         anotacao: editAnotacao.trim() || undefined,
@@ -139,6 +215,7 @@ export const PersonalWorkDetailsPage: React.FC = () => {
 
       setItem(updated);
       setChapterInput(updated.progressoAtual || 0);
+      setBookmarkInput(updated.marcadorOndeParou || "");
       setTempUrl(updated.urlLeitura || "");
       setIsEditing(false);
       toast.success("Edição salva com sucesso!", "Obra Atualizada");
@@ -169,6 +246,7 @@ export const PersonalWorkDetailsPage: React.FC = () => {
         if (!isMounted) return;
         setItem(data);
         setChapterInput(data.progressoAtual || 0);
+        setBookmarkInput(data.marcadorOndeParou || "");
         setTempUrl(data.urlLeitura || "");
         setIsLoading(false);
       })
@@ -218,19 +296,134 @@ export const PersonalWorkDetailsPage: React.FC = () => {
     ? Math.min(100, Math.round(((chapterInput || 0) / (totalCaps || 1)) * 100))
     : 0;
 
+  // Helper para URL Inteligente com avanço automático de capítulo
+  const resolveSmartChapterUrl = (rawUrl: string, targetChapter: number): string => {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return "";
+    if (trimmed.includes("{cap}") || trimmed.includes("{chapter}")) {
+      return trimmed
+        .replace(/\{cap\}/gi, String(targetChapter))
+        .replace(/\{chapter\}/gi, String(targetChapter));
+    }
+    const namedChapterRegex = /((?:capitulo|chapter|cap|ch|ep|episodio)[-_=/])(\d+(?:\.\d+)?)/i;
+    if (namedChapterRegex.test(trimmed)) {
+      return trimmed.replace(namedChapterRegex, `$1${targetChapter}`);
+    }
+    const trailingNumberRegex = /(\/|-|c)(\d+)(\/?)$/i;
+    if (trailingNumberRegex.test(trimmed)) {
+      return trimmed.replace(trailingNumberRegex, `$1${targetChapter}$3`);
+    }
+    return trimmed;
+  };
+
+  const handleOpenSmartReader = (targetCap: number) => {
+    if (!item?.urlLeitura) {
+      setIsEditingUrl(true);
+      return;
+    }
+    const smartUrl = resolveSmartChapterUrl(item.urlLeitura, targetCap);
+    window.open(smartUrl, "_blank", "noopener,noreferrer");
+    setPendingAutoTrackCap(targetCap);
+    setShowAutoTrackPrompt(false);
+  };
+
+  const handleConfirmAutoTrack = async () => {
+    if (!item || pendingAutoTrackCap === null) return;
+    try {
+      setIsSavingProgress(true);
+      const totalCapsVal = item.totalCapitulos !== undefined ? item.totalCapitulos : item.obraTotalCapitulos;
+      let nextStatus: StatusLeitura = item.statusLeitura === "PLANEJADO" ? "LENDO" : item.statusLeitura;
+      if (totalCapsVal && totalCapsVal > 0 && pendingAutoTrackCap >= totalCapsVal) {
+        nextStatus = "TERMINOU";
+      }
+
+      const updated = await CatalogService.updateProgress(item.id, {
+        capituloAtual: pendingAutoTrackCap,
+        volumeAtual: item.volumeAtual,
+        statusLeitura: nextStatus,
+      });
+
+      // Se a URL salva continha o número do capítulo anterior (sem placeholder {cap}), avança a URL salva também
+      if (
+        item.urlLeitura &&
+        !item.urlLeitura.includes("{cap}") &&
+        !item.urlLeitura.includes("{chapter}")
+      ) {
+        const nextResolvedUrl = resolveSmartChapterUrl(item.urlLeitura, pendingAutoTrackCap);
+        if (nextResolvedUrl !== item.urlLeitura) {
+          await CatalogService.updatePersonalWork(item.id, { urlLeitura: nextResolvedUrl });
+          updated.urlLeitura = nextResolvedUrl;
+          setTempUrl(nextResolvedUrl);
+        }
+      }
+
+      setItem(updated);
+      setChapterInput(pendingAutoTrackCap);
+      setPendingAutoTrackCap(null);
+      setShowAutoTrackPrompt(false);
+      toast.success(
+        nextStatus === "TERMINOU"
+          ? `Leitura do Cap. ${pendingAutoTrackCap} confirmada! Obra marcada como Concluída!`
+          : `Auto-Tracking: Capítulo ${pendingAutoTrackCap} registrado com sucesso!`,
+        "Progresso Confirmado"
+      );
+    } catch (err: any) {
+      toast.error(err, "Falha ao Confirmar Auto-Tracking");
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
+  const handleStartRereadingCycle = async () => {
+    if (!item) return;
+    try {
+      setIsSavingProgress(true);
+      const updated = await CatalogService.updateProgress(item.id, {
+        capituloAtual: 0,
+        volumeAtual: 0,
+        statusLeitura: "LENDO",
+        anotacao: `Novo ciclo de releitura iniciado (anterior: Cap. ${item.progressoAtual || 0}).`,
+      });
+      setItem(updated);
+      setChapterInput(0);
+      toast.success(
+        "Novo ciclo de releitura iniciado! Seu histórico de leituras anteriores permanece preservado.",
+        "Releitura Iniciada"
+      );
+    } catch (err: any) {
+      toast.error(err, "Falha ao Iniciar Releitura");
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
   // Actions
   const handleQuickIncrement = async () => {
     if (!item) return;
     try {
-      const nextCap = (item.progressoAtual || 0) + 1;
+      const totalCapsVal = item.totalCapitulos !== undefined ? item.totalCapitulos : item.obraTotalCapitulos;
+      const nextCap =
+        totalCapsVal && totalCapsVal > 0
+          ? Math.min(totalCapsVal, (item.progressoAtual || 0) + 1)
+          : (item.progressoAtual || 0) + 1;
+      let nextStatus: StatusLeitura = item.statusLeitura === "PLANEJADO" ? "LENDO" : item.statusLeitura;
+      if (totalCapsVal && totalCapsVal > 0 && nextCap >= totalCapsVal) {
+        nextStatus = "TERMINOU";
+      }
+
       const updated = await CatalogService.updateProgress(item.id, {
         capituloAtual: nextCap,
         volumeAtual: item.volumeAtual,
-        statusLeitura: item.statusLeitura === "PLANEJADO" ? "LENDO" : item.statusLeitura,
+        statusLeitura: nextStatus,
       });
       setItem(updated);
       setChapterInput(nextCap);
-      toast.success(`Avançado para o capítulo ${nextCap}!`, "Progresso Atualizado");
+      toast.success(
+        nextStatus === "TERMINOU" && item.statusLeitura !== "TERMINOU"
+          ? `Capítulo ${nextCap} alcançado! Obra marcada automaticamente como Concluída!`
+          : `Avançado para o capítulo ${nextCap}!`,
+        "Progresso Atualizado"
+      );
     } catch (err: any) {
       toast.error(err, "Falha ao Avançar Capítulo");
     }
@@ -251,12 +444,13 @@ export const PersonalWorkDetailsPage: React.FC = () => {
         capituloAtual: chapterInput,
         volumeAtual: item.volumeAtual,
         statusLeitura: finalStatus,
+        marcadorOndeParou: bookmarkInput,
       });
       setItem(updated);
       toast.success(
         finalStatus === "TERMINOU" && item.statusLeitura !== "TERMINOU"
           ? `Parabéns! Obra concluída no capítulo ${chapterInput} e ciclo registrado automaticamente.`
-          : `Capítulo ${chapterInput} salvo na sua estante.`,
+          : `Progresso salvo (Cap. ${chapterInput}${bookmarkInput.trim() ? ` • ${bookmarkInput.trim()}` : ""}).`,
         "Progresso Atualizado"
       );
     } catch (err: any) {
@@ -363,6 +557,29 @@ export const PersonalWorkDetailsPage: React.FC = () => {
     }
   };
 
+  const handleExportSingleWork = async () => {
+    if (!item) return;
+    try {
+      const data = await CatalogService.exportarObraUnica(item.id);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const safeSlug = (item.titulo || item.obraTitulo || "obra")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `shiori-obra-${safeSlug}-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Backup JSON de "${tituloExibido}" exportado com sucesso!`);
+    } catch (err: any) {
+      toast.error(err, "Falha ao exportar obra");
+    }
+  };
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.ambientGlowPrimary} />
@@ -413,17 +630,15 @@ export const PersonalWorkDetailsPage: React.FC = () => {
             ) : (
               <>
                 {item.urlLeitura ? (
-                  <a
-                    href={item.urlLeitura}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: "none" }}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleOpenSmartReader((item.progressoAtual || 0) + 1)}
+                    title="Abre sua URL de leitura avançando automaticamente para o próximo capítulo e ativa o Auto-Tracking ao retornar"
                   >
-                    <Button variant="primary" size="sm">
-                      <BookOpen size={14} />
-                      <span>Abrir Leitor Privado (Cap. {item.progressoAtual})</span>
-                    </Button>
-                  </a>
+                    <BookOpen size={14} />
+                    <span>Ler Próximo (Cap. {(item.progressoAtual || 0) + 1})</span>
+                  </Button>
                 ) : (
                   <Button
                     variant="primary"
@@ -431,7 +646,7 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                     onClick={() => setIsEditingUrl(true)}
                   >
                     <BookOpen size={14} />
-                    <span>Configurar Leitor Privado</span>
+                    <span>Configurar Link de Leitura</span>
                   </Button>
                 )}
 
@@ -453,6 +668,29 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                 >
                   <Edit size={14} />
                   <span>Editar Obra</span>
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleExportSingleWork}
+                  title="Exportar backup completo (.json) desta obra para importar quando quiser"
+                >
+                  <Download size={14} />
+                  <span>Exportar Obra (Backup)</span>
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setCropInitialMode("AMBOS");
+                    setIsCropModalOpen(true);
+                  }}
+                  title="Recortar e converter Capa (2:3) e Banner (16:9) automaticamente para WebP"
+                >
+                  <Crop size={14} />
+                  <span>Capa &amp; Banner WebP</span>
                 </Button>
 
                 <Button
@@ -553,25 +791,81 @@ export const PersonalWorkDetailsPage: React.FC = () => {
               </div>
 
               <div className={styles.editFieldGroup}>
-                <label className={styles.editLabel}>URL da Imagem de Capa</label>
+                <label className={styles.editLabel}>Título Original (opcional)</label>
+                <input
+                  type="text"
+                  value={editTituloOriginal}
+                  onChange={(e) => setEditTituloOriginal(e.target.value)}
+                  className={styles.editInput}
+                  placeholder="Opcional se o título principal já for o original"
+                />
+              </div>
+
+              <div className={styles.editFieldGroup}>
+                <label className={styles.editLabel}>Sinopse / Descrição da Obra (opcional)</label>
+                <textarea
+                  rows={3}
+                  value={editSinopse}
+                  onChange={(e) => setEditSinopse(e.target.value)}
+                  className={styles.editTextarea}
+                  placeholder="Resumo da história, premissa ou notas descritivas..."
+                />
+              </div>
+
+              <div className={styles.editFieldGroup}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                  <label className={styles.editLabel}>Imagens de Capa (2:3) e Banner (16:9) em WebP</label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setCropInitialMode("AMBOS");
+                      setIsCropModalOpen(true);
+                    }}
+                  >
+                    <Upload size={13} />
+                    <span>Recortar &amp; Converter WebP</span>
+                  </Button>
+                </div>
                 <input
                   type="url"
                   value={editCapaUrl}
                   onChange={(e) => setEditCapaUrl(e.target.value)}
                   className={styles.editInput}
-                  placeholder="https://exemplo.com/capa.jpg"
+                  placeholder="URL da Capa (ou use o botão acima para gerar WebP)"
                 />
-                {editCapaUrl.trim() && (
-                  <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    <img
-                      src={editCapaUrl.trim()}
-                      alt="Preview da capa"
-                      style={{ width: 44, height: 64, objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                    <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>Pré-visualização da capa</span>
+                <input
+                  type="url"
+                  value={editBannerUrl}
+                  onChange={(e) => setEditBannerUrl(e.target.value)}
+                  className={styles.editInput}
+                  style={{ marginTop: "0.35rem" }}
+                  placeholder="URL do Banner 16:9 (ou use o botão acima para gerar WebP)"
+                />
+                {(editCapaUrl.trim() || editBannerUrl.trim()) && (
+                  <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                    {editCapaUrl.trim() && (
+                      <img
+                        src={editCapaUrl.trim()}
+                        alt="Preview da capa"
+                        style={{ width: 44, height: 64, objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                    {editBannerUrl.trim() && (
+                      <img
+                        src={editBannerUrl.trim()}
+                        alt="Preview do banner"
+                        style={{ width: 114, height: 64, objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                    <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>Pré-visualização Capa / Banner</span>
                   </div>
                 )}
               </div>
@@ -617,6 +911,112 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {/* Gêneros Oficiais na Edição */}
+              <div className={styles.editFieldGroup}>
+                <label className={styles.editLabel}>Gêneros Oficiais</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                  {availableGenres.map((g) => {
+                    const active = editGeneros.includes(g.nome);
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() =>
+                          setEditGeneros((prev) =>
+                            prev.includes(g.nome)
+                              ? prev.filter((x) => x !== g.nome)
+                              : [...prev, g.nome]
+                          )
+                        }
+                        style={{
+                          padding: "0.25rem 0.65rem",
+                          borderRadius: "999px",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          border: active
+                            ? "1px solid var(--brand-primary)"
+                            : "1px solid var(--border-subtle)",
+                          background: active
+                            ? "rgba(99, 102, 241, 0.2)"
+                            : "var(--bg-surface-elevated)",
+                          color: active ? "var(--brand-primary)" : "var(--text-secondary)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {active ? `✓ ${g.nome}` : g.nome}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Tags Personalizadas na Edição */}
+              <div className={styles.editFieldGroup}>
+                <label className={styles.editLabel}>Tags Personalizadas</label>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input
+                    type="text"
+                    value={editTagInput}
+                    onChange={(e) => setEditTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") {
+                        e.preventDefault();
+                        const val = editTagInput.trim();
+                        if (val && !editTags.includes(val)) {
+                          setEditTags((prev) => [...prev, val]);
+                        }
+                        setEditTagInput("");
+                      }
+                    }}
+                    className={styles.editInput}
+                    placeholder="Digite uma tag e pressione Enter..."
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const val = editTagInput.trim();
+                      if (val && !editTags.includes(val)) {
+                        setEditTags((prev) => [...prev, val]);
+                      }
+                      setEditTagInput("");
+                    }}
+                  >
+                    + Tag
+                  </Button>
+                </div>
+                {editTags.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.35rem" }}>
+                    {editTags.map((t) => (
+                      <span
+                        key={t}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          padding: "0.15rem 0.55rem",
+                          borderRadius: "999px",
+                          fontSize: "0.72rem",
+                          background: "rgba(16, 185, 129, 0.15)",
+                          color: "#34d399",
+                          border: "1px solid rgba(16, 185, 129, 0.3)",
+                        }}
+                      >
+                        #{t}
+                        <button
+                          type="button"
+                          onClick={() => setEditTags((prev) => prev.filter((x) => x !== t))}
+                          style={{ background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* SEÇÃO 2: DADOS PESSOAIS DE LEITURA */}
@@ -654,6 +1054,38 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                     onChange={(e) => setEditVolumeAtual(e.target.value ? Number(e.target.value) : "")}
                     className={styles.editInput}
                     placeholder="Ex: 1"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.editFieldGroup}>
+                <label className={styles.editLabel}>Marcador Exato de Onde Parou</label>
+                <input
+                  type="text"
+                  value={editMarcadorOndeParou}
+                  onChange={(e) => setEditMarcadorOndeParou(e.target.value)}
+                  className={styles.editInput}
+                  placeholder="Ex.: Pág. 142, Meio do cap. 15, 38%, Antes da luta..."
+                />
+              </div>
+
+              <div className={styles.editTwoCols}>
+                <div className={styles.editFieldGroup}>
+                  <label className={styles.editLabel}>Data de Início da Leitura</label>
+                  <input
+                    type="date"
+                    value={editDataInicioLeitura}
+                    onChange={(e) => setEditDataInicioLeitura(e.target.value)}
+                    className={styles.editInput}
+                  />
+                </div>
+                <div className={styles.editFieldGroup}>
+                  <label className={styles.editLabel}>Data da Última Leitura</label>
+                  <input
+                    type="date"
+                    value={editUltimaDataLida}
+                    onChange={(e) => setEditUltimaDataLida(e.target.value)}
+                    className={styles.editInput}
                   />
                 </div>
               </div>
@@ -739,6 +1171,60 @@ export const PersonalWorkDetailsPage: React.FC = () => {
          * MODO DE VISUALIZAÇÃO MINIMALISTA (Requisito 2.2)
          * =================================================================== */
         <>
+          {/* Banner Panorâmico 16:9 (WebP) no topo da Obra */}
+          {item.bannerUrl && (
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                height: "210px",
+                borderRadius: "var(--radius-xl)",
+                overflow: "hidden",
+                border: "1px solid var(--border-subtle)",
+                marginBottom: "-1.25rem",
+                boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
+              }}
+            >
+              <img
+                src={item.bannerUrl}
+                alt={`Banner de ${tituloExibido}`}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(to top, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.25))",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setCropInitialMode("BANNER");
+                  setIsCropModalOpen(true);
+                }}
+                style={{
+                  position: "absolute",
+                  top: "0.75rem",
+                  right: "0.75rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  padding: "0.35rem 0.7rem",
+                  borderRadius: "var(--radius-md)",
+                  background: "rgba(15, 23, 42, 0.75)",
+                  color: "#fff",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Crop size={13} /> Ajustar Banner WebP
+              </button>
+            </div>
+          )}
+
           {/* 2. Hero Card */}
           <div className={styles.heroCard}>
             <div className={styles.coverContainer}>
@@ -761,7 +1247,14 @@ export const PersonalWorkDetailsPage: React.FC = () => {
             <div className={styles.heroContent}>
               <div className={styles.titleArea}>
                 <div className={styles.titleHeaderRow}>
-                  <h1 className={styles.workTitle}>{tituloExibido}</h1>
+                  <div>
+                    <h1 className={styles.workTitle}>{tituloExibido}</h1>
+                    {item.tituloOriginal && item.tituloOriginal !== tituloExibido && (
+                      <p style={{ margin: "0.15rem 0 0", fontSize: "0.82rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                        Título original: {item.tituloOriginal}
+                      </p>
+                    )}
+                  </div>
                   {item.volumeAtual !== undefined && (
                     <span className={styles.percentPill}>
                       Vol. {item.volumeAtual}{totalVols ? ` / ${totalVols}` : ""} em andamento
@@ -795,7 +1288,33 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                       ))}
                     </div>
                   )}
+                  {item.tags && item.tags.length > 0 && (
+                    <div style={{ display: "inline-flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                      {item.tags.map((t) => (
+                        <span
+                          key={t}
+                          style={{
+                            fontSize: "0.72rem",
+                            padding: "0.15rem 0.5rem",
+                            borderRadius: "12px",
+                            background: "rgba(16, 185, 129, 0.12)",
+                            color: "#34d399",
+                            border: "1px solid rgba(16, 185, 129, 0.28)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {item.sinopse && (
+                  <p style={{ margin: "0.5rem 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    {item.sinopse}
+                  </p>
+                )}
 
                 <div className={styles.authorMeta}>
                   <span>{item.tipoObra || "Obra"}</span>
@@ -812,6 +1331,56 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {/* Prompt de Auto-Tracking ao Retornar da Aba de Leitura */}
+              {showAutoTrackPrompt && pendingAutoTrackCap !== null && (
+                <div
+                  style={{
+                    padding: "0.85rem 1rem",
+                    borderRadius: "var(--radius-md)",
+                    background: "rgba(99, 102, 241, 0.12)",
+                    border: "1px solid var(--brand-primary)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                    <BookOpen size={18} style={{ color: "var(--brand-primary)" }} />
+                    <div>
+                      <strong style={{ fontSize: "var(--text-xs)", color: "var(--text-primary)", display: "block" }}>
+                        Auto-Tracking: Você avançou na leitura do Capítulo {pendingAutoTrackCap}?
+                      </strong>
+                      <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                        Confirme com 1 clique para atualizar seu progresso e o link salvo automaticamente.
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleConfirmAutoTrack}
+                      isLoading={isSavingProgress}
+                    >
+                      <Check size={14} />
+                      <span>Confirmar Cap. {pendingAutoTrackCap}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowAutoTrackPrompt(false);
+                        setPendingAutoTrackCap(null);
+                      }}
+                    >
+                      <span>Ainda não</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Scrubber Module */}
               <div className={styles.scrubberCard}>
@@ -878,8 +1447,69 @@ export const PersonalWorkDetailsPage: React.FC = () => {
                       <Check size={14} />
                       <span>Salvar Progresso</span>
                     </Button>
+
+                    {(item.statusLeitura === "TERMINOU" || (item.progressoAtual || 0) > 0) && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleStartRereadingCycle}
+                        isLoading={isSavingProgress}
+                        title="Inicia uma releitura zerando o capítulo atual, mas mantendo todos os ciclos anteriores salvos no histórico"
+                      >
+                        <History size={14} />
+                        <span>Iniciar Releitura</span>
+                      </Button>
+                    )}
                   </div>
 
+                  {/* Marcador Exato de Onde Parou + Datas de Leitura */}
+                  <div
+                    style={{
+                      marginTop: "0.65rem",
+                      paddingTop: "0.65rem",
+                      borderTop: "1px solid var(--border-subtle)",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1, minWidth: "240px" }}>
+                      <Bookmark size={14} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
+                      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                        Onde parou:
+                      </span>
+                      <input
+                        type="text"
+                        value={bookmarkInput}
+                        onChange={(e) => setBookmarkInput(e.target.value)}
+                        placeholder="Ex.: Pág. 142, Meio do cap. 15, 38%, Antes da luta..."
+                        style={{
+                          flex: 1,
+                          padding: "0.3rem 0.6rem",
+                          borderRadius: "var(--radius-md)",
+                          border: "1px solid var(--border-subtle)",
+                          background: "var(--bg-surface)",
+                          color: "var(--text-primary)",
+                          fontSize: "0.75rem",
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                      {item.dataInicioLeitura && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                          <Calendar size={12} /> Início: {new Date(item.dataInicioLeitura).toLocaleDateString("pt-BR")}
+                        </span>
+                      )}
+                      {item.ultimaDataLida && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "var(--brand-primary)", fontWeight: 600 }}>
+                          <Calendar size={12} /> Última leitura: {new Date(item.ultimaDataLida).toLocaleDateString("pt-BR")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1198,6 +1828,31 @@ export const PersonalWorkDetailsPage: React.FC = () => {
           onClose={() => setIsSuggestModalOpen(false)}
         />
       )}
+
+      <ImageWebpCropModal
+        isOpen={isCropModalOpen}
+        onClose={() => setIsCropModalOpen(false)}
+        initialImageUrl={isEditing ? editCapaUrl || editBannerUrl : capaExibida || item.bannerUrl || ""}
+        initialMode={cropInitialMode}
+        onApply={async ({ capaWebp, bannerWebp }) => {
+          if (isEditing) {
+            if (capaWebp) setEditCapaUrl(capaWebp);
+            if (bannerWebp) setEditBannerUrl(bannerWebp);
+            toast.success("Imagem recortada em WebP pronta para salvar!");
+          } else {
+            try {
+              const updated = await CatalogService.updatePersonalWork(item.id, {
+                ...(capaWebp ? { capaUrl: capaWebp } : {}),
+                ...(bannerWebp ? { bannerUrl: bannerWebp } : {}),
+              });
+              setItem(updated);
+              toast.success("Capa/Banner atualizados e otimizados em WebP!");
+            } catch (err: any) {
+              toast.error(err, "Erro ao salvar imagem WebP");
+            }
+          }
+        }}
+      />
     </div>
   );
 };

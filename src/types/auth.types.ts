@@ -3,13 +3,14 @@ import type { TipoObra } from "./work.types";
 export type UserRole = "ROLE_USER" | "ROLE_ADMIN" | "ROLE_CURADOR";
 
 export interface LoginRequest {
-  email: string;
+  email?: string;
+  apelido?: string;
   senha: string;
   lembrarDeMim?: boolean;
 }
 
 export interface RegistroRequest {
-  email: string;
+  email?: string;
   senha: string;
   apelido: string;
 }

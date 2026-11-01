@@ -238,5 +238,44 @@ describe("LocalShelfRepository (Modo 100% Local / Soberania do Leitor)", () => {
 
     expect(editado.generos).toEqual(["Fantasia", "Comédia", "Aventura"]);
   });
+
+  it("persiste e exporta/importa tags, bannerUrl WebP, tituloOriginal, sinopse, marcadorOndeParou e datas de leitura", () => {
+    const item = LocalShelfRepository.add({
+      titulo: "Omniscient Reader's Viewpoint",
+      tituloOriginal: "Jeonjijeok Dokja Sijeom",
+      sinopse: "Apenas um leitor conhece o fim do mundo.",
+      tipoObra: "WEB_NOVEL",
+      statusLeitura: "LENDO",
+      capituloAtual: 188,
+      marcadorOndeParou: "Meio do cap. 188 (pág. 42)",
+      capaUrl: "data:image/webp;base64,UklGRcapa",
+      bannerUrl: "data:image/webp;base64,UklGRbanner",
+      generos: ["Ação", "Fantasia"],
+      tags: ["Constelações", "Apocalipse"],
+    });
+
+    expect(item.tituloOriginal).toBe("Jeonjijeok Dokja Sijeom");
+    expect(item.sinopse).toBe("Apenas um leitor conhece o fim do mundo.");
+    expect(item.marcadorOndeParou).toBe("Meio do cap. 188 (pág. 42)");
+    expect(item.bannerUrl).toContain("data:image/webp");
+    expect(item.tags).toEqual(["Constelações", "Apocalipse"]);
+    expect(item.dataInicioLeitura).toBeDefined();
+    expect(item.ultimaDataLida).toBeDefined();
+    expect(LocalShelfRepository.getAllTags()).toEqual(["Apocalipse", "Constelações"]);
+
+    const singleExport = LocalShelfRepository.exportItemsByIds([item.id]);
+    expect(singleExport.totalItens).toBe(1);
+    expect(singleExport.itens[0].bannerUrl).toBe("data:image/webp;base64,UklGRbanner");
+    expect(singleExport.itens[0].marcadorOndeParou).toBe("Meio do cap. 188 (pág. 42)");
+    expect(singleExport.itens[0].tags).toEqual(["Constelações", "Apocalipse"]);
+
+    localStorage.clear();
+    LocalShelfRepository.importData({ itens: singleExport.itens });
+    const reimported = LocalShelfRepository.getAll()[0];
+    expect(reimported.tituloOriginal).toBe("Jeonjijeok Dokja Sijeom");
+    expect(reimported.bannerUrl).toBe("data:image/webp;base64,UklGRbanner");
+    expect(reimported.marcadorOndeParou).toBe("Meio do cap. 188 (pág. 42)");
+    expect(reimported.tags).toEqual(["Constelações", "Apocalipse"]);
+  });
 });
 

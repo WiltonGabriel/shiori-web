@@ -114,6 +114,22 @@ export class FormatPreferencesRepository {
   }
 
   /**
+   * Retorna estritamente os formatos habilitados pelo usuário nas suas preferências.
+   * Se o usuário definiu formatos em EXCLUDE, eles são omitidos na seleção inicial de adição.
+   */
+  public static getAllowedFormatsForCreation(userExplicitFormats?: string[]): TipoObra[] {
+    if (userExplicitFormats && userExplicitFormats.length > 0) {
+      const set = new Set(userExplicitFormats.map((f) => f.toUpperCase()));
+      const filtered = TODOS_FORMATOS.filter((f) => set.has(f.toUpperCase()));
+      if (filtered.length > 0) return filtered;
+    }
+
+    const prefs = this.getPreferences();
+    const allowed = TODOS_FORMATOS.filter((f) => prefs[f] !== "EXCLUDE");
+    return allowed.length > 0 ? allowed : [...TODOS_FORMATOS];
+  }
+
+  /**
    * Avalia se uma obra de determinado formato deve ser exibida.
    * Regra estrita de produto:
    * 1. Se for busca manual por texto (isManualSearch = true), SEMPRE exibe (não impede busca direta).

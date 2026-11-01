@@ -15,12 +15,6 @@ export const STORAGE_KEY_OPERATION_MODE = "shiori_operation_mode";
 export type OperationMode = "local" | "connected";
 
 export const getOperationMode = (): OperationMode => {
-  if (typeof window !== "undefined") {
-    const mode = localStorage.getItem(STORAGE_KEY_OPERATION_MODE);
-    if (mode === "local" || mode === "connected") {
-      return mode;
-    }
-  }
   return "connected";
 };
 

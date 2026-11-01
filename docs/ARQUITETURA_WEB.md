@@ -1,76 +1,48 @@
-# Arquitetura do Cliente Web (Shiori Web)
+# Arquitetura do Shiori Web
 
-Este documento detalha as decisões técnicas, padrões de projeto e o fluxo de dados do cliente front-end oficial do **Shiori**.
+Documento técnico objetivo descrevendo os módulos, persistência local e fluxos do front-end **Shiori Web**.
 
----
-
-## 1. Princípios Arquiteturais e Desacoplamento
-
-O **Shiori Web** é uma Single Page Application (SPA) construída sob a premissa de **total desacoplamento do back-end**:
-
-1. **Independência de Hospedagem:**
-   - O front-end consiste em arquivos estáticos (HTML, JS, CSS) servidos por Nginx ou qualquer CDN/hospedagem estática (Vercel, Cloudflare Pages, GitHub Pages).
-   - O código não requer recompilação para apontar para uma API diferente.
-2. **Seletor de API em Tempo de Execução:**
-   - A URL base do Hub Shiori (API) é resolvida dinamicamente a cada requisição HTTP através de uma hierarquia de prioridades controlada pelo usuário e pelo ambiente.
-3. **Soberania do Leitor e Resiliência:**
-   - Se o Hub estiver inacessível, o leitor não perde o acesso às interfaces da sua estante nem às ferramentas locais de importação/exportação.
+> Para o contexto completo de produto e diretrizes para agentes de IA, consulte [`docs/AI_CONTEXT_MEMORY.md`](AI_CONTEXT_MEMORY.md).
 
 ---
 
-## 2. Hierarquia de Resolução do Endpoint da API
+## 1. Persistência Soberana (`LocalShelfRepository`)
 
-No módulo [`src/services/api/httpClient.ts`](../src/services/api/httpClient.ts), a função `getApiBaseUrl()` adota a seguinte ordem de precedência estrita:
+O núcleo do **Shiori Web** é a estante pessoal gerenciada por [`src/services/storage/localShelfRepository.ts`](../src/services/storage/localShelfRepository.ts) na chave `shiori_local_shelf_v1` do `localStorage`:
 
-```
-┌──────────────────────────────────────────────────────────┐
-│ 1. Prioridade Máxima: Escolha do Usuário (localStorage)  │
-│    Chave: "shiori_api_endpoint"                          │
-└────────────────────────────┬─────────────────────────────┘
-                             │ (Se ausente)
-                             ▼
-┌──────────────────────────────────────────────────────────┐
-│ 2. Variável de Runtime Injetada no Container             │
-│    window.__ENV__.VITE_API_BASE_URL (Portainer / Nginx)  │
-└────────────────────────────┬─────────────────────────────┘
-                             │ (Se ausente)
-                             ▼
-┌──────────────────────────────────────────────────────────┐
-│ 3. Variável de Build Vite (.env local)                   │
-│    import.meta.env.VITE_API_BASE_URL                     │
-└────────────────────────────┬─────────────────────────────┘
-                             │ (Se ausente)
-                             ▼
-┌──────────────────────────────────────────────────────────┐
-│ 4. Fallback Padrão: http://localhost:8080                │
-└──────────────────────────────────────────────────────────┘
-```
-
-### Interceptor Dinâmico do Axios
-Todas as chamadas do `httpClient` interceptam requisições ativas e atribuem dinamicamente `config.baseURL = getApiBaseUrl()`, permitindo troca instantânea de Hub sem necessidade de recarregar a página.
+- Armazena todos os metadados e registros de leitura da obra:
+  - Identificação e formato: `tipoObra` (`MANGA`, `MANHWA`, `MANHUA`, `LIGHT_NOVEL`, `WEB_NOVEL`, `LIVRO`, `COMIC`), `titulo`, `tituloOriginal` (opcional) e `sinopse` (opcional).
+  - Imagens otimizadas: `capaUrl` (2:3 em WebP) e `bannerUrl` (16:9 em WebP).
+  - Progresso e datas: `progressoAtual`, `volumeAtual`, `marcadorOndeParou` (página, trecho, porcentagem), `dataInicioLeitura`, `ultimaDataLida` e `dataConclusaoLeitura`.
+  - Classificação: `generos` (lista de gêneros oficiais) e `tags` (tags livres criadas pelo leitor).
+  - Ciclos de leitura: `historicosLeitura` (mantém todos os ciclos de leitura e releitura sem duplicar registros idênticos).
+- Quando o usuário se conecta a uma instância da **Shiori API** com seu `Apelido + Senha`, [`CatalogService.syncLocalShelfToRemote()`](../src/services/catalog.service.ts) sincroniza os itens locais com o servidor.
 
 ---
 
-## 3. Modal de Conexão e Boas-Vindas (`ApiEndpointSetupModal`)
+## 2. Principais Módulos da Estante (`src/features/shelf/`)
 
-Ao inicializar o Shiori Web:
-1. Se nenhuma URL de API estiver explicitamente configurada (isto é, ausente no `localStorage` e nas variáveis de ambiente), o modal de boas-vindas é exibido automaticamente.
-2. O modal permite:
-   - Digitar o endereço de qualquer instância pública ou privada da Shiori API.
-   - Executar um teste ativo de conexão via `GET /actuator/health` exibindo status e latência em milissegundos.
-   - Salvar e conectar imediatamente ou continuar com o localhost padrão.
-3. O usuário pode reabrir o seletor a qualquer instante clicando no ícone do Servidor na barra de navegação superior (`Navbar`).
+1. **Estúdio de Recorte e Conversão WebP (`src/components/ui/ImageWebpCropModal/ImageWebpCropModal.tsx`):**
+   - Aceita upload de arquivo, colagem da área de transferência (`Ctrl+V`) ou URL.
+   - Permite ajustar zoom e enquadramento em HTML5 Canvas para **Capa (2:3)** e **Banner (16:9)**, convertendo automaticamente para `.webp` (`canvas.toDataURL("image/webp", quality)`).
+2. **Criação Manual (`AddWorkToShelfModal.tsx`):**
+   - Seleção de categoria logo no topo, busca assistida opcional, recorte de Capa/Banner WebP, marcador exato de onde parou, datas de leitura, 30 gêneros oficiais em chips e tags temáticas com autocompletar.
+3. **Detalhes Pessoais da Obra (`PersonalWorkDetailsPage.tsx`):**
+   - Exibe o Banner 16:9 WebP no topo, Capa 2:3, título original, sinopse, gêneros e `#tags`.
+   - Scrubber de capítulos com edição rápida de **Onde Parou**, botão de **Iniciar Releitura** e botão de **Exportar Obra (Backup)** individual.
+   - **URL Inteligente & Auto-Tracking:** Resolve placeholders `{cap}` ou incrementa números de capítulo na URL privada; ao retornar da aba externa de leitura, exibe confirmação rápida para salvar o capítulo lido.
+4. **Central de Portabilidade em Série ou Individual (`ShelfPortabilityModal.tsx`):**
+   - Permite exportar toda a estante, selecionar obras específicas com checkboxes (em arquivo único `.json` ou arquivos `.json` separados por obra) ou exportar 1 obra específica.
+   - Permite importar 1 ou múltiplos arquivos `.json` simultaneamente com pré-visualização das obras antes de confirmar.
+5. **Filtros e Ordenação (`domain/shelfFilters.ts` e `components/ShelfHeader.tsx`):**
+   - Filtra por aba de status, busca textual (título, título original, tag, onde parou), categoria, gênero/tag e data de leitura (`Hoje`, `Últimos 7 dias`, `Este mês`, `Este ano` ou data exata), com ordenação por última leitura, nota, progresso ou nome.
 
 ---
 
-## 4. Engenharia de Software: Clean Code & SOLID (Uncle Bob)
+## 3. Resolução Dinâmica do Servidor (`httpClient.ts`)
 
-Todos os componentes e hooks do Shiori Web seguem rigorosamente o **Princípio da Responsabilidade Única (SRP)**:
-
-- **Hooks Especializados:** Hooks de busca, paginação, filtros e mutações residem em diretórios dedicados (`hooks/`), separados da apresentação visual.
-- **Componentes Atômicos:** Modais e listas são quebrados em submódulos coesos (ex: `ShelfTable`, `ShelfGrid`, `ShelfCard`, `ShelfEditModal`, `ShelfCloseCycleModal`).
-- **Isolamento de Estado com Zustand:**
-  - `authStore`: Gerencia autenticação, token JWT e sessão do usuário.
-  - `apiEndpointStore`: Controla o endpoint ativo, testes de latência e visibilidade do modal seletor.
-  - `themeStore`: Alternância dinâmica entre temas escuro e claro.
-  - `toastStore`: Notificações fluidas e não bloqueantes.
+A URL da Shiori API é resolvida dinamicamente em [`src/services/api/httpClient.ts`](../src/services/api/httpClient.ts) na seguinte ordem:
+1. Escolha manual do usuário salva no navegador (`localStorage["shiori_api_endpoint"]`).
+2. Variável de runtime do container Docker (`window.__ENV__.VITE_API_BASE_URL`).
+3. Variável `.env` de build (`import.meta.env.VITE_API_BASE_URL`).
+4. Fallback local: `http://localhost:8080`.

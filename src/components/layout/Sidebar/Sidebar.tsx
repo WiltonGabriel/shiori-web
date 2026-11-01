@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.css";
 import { useAuthStore } from "../../../store/authStore";
+import { getApiBaseUrl } from "../../../services/api/httpClient";
 import { Home, Compass, Bookmark, User, Settings, ShieldAlert } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
@@ -65,15 +66,16 @@ export const Sidebar: React.FC = () => {
       )}
 
       {isAdmin && (
-        <NavLink
-          to="/admin"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.active : ""}`
-          }
+        <a
+          href={`${getApiBaseUrl()}/admin/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.navLink}
+          title="Abrir Painel Administrativo Oficial da Shiori API"
         >
           <ShieldAlert size={18} />
           <span>Painel Admin</span>
-        </NavLink>
+        </a>
       )}
     </aside>
   );

@@ -8,16 +8,15 @@ import { WorkDetailsPage } from "./features/catalog/WorkDetailsPage";
 import { ShelfPage } from "./features/shelf/ShelfPage";
 import { PersonalWorkDetailsPage } from "./features/shelf/PersonalWorkDetailsPage";
 import { ProfilePage } from "./features/profile/ProfilePage";
+import { ReaderProfilePage } from "./features/profile/ReaderProfilePage";
 import { SettingsPage } from "./features/profile/SettingsPage";
-import { AdminDashboardPage } from "./features/admin/AdminDashboardPage";
 import { NotFoundPage } from "./features/notFound/NotFoundPage";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { useAuthStore } from "./store/authStore";
 import { useBroadcastStore } from "./store/broadcastStore";
 import { BroadcastService } from "./services/broadcast.service";
-
 import { ProtectedRoute } from "./components/guards/ProtectedRoute";
-import { AdminRoleRoute } from "./components/guards/AdminRoleRoute";
+import { getApiBaseUrl, isLocalMode } from "./services/api/httpClient";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +27,12 @@ const queryClient = new QueryClient({
   },
 });
 
-import { isLocalMode } from "./services/api/httpClient";
+const OfficialAdminRedirect: React.FC = () => {
+  useEffect(() => {
+    window.location.href = `${getApiBaseUrl().replace(/\/+$/, "")}/admin/`;
+  }, []);
+  return null;
+};
 
 export const App: React.FC = () => {
   const { initAuth } = useAuthStore();
@@ -37,7 +41,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     initAuth();
 
-    // Carregar comunicados ativos do sistema apenas se não for modo puramente local
     if (!isLocalMode()) {
       BroadcastService.getActiveBroadcasts()
         .then((data) => setBroadcasts(data))
@@ -56,6 +59,8 @@ export const App: React.FC = () => {
               <Route path="catalogo/:id" element={<WorkDetailsPage />} />
               <Route path="obras/:id" element={<WorkDetailsPage />} />
               <Route path="explorar" element={<Navigate to="/catalogo" replace />} />
+              <Route path="leitor/:username" element={<ReaderProfilePage />} />
+              <Route path="perfil/:username" element={<ReaderProfilePage />} />
 
               {/* Rotas Protegidas de Leitor */}
               <Route element={<ProtectedRoute />}>
@@ -69,10 +74,8 @@ export const App: React.FC = () => {
                 <Route path="configuracoes" element={<SettingsPage />} />
               </Route>
 
-              {/* Rota Protegida de Governança e Administração */}
-              <Route element={<AdminRoleRoute />}>
-                <Route path="admin" element={<AdminDashboardPage />} />
-              </Route>
+              {/* Redirecionamento para o Painel Administrativo Oficial na Shiori API */}
+              <Route path="admin" element={<OfficialAdminRedirect />} />
 
               {/* Página 404 para qualquer rota não mapeada */}
               <Route path="*" element={<NotFoundPage />} />
@@ -85,4 +88,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-

@@ -14,6 +14,7 @@ import { ShelfCard } from "./components/ShelfCard";
 import { ShelfTable } from "./components/ShelfTable";
 import { ShelfEditModal } from "./components/ShelfEditModal";
 import { AddWorkToShelfModal } from "./components/AddWorkToShelfModal";
+import { ShelfPortabilityModal } from "./components/ShelfPortabilityModal";
 import { Plus } from "lucide-react";
 
 export const ShelfPage: React.FC = () => {
@@ -23,6 +24,7 @@ export const ShelfPage: React.FC = () => {
   );
 
   const {
+    items,
     filteredItems,
     isLoading,
     loadError,
@@ -31,6 +33,19 @@ export const ShelfPage: React.FC = () => {
     tabCounts,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    selectedGenreOrTag,
+    setSelectedGenreOrTag,
+    dateFilter,
+    setDateFilter,
+    specificDate,
+    setSpecificDate,
+    sortBy,
+    setSortBy,
+    availableShelfGenresAndTags,
     loadShelf,
     handleQuickIncrement,
     handleUpdateMetaCapitulos,
@@ -44,6 +59,7 @@ export const ShelfPage: React.FC = () => {
   // Estados dos Modais
   const [editingItem, setEditingItem] = useState<ItemCatalogoResponse | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [portabilityModalTab, setPortabilityModalTab] = useState<"EXPORT" | "IMPORT" | null>(null);
 
   return (
     <div className={styles.pageContainer}>
@@ -55,7 +71,21 @@ export const ShelfPage: React.FC = () => {
         setViewMode={setViewMode}
         onExport={exportShelf}
         onImport={importShelf}
+        onOpenPortabilityModal={(tab) => setPortabilityModalTab(tab)}
         onAddManual={() => setIsAddModalOpen(true)}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        selectedGenreOrTag={selectedGenreOrTag}
+        onGenreOrTagChange={setSelectedGenreOrTag}
+        dateFilter={dateFilter}
+        onDateFilterChange={setDateFilter}
+        specificDate={specificDate}
+        onSpecificDateChange={setSpecificDate}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        availableGenresAndTags={availableShelfGenresAndTags}
       />
 
       {isLoading ? (
@@ -133,6 +163,14 @@ export const ShelfPage: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onWorkAdded={() => loadShelf()}
+      />
+
+      <ShelfPortabilityModal
+        isOpen={portabilityModalTab !== null}
+        onClose={() => setPortabilityModalTab(null)}
+        initialTab={portabilityModalTab || "EXPORT"}
+        shelfItems={items}
+        onImported={() => loadShelf()}
       />
     </div>
   );

@@ -119,4 +119,56 @@ export class WorkService {
     const response = await api.post(`/obras/${obraId}/sugestoes-edicao`, data);
     return response.data;
   }
+
+  public static async listComments(
+    obraId: number,
+    pagina: number = 0,
+    tamanho: number = 20
+  ): Promise<PaginatedResponse<{
+    id: number;
+    autorId: number | null;
+    autorApelido: string;
+    autorAvatarUrl?: string | null;
+    texto: string;
+    contemSpoiler: boolean;
+    dataCriacao: string;
+  }>> {
+    const response = await api.get(`/obras/${obraId}/comentarios`, {
+      params: { pagina, tamanho },
+    });
+    return response.data;
+  }
+
+  public static async createComment(
+    obraId: number,
+    data: { texto: string; contemSpoiler: boolean }
+  ): Promise<{
+    id: number;
+    autorId: number | null;
+    autorApelido: string;
+    autorAvatarUrl?: string | null;
+    texto: string;
+    contemSpoiler: boolean;
+    dataCriacao: string;
+  }> {
+    const response = await api.post(`/obras/${obraId}/comentarios`, data);
+    return response.data;
+  }
+
+  public static async reportComment(
+    obraId: number,
+    comentarioId: number,
+    data: { motivo: string; detalhes?: string }
+  ): Promise<any> {
+    const response = await api.post(`/obras/${obraId}/comentarios/${comentarioId}/denuncias`, data);
+    return response.data;
+  }
+
+  public static async reportWork(
+    obraId: number,
+    data: { motivo: string; detalhes?: string }
+  ): Promise<any> {
+    const response = await api.post(`/obras/${obraId}/denuncias`, data);
+    return response.data;
+  }
 }

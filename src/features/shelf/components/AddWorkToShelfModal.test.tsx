@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AddWorkToShelfModal } from "./AddWorkToShelfModal";
 import { CatalogService } from "../../../services/catalog.service";
 import { WorkService } from "../../../services/work.service";
+import { FormatPreferencesRepository } from "../../../services/storage/formatPreferencesRepository";
 import * as httpClient from "../../../services/api/httpClient";
 
 vi.mock("../../../services/catalog.service", () => ({
@@ -24,6 +25,7 @@ vi.mock("../../../services/genre.service", () => ({
       { id: 1, nome: "Ação" },
       { id: 2, nome: "Fantasia" },
     ]),
+    getGenresForFormat: vi.fn().mockImplementation((_format, genres) => genres || []),
   },
 }));
 
@@ -43,6 +45,50 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("exibe primeiro o seletor de formato e avança para o formulário ao escolher um formato", () => {
+    render(
+      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+    );
+
+    expect(screen.getByText("Adicionar Obra — Escolha o Formato")).toBeDefined();
+    expect(screen.getByText(/1\. Qual é a categoria da obra que você está adicionando\?/i)).toBeDefined();
+
+    // Deve conter os cards de formatos literários
+    const mangaCard = screen.getByRole("button", { name: /mangá/i });
+    expect(mangaCard).toBeDefined();
+
+    // Clica no card Mangá para ir ao formulário
+    fireEvent.click(mangaCard);
+
+    // Agora o formulário é exibido com o banner de formato selecionado
+    expect(screen.getByText(/Formato Selecionado:/i)).toBeDefined();
+    expect(screen.getByLabelText(/Título Principal \*/i)).toBeDefined();
+
+    // Botão de trocar formato permite voltar ao passo 1
+    const trocarBtn = screen.getByRole("button", { name: /trocar formato da obra/i });
+    fireEvent.click(trocarBtn);
+    expect(screen.getByText("Adicionar Obra — Escolha o Formato")).toBeDefined();
+  });
+
+  it("filtra formatos excluídos nas preferências de leitura do usuário", () => {
+    vi.spyOn(FormatPreferencesRepository, "getAllowedFormatsForCreation").mockReturnValueOnce([
+      "LIVRO",
+      "COMIC",
+    ]);
+
+    render(
+      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+    );
+
+    // Formatos permitidos aparecem
+    expect(screen.getByRole("button", { name: /livro/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /comic/i })).toBeDefined();
+
+    // Formatos não permitidos NÃO devem aparecer
+    expect(screen.queryByRole("button", { name: /mangá/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /manhwa/i })).toBeNull();
+  });
+
   it("renderiza campos do formulário e permite adicionar obra com total de capítulos em branco", async () => {
     vi.mocked(CatalogService.addItemToShelf).mockResolvedValueOnce({
       id: 1,
@@ -57,10 +103,15 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     });
 
     render(
-      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+      <AddWorkToShelfModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onWorkAdded={mockOnWorkAdded}
+        initialFormat="MANGA"
+      />
     );
 
-    expect(screen.getByText("Adicionar Obra à Minha Estante")).toBeDefined();
+    expect(screen.getByText(/Adicionar Mangá à Minha Estante/i)).toBeDefined();
 
     const titleInput = screen.getByLabelText(/Título Principal \*/i);
     fireEvent.change(titleInput, { target: { value: "Frieren" } });
@@ -105,7 +156,12 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     });
 
     render(
-      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+      <AddWorkToShelfModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onWorkAdded={mockOnWorkAdded}
+        initialFormat="MANHWA"
+      />
     );
 
     const titleInput = screen.getByLabelText(/Título Principal \*/i);
@@ -143,7 +199,12 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     vi.mocked(WorkService.createWork).mockRejectedValueOnce(new Error("API 500"));
 
     render(
-      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+      <AddWorkToShelfModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onWorkAdded={mockOnWorkAdded}
+        initialFormat="MANHWA"
+      />
     );
 
     const titleInput = screen.getByLabelText(/Título Principal \*/i);
@@ -186,7 +247,12 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     });
 
     render(
-      <AddWorkToShelfModal isOpen={true} onClose={mockOnClose} onWorkAdded={mockOnWorkAdded} />
+      <AddWorkToShelfModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onWorkAdded={mockOnWorkAdded}
+        initialFormat="MANHWA"
+      />
     );
 
     const titleInput = screen.getByLabelText(/Título Principal \*/i);
@@ -218,4 +284,5 @@ describe("AddWorkToShelfModal - Fluxo Unificado de Adição e Proposta", () => {
     expect(callArgs).not.toHaveProperty("anotacao");
   });
 });
+
 

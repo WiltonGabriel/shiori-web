@@ -1,4 +1,5 @@
 import type { TipoObra } from "./work.types";
+import type { ItemCatalogoResponse } from "./catalog.types";
 
 export interface UsuarioPerfilResponse {
   id: number;
@@ -21,9 +22,14 @@ export interface UsuarioPerfilPublicoResponse {
   apelido: string;
   fotoUrl?: string;
   descricao?: string;
+  fusoHorario?: string;
   pontosConfianca: number;
-  dataCriacao: string;
+  dataCriacao?: string;
   saoConexoes?: boolean;
+  estante?: {
+    content?: ItemCatalogoResponse[];
+    totalElements?: number;
+  } | ItemCatalogoResponse[];
 }
 
 export interface ConcluirOnboardingRequest {

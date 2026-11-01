@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildShelfItem } from "../../../test/fixtures";
-import { countByTab, filterByTab } from "./shelfFilters";
+import { applyAdvancedShelfFilters, countByTab, filterByTab } from "./shelfFilters";
 
 describe("shelfFilters", () => {
   const items = [
@@ -54,6 +54,60 @@ describe("shelfFilters", () => {
 
     it("retorna zeros para estante vazia", () => {
       expect(countByTab([]).TODOS).toBe(0);
+    });
+  });
+
+  describe("applyAdvancedShelfFilters", () => {
+    const richItems = [
+      buildShelfItem({
+        id: 1,
+        titulo: "Solo Leveling",
+        tituloOriginal: "Na Honjaman Level Up",
+        tipoObra: "MANHWA",
+        statusLeitura: "LENDO",
+        progressoAtual: 110,
+        avaliacaoPessoal: 9,
+        generos: ["Ação", "Fantasia"],
+        tags: ["Protagonista OP", "Dungeon"],
+        marcadorOndeParou: "Pág. 42 - Ilha Jeju",
+        ultimaDataLida: new Date().toISOString(),
+      }),
+      buildShelfItem({
+        id: 2,
+        titulo: "O Senhor dos Anéis",
+        tipoObra: "LIVRO",
+        statusLeitura: "LENDO",
+        progressoAtual: 15,
+        avaliacaoPessoal: 10,
+        generos: ["Fantasia", "Aventura"],
+        tags: ["Clássico"],
+        marcadorOndeParou: "Pág. 318 - Valfenda",
+        ultimaDataLida: "2024-01-15T12:00:00.000Z",
+      }),
+    ];
+
+    it("filtra por busca textual em título original, tag ou marcador de onde parou", () => {
+      expect(
+        applyAdvancedShelfFilters(richItems, { tab: "TODOS", searchQuery: "Honjaman" })
+      ).toHaveLength(1);
+      expect(
+        applyAdvancedShelfFilters(richItems, { tab: "TODOS", searchQuery: "Valfenda" })
+      ).toHaveLength(1);
+      expect(
+        applyAdvancedShelfFilters(richItems, { tab: "TODOS", searchQuery: "Protagonista OP" })
+      ).toHaveLength(1);
+    });
+
+    it("filtra por categoria, gênero/tag e data de leitura (TODAY)", () => {
+      expect(
+        applyAdvancedShelfFilters(richItems, { tab: "TODOS", category: "LIVRO" })
+      ).toHaveLength(1);
+      expect(
+        applyAdvancedShelfFilters(richItems, { tab: "TODOS", genreOrTag: "Dungeon" })
+      ).toHaveLength(1);
+      expect(
+        applyAdvancedShelfFilters(richItems, { tab: "TODOS", dateFilter: "TODAY" })
+      ).toHaveLength(1);
     });
   });
 });

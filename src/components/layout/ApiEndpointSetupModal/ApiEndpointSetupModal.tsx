@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Modal } from "../../ui/Modal/Modal";
 import { Button } from "../../ui/Button/Button";
+import { Input } from "../../ui/Input/Input";
 import { useApiEndpointStore } from "../../../store/apiEndpointStore";
+import { useAuthStore } from "../../../store/authStore";
 import { toast } from "../../../store/toastStore";
-import { Server, Activity, CheckCircle2, AlertCircle, HardDrive, ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
+import { Server, Activity, CheckCircle2, AlertCircle, User, Lock } from "lucide-react";
 import styles from "./ApiEndpointSetupModal.module.css";
-
-type SetupStep = "CHOICE" | "CONFIG_SERVER" | "CONFIRM_LOCAL";
 
 export const ApiEndpointSetupModal: React.FC = () => {
   const { isModalOpen } = useApiEndpointStore();
@@ -21,13 +21,17 @@ const ApiEndpointSetupModalContent: React.FC = () => {
     isTesting,
     lastCheckResult,
     closeModal,
-    setLocalMode,
     saveEndpoint,
     testConnection,
   } = useApiEndpointStore();
 
-  const [step, setStep] = useState<SetupStep>("CHOICE");
+  const { user, conectarConta } = useAuthStore();
+
   const [inputUrl, setInputUrl] = useState(currentEndpoint);
+  const [apelidoNoServidor, setApelidoNoServidor] = useState(user?.apelido || "");
+  const [senha, setSenha] = useState("");
+  const [isConnectingAccount, setIsConnectingAccount] = useState(false);
+  const [accountError, setAccountError] = useState("");
 
   const handleTest = async () => {
     if (!inputUrl.trim()) {
@@ -36,27 +40,53 @@ const ApiEndpointSetupModalContent: React.FC = () => {
     }
     const res = await testConnection(inputUrl.trim());
     if (res.ok) {
-      toast.success(res.message, "Hub Shiori Acessível");
+      toast.success(res.message, "Servidor Shiori Acessível");
     } else {
       toast.error(res.message, "Falha na Conexão");
     }
   };
 
-  const handleSaveServer = (e: React.FormEvent) => {
+  const handleSaveServer = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAccountError("");
+
     const cleanUrl = inputUrl.trim().replace(/\/+$/, "");
     if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
       toast.warning("A URL do endpoint deve iniciar com http:// ou https://");
       return;
     }
 
-    saveEndpoint(cleanUrl);
-    toast.success(`Hub Shiori conectado em: ${cleanUrl}`);
-  };
+    const cleanApelido = apelidoNoServidor.trim();
+    if (!cleanApelido) {
+      setAccountError("Informe qual apelido sua conta usará neste servidor.");
+      return;
+    }
+    if (!senha || senha.length < 6) {
+      setAccountError("Informe sua senha (mínimo 6 caracteres) para autenticar ou vincular sua conta neste servidor.");
+      return;
+    }
 
-  const handleConfirmLocal = () => {
-    setLocalMode();
-    toast.success("Modo Local ativado. Seus dados estão salvos com isolamento no navegador.");
+    try {
+      setIsConnectingAccount(true);
+      saveEndpoint(cleanUrl, false);
+      const connectedUser = await conectarConta({
+        apelido: cleanApelido,
+        senha,
+      });
+      toast.success(
+        `Conectado a ${cleanUrl} como @${connectedUser.apelido}! Sua estante foi sincronizada.`,
+        "Servidor e Conta Sincronizados"
+      );
+      closeModal();
+    } catch (err: any) {
+      const msg =
+        err.message ||
+        "Falha ao vincular sua conta neste servidor. Se o apelido já estiver em uso por outra pessoa, escolha um apelido diferente abaixo.";
+      setAccountError(msg);
+      toast.error(msg, "Conflito ou Falha na Conta");
+    } finally {
+      setIsConnectingAccount(false);
+    }
   };
 
   const handlePresetClick = (preset: string) => {
@@ -67,186 +97,149 @@ const ApiEndpointSetupModalContent: React.FC = () => {
     <Modal
       isOpen={isModalOpen}
       onClose={closeModal}
-      title={
-        step === "CHOICE"
-          ? "Bem-vindo ao Shiori 栞"
-          : step === "CONFIG_SERVER"
-          ? "Conectar ao Servidor Shiori"
-          : "Usar Shiori Localmente"
-      }
+      title="Conectar ao Servidor Shiori API"
     >
       <div className={styles.container}>
-        {/* ETAPA 1: ESCOLHA DE MODO */}
-        {step === "CHOICE" && (
-          <>
-            <div className={styles.stepIndicator}>Etapa 1 de 2 • Escolha como deseja usar o Shiori</div>
-            <p className={styles.welcomeIntro}>
-              O Shiori foi projetado para conceder total controle ao leitor. Você pode utilizá-lo de forma autônoma e privada no seu navegador ou conectar-se a uma instância do servidor Shiori para sincronização federada.
-            </p>
+        <form onSubmit={handleSaveServer} className={styles.form}>
+          <p className={styles.welcomeIntro}>
+            Conecte sua conta única a um servidor <strong>Shiori API</strong> para acessar o Catálogo Global, o Feed Social e sincronizar sua estante automaticamente.
+          </p>
 
-            <div className={styles.choiceGrid}>
-              <button
-                type="button"
-                className={styles.choiceCard}
-                onClick={() => setStep("CONFIRM_LOCAL")}
-              >
-                <div className={styles.choiceIcon}>
-                  <HardDrive size={22} />
-                </div>
-                <div className={styles.choiceTitle}>Modo 100% Local (Isolado)</div>
-                <div className={styles.choiceDesc}>
-                  Totalmente offline e privado. Sua estante e notas são salvas localmente no navegador, sem tráfego de dados para servidores externos.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                className={styles.choiceCard}
-                onClick={() => setStep("CONFIG_SERVER")}
-              >
-                <div className={styles.choiceIcon}>
-                  <Server size={22} />
-                </div>
-                <div className={styles.choiceTitle}>Conectar a um Servidor</div>
-                <div className={styles.choiceDesc}>
-                  Sincronização com sua instância ou comunidade Shiori API. Acesso ao catálogo global, busca assistida e backup contínuo.
-                </div>
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ETAPA 2A: CONFIRMAR USO LOCAL */}
-        {step === "CONFIRM_LOCAL" && (
-          <>
-            <div className={styles.stepIndicator}>Etapa 2 de 2 • Confirmação do Modo Local</div>
-            <div className={styles.localInfoBox}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--accent-emerald)" }}>
-                <ShieldCheck size={18} />
-                <strong>Privacidade e Isolamento Garantidos</strong>
-              </div>
-              <p>
-                No modo local, o Shiori não envia requisições a hubs remotos. Você pode exportar e importar seu histórico completo de leitura em JSON a qualquer instante na página de Configurações ou no cabeçalho da Estante.
-              </p>
-              <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                Você poderá conectar um servidor a qualquer momento através do ícone de Servidor na barra superior.
-              </p>
-            </div>
-
-            <div className={styles.actions}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="api-endpoint-input" className={styles.label}>
+              1. URL da Shiori API
+            </label>
+            <div className={styles.urlRow}>
+              <input
+                id="api-endpoint-input"
+                type="text"
+                className={styles.urlInput}
+                placeholder="http://localhost:8080 ou https://hub.shiori.app"
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+              />
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => setStep("CHOICE")}
+                onClick={handleTest}
+                isLoading={isTesting}
+                title="Testar acessibilidade e latência deste endpoint"
               >
-                <ArrowLeft size={14} />
-                <span>Voltar</span>
+                <Activity size={14} />
+                <span>Testar</span>
               </Button>
-              <Button
+            </div>
+          </div>
+
+          <div className={styles.presetsSection}>
+            <span className={styles.presetsLabel}>Sugestões rápidas:</span>
+            <div className={styles.presetsRow}>
+              <button
                 type="button"
-                variant="primary"
-                size="sm"
-                onClick={handleConfirmLocal}
+                className={styles.presetBtn}
+                onClick={() => handlePresetClick("http://localhost:8080")}
               >
-                <span>Iniciar em Modo Local</span>
-                <ArrowRight size={14} />
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* ETAPA 2B: CONFIGURAR SERVIDOR */}
-        {step === "CONFIG_SERVER" && (
-          <form onSubmit={handleSaveServer} className={styles.form}>
-            <div className={styles.stepIndicator}>Etapa 2 de 2 • Endereço da API</div>
-            <p className={styles.welcomeIntro}>
-              Informe o endereço da Shiori API (Hub) que você deseja conectar. Você pode testar a latência antes de salvar.
-            </p>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="api-endpoint-input" className={styles.label}>
-                URL da Shiori API (Hub)
-              </label>
-              <div className={styles.urlRow}>
-                <input
-                  id="api-endpoint-input"
-                  type="text"
-                  className={styles.urlInput}
-                  placeholder="http://localhost:8080 ou https://hub.shiori.app"
-                  value={inputUrl}
-                  onChange={(e) => setInputUrl(e.target.value)}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTest}
-                  isLoading={isTesting}
-                  title="Testar acessibilidade e latência deste endpoint"
-                >
-                  <Activity size={14} />
-                  <span>Testar</span>
-                </Button>
-              </div>
-            </div>
-
-            <div className={styles.presetsSection}>
-              <span className={styles.presetsLabel}>Sugestões rápidas:</span>
-              <div className={styles.presetsRow}>
+                http://localhost:8080 (Dev Local)
+              </button>
+              {typeof window !== "undefined" && window.location.hostname !== "localhost" && (
                 <button
                   type="button"
                   className={styles.presetBtn}
-                  onClick={() => handlePresetClick("http://localhost:8080")}
+                  onClick={() => handlePresetClick(window.location.origin)}
                 >
-                  http://localhost:8080 (Dev Local)
+                  {window.location.origin} (Origem Atual)
                 </button>
-                {typeof window !== "undefined" && window.location.hostname !== "localhost" && (
-                  <button
-                    type="button"
-                    className={styles.presetBtn}
-                    onClick={() => handlePresetClick(window.location.origin)}
-                  >
-                    {window.location.origin} (Origem Atual)
-                  </button>
-                )}
-              </div>
+              )}
             </div>
+          </div>
 
-            {lastCheckResult && (
+          {lastCheckResult && (
+            <div
+              className={`${styles.resultBox} ${
+                lastCheckResult.ok ? styles.resultSuccess : styles.resultError
+              }`}
+            >
+              {lastCheckResult.ok ? (
+                <CheckCircle2 size={16} />
+              ) : (
+                <AlertCircle size={16} />
+              )}
+              <span>{lastCheckResult.message}</span>
+            </div>
+          )}
+
+          <div
+            style={{
+              padding: "0.85rem 1rem",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-md)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
+            }}
+          >
+            <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--text-primary)" }}>
+              2. Seu Apelido e Senha nesta Conexão
+            </span>
+            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-secondary)", lineHeight: 1.45 }}>
+              Você pode manter seu apelido atual (<strong>@{user?.apelido || "leitor"}</strong>) ou informar outro apelido caso o seu já exista neste servidor.
+            </p>
+
+            {accountError && (
               <div
-                className={`${styles.resultBox} ${
-                  lastCheckResult.ok ? styles.resultSuccess : styles.resultError
-                }`}
+                style={{
+                  padding: "0.6rem 0.85rem",
+                  background: "var(--accent-rose-glow)",
+                  border: "1px solid rgba(244, 63, 94, 0.35)",
+                  borderRadius: "var(--radius-sm)",
+                  color: "var(--accent-rose)",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                }}
               >
-                {lastCheckResult.ok ? (
-                  <CheckCircle2 size={16} />
-                ) : (
-                  <AlertCircle size={16} />
-                )}
-                <span>{lastCheckResult.message}</span>
+                {accountError}
               </div>
             )}
 
-            <div className={styles.actions}>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setStep("CHOICE")}
-              >
-                <ArrowLeft size={14} />
-                <span>Voltar</span>
-              </Button>
-              <Button type="submit" variant="primary" size="sm">
-                <Server size={14} />
-                <span>Salvar e Conectar</span>
-              </Button>
-            </div>
-          </form>
-        )}
+            <Input
+              label="Apelido nesta conexão"
+              placeholder="Seu apelido no servidor..."
+              leadingIcon={<User size={15} />}
+              value={apelidoNoServidor}
+              onChange={(e) => setApelidoNoServidor(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Senha da sua conta"
+              type="password"
+              placeholder="Digite sua senha (mín. 6 caracteres)..."
+              leadingIcon={<Lock size={15} />}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className={styles.actions}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={closeModal}
+            >
+              <span>Cancelar</span>
+            </Button>
+            <Button type="submit" variant="primary" size="sm" isLoading={isConnectingAccount}>
+              <Server size={14} />
+              <span>Conectar e Sincronizar Estante</span>
+            </Button>
+          </div>
+        </form>
       </div>
     </Modal>
   );

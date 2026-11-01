@@ -3,9 +3,15 @@ import { CatalogService } from "../../../services/catalog.service";
 import { useAuthStore } from "../../../store/authStore";
 import { toast } from "../../../store/toastStore";
 import type { ItemCatalogoResponse } from "../../../types/catalog.types";
-import { countByTab, filterByTab, type FilterTab } from "../domain/shelfFilters";
+import {
+  countByTab,
+  applyAdvancedShelfFilters,
+  type FilterTab,
+  type ReadingDateFilter,
+  type ShelfSortOption,
+} from "../domain/shelfFilters";
 
-export type { FilterTab };
+export type { FilterTab, ReadingDateFilter, ShelfSortOption };
 
 export const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "TODOS", label: "Todos" },
@@ -23,6 +29,12 @@ export function useShelf() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>("TODOS");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedGenreOrTag, setSelectedGenreOrTag] = useState<string>("ALL");
+  const [dateFilter, setDateFilter] = useState<ReadingDateFilter>("ALL");
+  const [specificDate, setSpecificDate] = useState<string>("");
+  const [sortBy, setSortBy] = useState<ShelfSortOption>("LAST_READ");
 
   const loadShelf = useCallback(async () => {
     if (!isAuthenticated) {
@@ -67,7 +79,37 @@ export function useShelf() {
     };
   }, [isAuthenticated]);
 
-  const filteredItems = useMemo(() => filterByTab(items, activeTab), [items, activeTab]);
+  const filteredItems = useMemo(
+    () =>
+      applyAdvancedShelfFilters(items, {
+        tab: activeTab,
+        searchQuery,
+        category: selectedCategory,
+        genreOrTag: selectedGenreOrTag,
+        dateFilter,
+        specificDate,
+        sortBy,
+      }),
+    [
+      items,
+      activeTab,
+      searchQuery,
+      selectedCategory,
+      selectedGenreOrTag,
+      dateFilter,
+      specificDate,
+      sortBy,
+    ]
+  );
+
+  const availableShelfGenresAndTags = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      (item.generos || []).forEach((g) => set.add(g));
+      (item.tags || []).forEach((t) => set.add(t));
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [items]);
 
   const tabCounts = useMemo(() => countByTab(items), [items]);
 
@@ -157,6 +199,19 @@ export function useShelf() {
     tabCounts,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    selectedGenreOrTag,
+    setSelectedGenreOrTag,
+    dateFilter,
+    setDateFilter,
+    specificDate,
+    setSpecificDate,
+    sortBy,
+    setSortBy,
+    availableShelfGenresAndTags,
     loadShelf,
     handleQuickIncrement,
     handleUpdateMetaCapitulos,

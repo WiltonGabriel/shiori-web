@@ -10,9 +10,6 @@ import { OnboardingModal } from "../../features/profile/OnboardingModal";
 import { ToastContainer } from "../ui/Toast/ToastContainer";
 import { ApiEndpointSetupModal } from "./ApiEndpointSetupModal/ApiEndpointSetupModal";
 import { QuickSearchModal } from "./QuickSearchModal/QuickSearchModal";
-import { InitialProfileWizardModal } from "../../features/onboarding/InitialProfileWizardModal";
-import { LocalProfileRepository } from "../../services/storage/localProfileRepository";
-import { AuthService } from "../../services/auth.service";
 import { useAuthStore } from "../../store/authStore";
 import { useApiEndpointStore } from "../../store/apiEndpointStore";
 
@@ -20,9 +17,6 @@ export const AppLayout: React.FC = () => {
   const { user, isAuthenticated, isAuthModalOpen, openAuthModal, closeAuthModal } = useAuthStore();
   const { checkInitialSetup } = useApiEndpointStore();
   const [isQuickSearchOpen, setIsQuickSearchOpen] = React.useState(false);
-  const [isInitialWizardOpen, setIsInitialWizardOpen] = React.useState<boolean>(
-    () => !LocalProfileRepository.hasProfile() && !AuthService.getStoredUser()
-  );
 
   React.useEffect(() => {
     checkInitialSetup();
@@ -40,7 +34,7 @@ export const AppLayout: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const showOnboarding = Boolean(isAuthenticated && user && !user.onboardingConcluido);
+  const showOnboarding = Boolean(isAuthenticated && user && user.id > 0 && !user.onboardingConcluido);
 
   return (
     <div className={styles.layout}>
@@ -56,10 +50,6 @@ export const AppLayout: React.FC = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={closeAuthModal}
-      />
-      <InitialProfileWizardModal
-        isOpen={isInitialWizardOpen}
-        onClose={() => setIsInitialWizardOpen(false)}
       />
       <OnboardingModal isOpen={showOnboarding} />
       <ApiEndpointSetupModal />

@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { SettingsRepository } from "../../services/storage/settingsRepository";
-import { HubPairingSection } from "./components/HubPairingSection";
+import { CatalogService } from "../../services/catalog.service";
 import { FormatPreferenceSelector } from "../preferences/FormatPreferenceSelector";
 import {
   FormatPreferencesRepository,
@@ -224,14 +224,28 @@ export const SettingsPage: React.FC = () => {
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const content = event.target?.result as string;
         const parsed = JSON.parse(content);
         if (typeof parsed !== "object" || parsed === null) {
           throw new Error("Estrutura de JSON inválida.");
         }
-        toast.success(`Arquivo "${file.name}" verificado com integridade! Importação local concluída.`);
+        const itens = Array.isArray(parsed.itens)
+          ? parsed.itens
+          : Array.isArray(parsed.estante)
+          ? parsed.estante
+          : Array.isArray(parsed)
+          ? parsed
+          : [];
+        const resultado = await CatalogService.importarEstante({
+          itens,
+          substituirExistentes: true,
+          sobrescrever: true,
+        });
+        toast.success(
+          `Arquivo "${file.name}" importado! ${resultado.totalImportados} obra(s) restaurada(s) na sua estante.`
+        );
       } catch {
         toast.error("O arquivo selecionado não é um backup JSON válido do Shiori.");
       }
@@ -344,7 +358,7 @@ export const SettingsPage: React.FC = () => {
                     <span className={styles.settingLabel}>Endpoint da Instância Shiori</span>
                     <span className={styles.settingValue}>{currentEndpoint || "http://localhost:8080"}</span>
                     <span className={styles.settingDesc}>
-                      Endereço da API REST utilizado para catálogo global, busca assistida e federação.
+                      Endereço da Shiori API utilizado para catálogo global, busca assistida e sincronização da conta.
                     </span>
                   </div>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -388,9 +402,6 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
               </Card>
-
-              {/* Seção de Pareamento com Mesh/Hub Shiori */}
-              <HubPairingSection />
             </section>
           )}
 
@@ -465,10 +476,9 @@ export const SettingsPage: React.FC = () => {
               <Card className={styles.card}>
                 <div className={styles.settingRow}>
                   <div className={styles.settingInfo}>
-                    <span className={styles.settingLabel}>Privacidade da Minha Estante</span>
+                    <span className={styles.settingLabel}>Privacidade dos Itens da Estante</span>
                     <span className={styles.settingDesc}>
-                      As obras, progresso e dados pessoais de leitura são sempre estritamente privados por padrão.
-                      Não são compartilhados na rede nem expostos no catálogo colaborativo.
+                      Cada obra adicionada à sua estante possui controle individual de visibilidade (Público, Restrito às suas conexões ou Privado), e suas anotações pessoais são criptografadas.
                     </span>
                   </div>
                   <span
@@ -484,7 +494,7 @@ export const SettingsPage: React.FC = () => {
                       fontWeight: 700,
                     }}
                   >
-                    <ShieldCheck size={14} /> Estritamente Privado
+                    <ShieldCheck size={14} /> Controle por Obra
                   </span>
                 </div>
 

@@ -71,7 +71,7 @@ const QuickSearchModalContent: React.FC<QuickSearchModalContentProps> = ({ onClo
   const handleSelectWork = useCallback(
     (work: ObraResponse) => {
       onClose();
-      navigate(`/catalogo?q=${encodeURIComponent(work.tituloPrincipal)}`);
+      navigate(`/catalogo/${work.id}`);
     },
     [navigate, onClose]
   );

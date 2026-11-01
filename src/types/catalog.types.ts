@@ -29,7 +29,10 @@ export interface ItemCatalogoResponse {
   historicosLeitura: HistoricoLeituraResponse[];
   tipoObra?: string;
   titulo?: string;
+  tituloOriginal?: string;
+  sinopse?: string;
   capaUrl?: string;
+  bannerUrl?: string;
   totalCapitulos?: number;
   totalVolumes?: number;
   sincronizarMetadados?: boolean;
@@ -37,14 +40,22 @@ export interface ItemCatalogoResponse {
   totalCapitulosGlobal?: number;
   desvinculado?: boolean;
   generos?: string[];
+  tags?: string[];
+  marcadorOndeParou?: string;
+  dataInicioLeitura?: string;
+  ultimaDataLida?: string;
+  dataConclusaoLeitura?: string;
 }
 
 export interface AdicionarItemCatalogoRequest {
   obraId?: number;
   titulo?: string;
   tituloPersonalizado?: string;
+  tituloOriginal?: string;
+  sinopse?: string;
   capaUrl?: string;
   capaPersonalizada?: string;
+  bannerUrl?: string;
   tipoObra?: string;
   capituloAtual?: number;
   capituloInicial?: number;
@@ -59,6 +70,11 @@ export interface AdicionarItemCatalogoRequest {
   urlLeitura?: string;
   sincronizarMetadados?: boolean;
   generos?: string[];
+  tags?: string[];
+  marcadorOndeParou?: string;
+  dataInicioLeitura?: string;
+  ultimaDataLida?: string;
+  dataConclusaoLeitura?: string;
 }
 
 export interface RegistrarProgressoRequest {
@@ -67,6 +83,8 @@ export interface RegistrarProgressoRequest {
   nota?: number;
   anotacao?: string;
   statusLeitura?: StatusLeitura;
+  marcadorOndeParou?: string;
+  ultimaDataLida?: string;
 }
 
 export interface AtualizarVisibilidadeRequest {
@@ -80,7 +98,10 @@ export interface VincularObraRequest {
 
 export interface EstanteItemExportDTO {
   titulo: string;
+  tituloOriginal?: string;
+  sinopse?: string;
   capaUrl?: string;
+  bannerUrl?: string;
   tipoObra?: string;
   progressoAtual?: number;
   volumeAtual?: number;
@@ -93,6 +114,12 @@ export interface EstanteItemExportDTO {
   sincronizarMetadados?: boolean;
   obraGlobalId?: number;
   desvinculado?: boolean;
+  generos?: string[];
+  tags?: string[];
+  marcadorOndeParou?: string;
+  dataInicioLeitura?: string;
+  ultimaDataLida?: string;
+  dataConclusaoLeitura?: string;
   historicos?: {
     capituloInicial: number;
     capituloFinal: number;
@@ -100,6 +127,7 @@ export interface EstanteItemExportDTO {
     anotacoes?: string;
     dataLeitura: string;
   }[];
+  historicosLeitura?: HistoricoLeituraResponse[];
 }
 
 export interface EstanteExportDTO {
