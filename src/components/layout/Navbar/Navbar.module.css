@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 1.5rem;
+  gap: 0.5rem;
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
@@ -19,12 +20,14 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .logoLink {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  flex-shrink: 0;
 }
 
 .logoImg {
@@ -50,13 +53,27 @@
   border: 1px solid var(--hero-badge-border);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  display: inline-block;
+  display: none;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .versionBadge {
+    display: inline-block;
+  }
 }
 
 .right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .right {
+    gap: 0.75rem;
+  }
 }
 
 .searchTrigger {
@@ -72,6 +89,9 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   min-height: 36px;
+  min-width: 36px;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .searchTrigger:hover {
@@ -88,9 +108,15 @@
   .searchLabel {
     display: inline;
   }
+
+  .kbdSmall {
+    display: inline;
+  }
 }
 
 .kbdSmall {
+  display: none;
+  white-space: nowrap;
   font-family: monospace;
   font-size: 0.65rem;
   padding: 0.15rem 0.35rem;
@@ -111,6 +137,7 @@
   align-items: center;
   justify-content: center;
   min-height: auto;
+  flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-fast);
 }
@@ -149,4 +176,21 @@
   font-size: var(--text-xs);
   color: var(--brand-primary);
   font-weight: 600;
+}
+
+/* Em telas estreitas: ações secundárias ficam no BottomNav (Ajustes) */
+.hideOnMobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hideOnMobile {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 639px) {
+  .navbar {
+    padding: 0 0.85rem;
+  }
 }

@@ -75,7 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal, onOpenQuickSear
               <Avatar name={user.apelido || user.email} size="sm" />
             </Link>
 
-            <Link to="/configuracoes">
+            <Link to="/configuracoes" className={styles.hideOnMobile}>
               <Button
                 variant="ghost"
                 size="sm"

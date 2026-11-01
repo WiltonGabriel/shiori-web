@@ -163,6 +163,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .coverImg {
@@ -473,4 +475,124 @@
   font-weight: 700;
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius-sm);
+}
+
+/* ===================================================================
+ * BARRA DE BUSCA E FILTROS (Categoria, Gênero/Tag, Data Lida, Ordenação)
+ * =================================================================== */
+.filterBar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0.85rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.filterField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.filterSearch {
+  grid-column: 1 / -1;
+}
+
+.filterIcon {
+  position: absolute;
+  left: 0.8rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.filterControl {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--touch-target-min, 44px);
+  padding: 0.55rem 0.85rem;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  text-overflow: ellipsis;
+}
+
+.filterControlWithIcon {
+  padding-left: 2.35rem;
+}
+
+.filterControl::placeholder {
+  color: var(--text-muted);
+}
+
+.filterControl:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 2px var(--brand-glow);
+}
+
+.filterDateRow {
+  grid-column: 1 / -1;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.filterDateLabel {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.filterDateRow .filterControl {
+  width: auto;
+  flex: 1;
+}
+
+.filterClearRow {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.filterClearBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  border: none;
+  color: var(--brand-light);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filterClearBtn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .filterBar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .filterBar {
+    grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(0, 1fr));
+  }
+
+  .filterSearch {
+    grid-column: auto;
+  }
+
+  .filterDateRow,
+  .filterClearRow {
+    grid-column: 1 / -1;
+  }
 }

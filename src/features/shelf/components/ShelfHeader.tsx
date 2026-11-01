@@ -200,31 +200,26 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
 
       {/* Barra Completa de Busca, Filtros (Categoria, Gênero/Tag, Data Lida) e Ordenação */}
       {onSearchQueryChange && (
-        <div className="mt-3 p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
-          {/* Busca Rápida */}
-          <div className="lg:col-span-4 relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-            />
+        <div className={styles.filterBar}>
+          <div className={`${styles.filterField} ${styles.filterSearch}`}>
+            <Search size={15} className={styles.filterIcon} aria-hidden="true" />
             <input
-              type="text"
+              type="search"
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
               placeholder="Buscar por título, tag ou onde parou..."
               aria-label="Buscar na minha estante"
-              className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+              className={`${styles.filterControl} ${styles.filterControlWithIcon}`}
             />
           </div>
 
-          {/* Filtro por Categoria */}
-          <div className="lg:col-span-2 flex items-center gap-1.5">
-            <Filter size={13} className="text-[var(--text-muted)] shrink-0" />
+          <div className={styles.filterField}>
+            <Filter size={14} className={styles.filterIcon} aria-hidden="true" />
             <select
               value={selectedCategory}
               onChange={(e) => onCategoryChange?.(e.target.value)}
               aria-label="Filtrar por categoria"
-              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+              className={`${styles.filterControl} ${styles.filterControlWithIcon}`}
             >
               <option value="ALL">Todas as Categorias</option>
               {TODOS_FORMATOS.map((f) => (
@@ -235,14 +230,13 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
             </select>
           </div>
 
-          {/* Filtro por Gênero ou Tag */}
-          <div className="lg:col-span-2 flex items-center gap-1.5">
-            <Tag size={13} className="text-[var(--text-muted)] shrink-0" />
+          <div className={styles.filterField}>
+            <Tag size={14} className={styles.filterIcon} aria-hidden="true" />
             <select
               value={selectedGenreOrTag}
               onChange={(e) => onGenreOrTagChange?.(e.target.value)}
               aria-label="Filtrar por gênero ou tag"
-              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+              className={`${styles.filterControl} ${styles.filterControlWithIcon}`}
             >
               <option value="ALL">Todos os Gêneros &amp; Tags</option>
               {availableGenresAndTags.map((gt) => (
@@ -253,14 +247,13 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
             </select>
           </div>
 
-          {/* Filtro por Data de Leitura */}
-          <div className="lg:col-span-2 flex items-center gap-1.5">
-            <Calendar size={13} className="text-[var(--text-muted)] shrink-0" />
+          <div className={styles.filterField}>
+            <Calendar size={14} className={styles.filterIcon} aria-hidden="true" />
             <select
               value={dateFilter}
               onChange={(e) => onDateFilterChange?.(e.target.value as ReadingDateFilter)}
               aria-label="Filtrar por data de leitura"
-              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+              className={`${styles.filterControl} ${styles.filterControlWithIcon}`}
             >
               <option value="ALL">Qualquer Data Lida</option>
               <option value="TODAY">Lido Hoje</option>
@@ -271,14 +264,13 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
             </select>
           </div>
 
-          {/* Ordenação */}
-          <div className="lg:col-span-2 flex items-center gap-1.5">
-            <ArrowUpDown size={13} className="text-[var(--text-muted)] shrink-0" />
+          <div className={styles.filterField}>
+            <ArrowUpDown size={14} className={styles.filterIcon} aria-hidden="true" />
             <select
               value={sortBy}
               onChange={(e) => onSortByChange?.(e.target.value as ShelfSortOption)}
               aria-label="Ordenar estante"
-              className="w-full px-2.5 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+              className={`${styles.filterControl} ${styles.filterControlWithIcon}`}
             >
               <option value="LAST_READ">Ordenar: Última Leitura</option>
               <option value="RATING_DESC">Ordenar: Maior Nota</option>
@@ -288,24 +280,23 @@ export const ShelfHeader: React.FC<ShelfHeaderProps> = ({
           </div>
 
           {dateFilter === "SPECIFIC_DATE" && (
-            <div className="lg:col-span-4 flex items-center gap-2">
-              <span className="text-xs text-[var(--text-secondary)]">Data exata da leitura:</span>
+            <div className={`${styles.filterField} ${styles.filterDateRow}`}>
+              <label htmlFor="shelf-specific-date" className={styles.filterDateLabel}>
+                Data exata da leitura:
+              </label>
               <input
+                id="shelf-specific-date"
                 type="date"
                 value={specificDate}
                 onChange={(e) => onSpecificDateChange?.(e.target.value)}
-                className="px-2.5 py-1.5 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+                className={styles.filterControl}
               />
             </div>
           )}
 
           {hasActiveFilters && (
-            <div className="lg:col-span-12 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent-primary)] hover:underline"
-              >
+            <div className={styles.filterClearRow}>
+              <button type="button" onClick={handleClearFilters} className={styles.filterClearBtn}>
                 <X size={13} /> Limpar filtros ativos
               </button>
             </div>

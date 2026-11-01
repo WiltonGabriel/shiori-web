@@ -46,7 +46,7 @@ export const ShelfCard: React.FC<ShelfCardProps> = ({
 
   return (
     <div className={styles.shelfCard}>
-      <Link to={`/minha-estante/${item.id}`} className={styles.coverWrapper} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+      <Link to={`/minha-estante/${item.id}`} className={styles.coverWrapper}>
         {capaExibida ? (
           <img
             src={capaExibida}

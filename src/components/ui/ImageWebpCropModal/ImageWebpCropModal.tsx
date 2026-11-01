@@ -12,6 +12,7 @@ import {
   Link2,
   ClipboardPaste,
 } from "lucide-react";
+import styles from "./ImageWebpCropModal.module.css";
 
 export type CropTargetMode = "CAPA" | "BANNER" | "AMBOS";
 
@@ -328,26 +329,26 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+      className={styles.overlay}
       role="dialog"
       aria-modal="true"
       aria-label="Estúdio de Recorte e Conversão WebP"
     >
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div className={styles.dialog}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center text-[var(--accent-primary)]">
+        <div className={styles.header}>
+          <div className={styles.headerInfo}>
+            <div className={styles.headerIcon}>
               <Crop size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <h3 className={styles.title}>
                 Recorte & Otimização Automática WebP
-                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span className={styles.badge}>
                   WebP Leve
                 </span>
               </h3>
-              <p className="text-xs text-[var(--text-secondary)]">
+              <p className={styles.subtitle}>
                 Ajuste o enquadramento da Capa (2:3) e do Banner (16:9). Tudo é convertido para WebP automaticamente.
               </p>
             </div>
@@ -355,20 +356,20 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+            className={styles.iconButton}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5 overflow-y-auto space-y-4">
+        <div className={styles.body}>
           {/* Seletor de Modo: Capa, Banner ou Ambos */}
-          <div className="flex flex-wrap items-center justify-between gap-2 bg-[var(--bg-elevated)]/50 p-2 rounded-xl border border-[var(--border-subtle)]">
-            <span className="text-xs font-semibold text-[var(--text-secondary)] px-2">
+          <div className={styles.modeBar}>
+            <span className={styles.modeLabel}>
               O que deseja gerar desta imagem?
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className={styles.modeOptions}>
               {(
                 [
                   { id: "AMBOS", label: "Capa (2:3) + Banner (16:9)" },
@@ -384,11 +385,7 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
                     if (opt.id === "CAPA") setActivePreviewTab("CAPA");
                     if (opt.id === "BANNER") setActivePreviewTab("BANNER");
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    mode === opt.id
-                      ? "bg-[var(--accent-primary)] text-white shadow-sm"
-                      : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]"
-                  }`}
+                  className={`${styles.chip} ${mode === opt.id ? styles.chipActive : ""}`}
                 >
                   {opt.label}
                 </button>
@@ -397,35 +394,35 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
           </div>
 
           {/* Barra de Entrada de Imagem (Upload, Colar ou URL) */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <div className={styles.inputBar}>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="hidden"
+              className={styles.visuallyHidden}
               data-testid="webp-crop-file-input"
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="sm:col-span-5 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[var(--accent-primary)]/15 hover:bg-[var(--accent-primary)]/25 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 text-xs font-bold transition-colors"
+              className={styles.uploadButton}
             >
               <Upload size={15} /> Escolher Arquivo de Imagem
             </button>
 
-            <div className="sm:col-span-7 flex items-center gap-1.5">
-              <div className="relative flex-1">
+            <div className={styles.urlGroup}>
+              <div className={styles.urlField}>
                 <Link2
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  className={styles.urlIcon}
                 />
                 <input
                   type="url"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder="Ou cole URL da imagem / pressione Ctrl+V..."
-                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
+                  className={styles.urlInput}
                 />
               </div>
               <button
@@ -435,7 +432,7 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
                     setSourceDataUrl(urlInput.trim());
                   }
                 }}
-                className="px-3 py-2 rounded-xl bg-[var(--bg-elevated)] hover:bg-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] border border-[var(--border-subtle)]"
+                className={styles.secondaryButton}
               >
                 Carregar
               </button>
@@ -443,33 +440,25 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+            <div className={styles.error}>
               {errorMsg}
             </div>
           )}
 
           {/* Abas de alternância entre visualização da Capa (2:3) e Banner (16:9) quando em modo AMBOS */}
           {mode === "AMBOS" && loadedImage && (
-            <div className="flex items-center justify-center gap-2">
+            <div className={styles.previewTabs}>
               <button
                 type="button"
                 onClick={() => setActivePreviewTab("CAPA")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                  activePreviewTab === "CAPA"
-                    ? "bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-[var(--accent-primary)]"
-                    : "bg-[var(--bg-elevated)] border-[var(--border-subtle)] text-[var(--text-secondary)]"
-                }`}
+                className={`${styles.tab} ${activePreviewTab === "CAPA" ? styles.tabActive : ""}`}
               >
                 1. Ajustar Capa Vertical (2:3) {webpStats.capaKb ? `• ~${webpStats.capaKb} KB` : ""}
               </button>
               <button
                 type="button"
                 onClick={() => setActivePreviewTab("BANNER")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                  activePreviewTab === "BANNER"
-                    ? "bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-[var(--accent-primary)]"
-                    : "bg-[var(--bg-elevated)] border-[var(--border-subtle)] text-[var(--text-secondary)]"
-                }`}
+                className={`${styles.tab} ${activePreviewTab === "BANNER" ? styles.tabActive : ""}`}
               >
                 2. Ajustar Banner Panorâmico (16:9) {webpStats.bannerKb ? `• ~${webpStats.bannerKb} KB` : ""}
               </button>
@@ -477,22 +466,20 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
           )}
 
           {/* Área de Preview e Arraste no Canvas */}
-          <div className="relative flex flex-col items-center justify-center bg-slate-950/90 border border-[var(--border-subtle)] rounded-2xl p-4 min-h-[270px] select-none overflow-hidden">
+          <div className={styles.previewArea}>
             {loadedImage ? (
               <>
-                <div className="text-[11px] text-slate-300 mb-2 flex items-center gap-2">
+                <div className={styles.previewHint}>
                   <span>
                     Arraste a imagem abaixo para posicionar o recorte de{" "}
-                    <strong className="text-white">
+                    <strong>
                       {activePreviewTab === "BANNER" ? "Banner 16:9 (1280×720)" : "Capa 2:3 (600×900)"}
                     </strong>
                   </span>
                 </div>
                 <div
-                  className={`relative overflow-hidden rounded-xl border-2 border-[var(--accent-primary)] shadow-xl cursor-grab active:cursor-grabbing ${
-                    activePreviewTab === "BANNER"
-                      ? "w-full max-w-[460px] aspect-video"
-                      : "w-[190px] sm:w-[210px] aspect-[2/3]"
+                  className={`${styles.canvasFrame} ${
+                    activePreviewTab === "BANNER" ? styles.canvasFrameBanner : styles.canvasFrameCover
                   }`}
                 >
                   <canvas
@@ -500,22 +487,22 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
-                    className="w-full h-full object-contain block touch-none"
+                    className={styles.canvas}
                   />
                 </div>
               </>
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center text-center py-10 px-4 cursor-pointer group"
+                className={styles.emptyState}
               >
-                <div className="w-14 h-14 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] group-hover:border-[var(--accent-primary)]/40 transition-colors mb-3">
+                <div className={styles.emptyIcon}>
                   <ImageIcon size={26} />
                 </div>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  Clique para enviar uma imagem ou pressione <kbd className="px-1.5 py-0.5 text-xs bg-[var(--bg-elevated)] rounded border border-[var(--border-subtle)]">Ctrl+V</kbd>
+                <p className={styles.emptyTitle}>
+                  Clique para enviar uma imagem ou pressione <kbd className={styles.kbd}>Ctrl+V</kbd>
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-1 flex items-center gap-1">
+                <p className={styles.emptyHint}>
                   <ClipboardPaste size={12} /> Conversão instantânea para WebP de alta eficiência
                 </p>
               </div>
@@ -524,22 +511,22 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
 
           {/* Controles de Zoom, Posição e Qualidade WebP */}
           {loadedImage && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--bg-elevated)]/40 p-3.5 rounded-xl border border-[var(--border-subtle)]">
+            <div className={styles.controls}>
               <div>
-                <label className="flex items-center justify-between text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
-                  <span className="flex items-center gap-1">
+                <label className={styles.controlLabel}>
+                  <span className={styles.controlTitle}>
                     <ZoomIn size={12} /> Zoom ({currentTransform.zoom.toFixed(2)}x)
                   </span>
                   <button
                     type="button"
                     onClick={() => updateCurrentTransform({ zoom: 1, offsetX: 0, offsetY: 0 })}
-                    className="text-[10px] text-[var(--accent-primary)] hover:underline flex items-center gap-0.5"
+                    className={styles.resetButton}
                   >
                     <RotateCcw size={10} /> Resetar
                   </button>
                 </label>
-                <div className="flex items-center gap-2">
-                  <ZoomOut size={13} className="text-[var(--text-muted)]" />
+                <div className={styles.sliderRow}>
+                  <ZoomOut size={13} className={styles.sliderIcon} />
                   <input
                     type="range"
                     min={1}
@@ -547,14 +534,14 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
                     step={0.05}
                     value={currentTransform.zoom}
                     onChange={(e) => updateCurrentTransform({ zoom: Number(e.target.value) })}
-                    className="w-full accent-[var(--accent-primary)]"
+                    className={styles.slider}
                   />
-                  <ZoomIn size={13} className="text-[var(--text-muted)]" />
+                  <ZoomIn size={13} className={styles.sliderIcon} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
+                <label className={styles.controlLabel}>
                   Enquadramento Vertical ({currentTransform.offsetY}%)
                 </label>
                 <input
@@ -564,16 +551,16 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
                   step={1}
                   value={currentTransform.offsetY}
                   onChange={(e) => updateCurrentTransform({ offsetY: Number(e.target.value) })}
-                  className="w-full accent-[var(--accent-primary)]"
+                  className={styles.slider}
                 />
               </div>
 
               <div>
-                <label className="flex items-center justify-between text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
-                  <span className="flex items-center gap-1">
-                    <Sparkles size={12} className="text-emerald-400" /> Compressão WebP ({Math.round(quality * 100)}%)
+                <label className={styles.controlLabel}>
+                  <span className={styles.controlTitle}>
+                    <Sparkles size={12} className={styles.sparkIcon} /> Compressão WebP ({Math.round(quality * 100)}%)
                   </span>
-                  <span className="text-[10px] font-mono text-emerald-400">
+                  <span className={styles.sizeStat}>
                     {activePreviewTab === "BANNER"
                       ? webpStats.bannerKb
                         ? `~${webpStats.bannerKb} KB`
@@ -590,7 +577,7 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
                   step={0.05}
                   value={quality}
                   onChange={(e) => setQuality(Number(e.target.value))}
-                  className="w-full accent-emerald-500"
+                  className={styles.sliderEmerald}
                 />
               </div>
             </div>
@@ -598,11 +585,11 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-[var(--border-subtle)] bg-[var(--bg-elevated)]/60">
+        <div className={styles.footer}>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
+            className={styles.ghostButton}
           >
             Cancelar
           </button>
@@ -610,7 +597,7 @@ export const ImageWebpCropModal: React.FC<ImageWebpCropModalProps> = ({
             type="button"
             disabled={!loadedImage || isProcessing}
             onClick={handleApplyWebp}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--accent-primary)] hover:opacity-95 disabled:opacity-50 text-white text-xs font-bold shadow-lg transition-all"
+            className={styles.primaryButton}
           >
             <Check size={15} />
             {isProcessing

@@ -455,16 +455,16 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
         /* ========================================================================= */
         /* PASSO 1: ESCOLHA DO FORMATO LITERÁRIO BASEADO NAS PREFERÊNCIAS DO USUÁRIO */
         /* ========================================================================= */
-        <div className="flex flex-col gap-4 py-1">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+        <div className={styles.stepOneContainer}>
+          <div className={styles.stepOneIntro}>
+            <h3 className={styles.stepOneTitle}>
               1. Qual é a categoria da obra que você está adicionando?
             </h3>
-            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+            <p className={styles.stepOneDesc}>
               Selecione o formato da obra. O catálogo adaptará automaticamente os gêneros,
               as marcações de leitura e a terminologia para este tipo de publicação.
               {allowedFormats.length < TODOS_FORMATOS.length && (
-                <span className="block mt-1 text-[11px] text-[var(--accent-primary)] font-medium">
+                <span className={styles.stepOnePreferenceNote}>
                   * Exibindo apenas os formatos ativos de acordo com suas preferências de leitura.
                 </span>
               )}
@@ -690,8 +690,8 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
 
             <div className={styles.fieldGroup}>
               <label htmlFor="exact-bookmark" className={styles.fieldLabel}>
-                <span className="inline-flex items-center gap-1">
-                  <Bookmark size={13} className="text-[var(--accent-primary)]" /> Onde Parou Exatamente (opcional)
+                <span className={styles.labelWithIcon}>
+                  <Bookmark size={13} className={styles.iconBrand} /> Onde Parou Exatamente (opcional)
                 </span>
               </label>
               <input
@@ -744,7 +744,7 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
           <div className={styles.twoCols}>
             <div className={styles.fieldGroup}>
               <label htmlFor="start-reading-date" className={styles.fieldLabel}>
-                <span className="inline-flex items-center gap-1">
+                <span className={styles.labelWithIcon}>
                   <Calendar size={13} /> Data em que Começou a Ler (opcional)
                 </span>
               </label>
@@ -759,7 +759,7 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
 
             <div className={styles.fieldGroup}>
               <label htmlFor="last-reading-date" className={styles.fieldLabel}>
-                <span className="inline-flex items-center gap-1">
+                <span className={styles.labelWithIcon}>
                   <Calendar size={13} /> Data da Última Leitura (opcional)
                 </span>
               </label>
@@ -774,29 +774,29 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
           </div>
 
           {/* CAPA (2:3) + BANNER (16:9) COM CONVERSÃO WEBP E RECORTE + LINK PRIVADO */}
-          <div className="p-3.5 rounded-xl bg-[var(--bg-elevated)]/45 border border-[var(--border-subtle)] space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-emerald-400" />
+          <div className={styles.mediaStudioCard}>
+            <div className={styles.mediaStudioHeader}>
+              <div className={styles.mediaStudioInfo}>
+                <span className={styles.mediaStudioTitle}>
+                  <Sparkles size={14} className={styles.iconEmerald} />
                   Capa (2:3) &amp; Banner (16:9) com Recorte e Conversão WebP
                 </span>
-                <span className="text-[11px] text-[var(--text-muted)] block">
+                <span className={styles.mediaStudioSub}>
                   Faça upload de uma imagem para abrir o pop-up de recorte e converter automaticamente para WebP leve.
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className={styles.mediaStudioActions}>
                 <input
                   ref={quickFileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleQuickImageUpload}
-                  className="hidden"
+                  className={styles.visuallyHidden}
                 />
                 <button
                   type="button"
                   onClick={() => quickFileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent-primary)] text-white text-xs font-bold shadow-sm hover:opacity-95 transition-all"
+                  className={styles.uploadWebpBtn}
                 >
                   <Upload size={13} /> Upload &amp; Recortar WebP
                 </button>
@@ -807,7 +807,7 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
                     setCropInitialMode("AMBOS");
                     setIsCropModalOpen(true);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] text-xs font-semibold hover:bg-[var(--bg-elevated)] transition-all"
+                  className={styles.openStudioBtn}
                 >
                   <Crop size={13} /> Abrir Estúdio de Recorte
                 </button>
@@ -815,32 +815,32 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
             </div>
 
             {(capaUrl || bannerUrl) && (
-              <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div className={styles.mediaPreviewRow}>
                 {capaUrl && (
-                  <div className="flex items-center gap-2 bg-[var(--bg-surface)] p-2 rounded-lg border border-[var(--border-subtle)]">
+                  <div className={styles.mediaPreviewItem}>
                     <img
                       src={capaUrl}
                       alt="Preview Capa"
-                      className="w-10 h-14 object-cover rounded border border-[var(--border-subtle)]"
+                      className={styles.coverThumb}
                     />
-                    <div className="text-[11px]">
-                      <span className="font-bold text-[var(--text-primary)] block">Capa (2:3) Pronta</span>
-                      <span className="text-emerald-400">
+                    <div className={styles.mediaPreviewMeta}>
+                      <span className={styles.mediaPreviewLabel}>Capa (2:3) Pronta</span>
+                      <span className={styles.mediaPreviewBadge}>
                         {capaUrl.startsWith("data:image/webp") ? "Formato WebP Otimizado" : "Imagem definida"}
                       </span>
                     </div>
                   </div>
                 )}
                 {bannerUrl && (
-                  <div className="flex items-center gap-2 bg-[var(--bg-surface)] p-2 rounded-lg border border-[var(--border-subtle)]">
+                  <div className={styles.mediaPreviewItem}>
                     <img
                       src={bannerUrl}
                       alt="Preview Banner"
-                      className="w-24 h-14 object-cover rounded border border-[var(--border-subtle)]"
+                      className={styles.bannerThumb}
                     />
-                    <div className="text-[11px]">
-                      <span className="font-bold text-[var(--text-primary)] block">Banner (16:9) Pronto</span>
-                      <span className="text-emerald-400">
+                    <div className={styles.mediaPreviewMeta}>
+                      <span className={styles.mediaPreviewLabel}>Banner (16:9) Pronto</span>
+                      <span className={styles.mediaPreviewBadge}>
                         {bannerUrl.startsWith("data:image/webp") ? "Formato WebP Otimizado" : "Banner definido"}
                       </span>
                     </div>
@@ -909,16 +909,15 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
           {/* TAGS PERSONALIZADAS / TEMÁTICAS */}
           <div className={styles.fieldGroup}>
             <label htmlFor="custom-tag-input" className={styles.fieldLabel}>
-              <span className="inline-flex items-center gap-1">
-                <Tag size={13} className="text-[var(--accent-primary)]" /> Tags Personalizadas &amp; Temas (opcional)
+              <span className={styles.labelWithIcon}>
+                <Tag size={13} className={styles.iconBrand} /> Tags Personalizadas &amp; Temas (opcional)
               </span>
             </label>
-            <div className="flex items-center gap-2">
+            <div className={styles.tagInputRow}>
               <input
                 id="custom-tag-input"
                 type="text"
-                className={styles.fieldInput}
-                style={{ flex: 1 }}
+                className={`${styles.fieldInput} ${styles.tagInputField}`}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -935,17 +934,14 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
             </div>
 
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
+              <div className={styles.tagsList}>
                 {tags.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                  >
+                  <span key={t} className={styles.tagPill}>
                     #{t}
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
-                      className="hover:text-white"
+                      className={styles.tagRemoveBtn}
                       aria-label={`Remover tag ${t}`}
                     >
                       <X size={12} />
@@ -956,8 +952,8 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
             )}
 
             {existingShelfTags.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                <span className="text-[11px] text-[var(--text-muted)]">Suas tags recentes:</span>
+              <div className={styles.recentTagsRow}>
+                <span className={styles.recentTagsLabel}>Suas tags recentes:</span>
                 {existingShelfTags
                   .filter((t) => !tags.includes(t))
                   .slice(0, 8)
@@ -966,7 +962,7 @@ const AddWorkToShelfModalContent: React.FC<AddWorkToShelfModalProps> = ({
                       key={t}
                       type="button"
                       onClick={() => handleAddTag(t)}
-                      className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] hover:bg-[var(--border-subtle)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
+                      className={styles.recentTagBtn}
                     >
                       + #{t}
                     </button>

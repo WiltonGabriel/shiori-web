@@ -1,0 +1,460 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.intro {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Abas */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 0.4rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  color: var(--brand-primary);
+  border-bottom-color: var(--brand-primary);
+  background: var(--brand-glow);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* Escopo de exportação */
+.scopeGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.scopeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 44px;
+  padding: 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.scopeCard:hover {
+  border-color: var(--border-light);
+}
+
+.scopeCardActive {
+  background: var(--brand-glow);
+  border-color: var(--brand-primary);
+  color: var(--text-primary);
+}
+
+.scopeTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.scopeDesc {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Campos e listas */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.listHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+.listHeading {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.listActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.linkButtonPrimary,
+.linkButtonMuted {
+  min-height: 40px;
+  padding: 0 0.25rem;
+  background: transparent;
+  border: none;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.linkButtonPrimary {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.linkButtonMuted {
+  color: var(--text-muted);
+}
+
+.linkButtonPrimary:hover,
+.linkButtonMuted:hover {
+  text-decoration: underline;
+}
+
+.separator {
+  color: var(--text-muted);
+}
+
+.workList {
+  max-height: 13rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.workRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  cursor: pointer;
+}
+
+.workRow:last-child {
+  border-bottom: none;
+}
+
+.workRow:hover {
+  background: var(--bg-elevated);
+}
+
+.workRowMain {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.checkIcon,
+.checkIconActive {
+  flex-shrink: 0;
+}
+
+.checkIcon {
+  color: var(--text-muted);
+}
+
+.checkIconActive {
+  color: var(--brand-primary);
+}
+
+.workText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.workTitle {
+  display: block;
+  min-width: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workMeta {
+  display: block;
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workText .workMeta {
+  flex-shrink: 1;
+}
+
+.cover,
+.coverPlaceholder {
+  width: 28px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+}
+
+.cover {
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+}
+
+.coverPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.replaceLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.replaceLabel input {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+/* Formato de saída */
+.formatBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.formatOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.formatButton {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.formatButtonActive {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--text-on-brand);
+}
+
+/* Importação */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.dropzone {
+  padding: 1.25rem 1rem;
+  background: var(--bg-surface);
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: border-color 0.15s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--brand-primary);
+}
+
+.dropzoneIcon {
+  margin-bottom: 0.5rem;
+  color: var(--brand-primary);
+}
+
+.dropzoneTitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dropzoneHint {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.loadedFiles {
+  margin-top: 0.75rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--accent-emerald);
+}
+
+/* Rodapé */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.secondaryButton,
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.secondaryButton:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.primaryButton {
+  background: var(--brand-primary);
+  border: none;
+  color: var(--text-on-brand);
+  box-shadow: var(--shadow-glow);
+  text-align: center;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--brand-dark);
+}
+
+.primaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (min-width: 601px) {
+  .scopeGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .tab {
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.4rem 0.25rem;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .secondaryButton,
+  .primaryButton {
+    width: 100%;
+  }
+}

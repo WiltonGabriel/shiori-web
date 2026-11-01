@@ -1,11 +1,9 @@
 import React, { useState, useRef } from "react";
 import {
-  X,
   Download,
   Upload,
   CheckSquare,
   Square,
-  FileJson,
   Check,
   Layers,
   FileText,
@@ -18,6 +16,8 @@ import type {
 } from "../../../types/catalog.types";
 import { TIPO_OBRA_LABELS, type TipoObra } from "../../../types/work.types";
 import { toast } from "../../../store/toastStore";
+import { Modal } from "../../../components/ui/Modal/Modal";
+import styles from "./ShelfPortabilityModal.module.css";
 
 interface ShelfPortabilityModalProps {
   isOpen: boolean;
@@ -202,69 +202,44 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Central de Backup: Importar e Exportar em Série ou Individual"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Central de Backup e Portabilidade (.JSON)"
     >
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center text-[var(--accent-primary)]">
-              <FileJson size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-[var(--text-primary)]">
-                Central de Backup e Portabilidade (.JSON)
-              </h3>
-              <p className="text-xs text-[var(--text-secondary)]">
-                Exporte ou importe 1 obra individual ou várias obras em série (inclui capas/banners WebP, tags e onde parou).
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
+      <div className={styles.container}>
+        <p className={styles.intro}>
+          Exporte ou importe 1 obra individual ou várias obras em série (inclui capas/banners WebP, tags e onde parou).
+        </p>
 
         {/* Tabs */}
-        <div className="grid grid-cols-2 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/30">
+        <div className={styles.tabs} role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "EXPORT"}
             onClick={() => setActiveTab("EXPORT")}
-            className={`py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all ${
-              activeTab === "EXPORT"
-                ? "border-[var(--accent-primary)] text-[var(--accent-primary)] bg-[var(--accent-primary)]/10"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`${styles.tab} ${activeTab === "EXPORT" ? styles.tabActive : ""}`}
           >
             <Download size={15} /> Exportar (Em Série ou 1 Obra)
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "IMPORT"}
             onClick={() => setActiveTab("IMPORT")}
-            className={`py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all ${
-              activeTab === "IMPORT"
-                ? "border-[var(--accent-primary)] text-[var(--accent-primary)] bg-[var(--accent-primary)]/10"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`${styles.tab} ${activeTab === "IMPORT" ? styles.tabActive : ""}`}
           >
             <Upload size={15} /> Importar (1 ou Vários Arquivos)
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto space-y-4 flex-1">
+        <div className={styles.content}>
           {activeTab === "EXPORT" ? (
             <>
               {/* Escopo de Exportação */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className={styles.scopeGrid}>
                 {(
                   [
                     {
@@ -291,31 +266,28 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
                     key={opt.id}
                     type="button"
                     onClick={() => setExportScope(opt.id)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      exportScope === opt.id
-                        ? "bg-[var(--accent-primary)]/15 border-[var(--accent-primary)] text-[var(--text-primary)]"
-                        : "bg-[var(--bg-elevated)]/40 border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                    }`}
+                    className={`${styles.scopeCard} ${exportScope === opt.id ? styles.scopeCardActive : ""}`}
                   >
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+                    <span className={styles.scopeTitle}>
                       {opt.icon}
                       <span>{opt.title}</span>
-                    </div>
-                    <p className="text-[11px] text-[var(--text-muted)] mt-1">{opt.desc}</p>
+                    </span>
+                    <span className={styles.scopeDesc}>{opt.desc}</span>
                   </button>
                 ))}
               </div>
 
               {/* Seleção de 1 Obra */}
               {exportScope === "SINGLE" && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[var(--text-secondary)]">
+                <div className={styles.field}>
+                  <label htmlFor="portability-single-select" className={styles.fieldLabel}>
                     Escolha a obra que deseja exportar:
                   </label>
                   <select
+                    id="portability-single-select"
                     value={singleExportId}
                     onChange={(e) => setSingleExportId(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
+                    className={styles.select}
                   >
                     {shelfItems.map((it) => (
                       <option key={it.id} value={it.id}>
@@ -328,31 +300,31 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
 
               {/* Seleção Múltipla em Série */}
               {exportScope === "SELECTED" && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                <div className={styles.field}>
+                  <div className={styles.listHeader}>
+                    <span className={styles.fieldLabel}>
                       Obras selecionadas ({selectedExportIds.length} de {shelfItems.length}):
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className={styles.listActions}>
                       <button
                         type="button"
                         onClick={() => setSelectedExportIds(shelfItems.map((i) => i.id))}
-                        className="text-xs text-[var(--accent-primary)] hover:underline font-semibold"
+                        className={styles.linkButtonPrimary}
                       >
                         Marcar todas
                       </button>
-                      <span className="text-[var(--text-muted)]">•</span>
+                      <span className={styles.separator}>•</span>
                       <button
                         type="button"
                         onClick={() => setSelectedExportIds([])}
-                        className="text-xs text-[var(--text-muted)] hover:underline"
+                        className={styles.linkButtonMuted}
                       >
                         Limpar
                       </button>
                     </div>
                   </div>
 
-                  <div className="max-h-52 overflow-y-auto border border-[var(--border-subtle)] rounded-xl divide-y divide-[var(--border-subtle)] bg-[var(--bg-base)]">
+                  <div className={styles.workList}>
                     {shelfItems.map((it) => {
                       const checked = selectedExportIds.includes(it.id);
                       return (
@@ -360,19 +332,17 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
                           key={it.id}
                           type="button"
                           onClick={() => toggleExportId(it.id)}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-left hover:bg-[var(--bg-elevated)]/60 transition-colors"
+                          className={styles.workRow}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
+                          <span className={styles.workRowMain}>
                             {checked ? (
-                              <CheckSquare size={15} className="text-[var(--accent-primary)] shrink-0" />
+                              <CheckSquare size={16} className={styles.checkIconActive} />
                             ) : (
-                              <Square size={15} className="text-[var(--text-muted)] shrink-0" />
+                              <Square size={16} className={styles.checkIcon} />
                             )}
-                            <span className="text-xs font-semibold text-[var(--text-primary)] truncate">
-                              {it.titulo || it.obraTitulo}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-[var(--text-muted)] shrink-0 ml-2">
+                            <span className={styles.workTitle}>{it.titulo || it.obraTitulo}</span>
+                          </span>
+                          <span className={styles.workMeta}>
                             {TIPO_OBRA_LABELS[(it.tipoObra as TipoObra) || "MANGA"] || it.tipoObra} • Cap. {it.progressoAtual || 0}
                           </span>
                         </button>
@@ -384,30 +354,22 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
 
               {/* Formato do Arquivo quando exportando múltiplas obras */}
               {exportScope !== "SINGLE" && (
-                <div className="p-3 rounded-xl bg-[var(--bg-elevated)]/40 border border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                <div className={styles.formatBox}>
+                  <span className={styles.fieldLabel}>
                     Formato de saída para exportação em série:
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className={styles.formatOptions}>
                     <button
                       type="button"
                       onClick={() => setExportFormat("UNIFIED")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-                        exportFormat === "UNIFIED"
-                          ? "bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]"
-                          : "bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)]"
-                      }`}
+                      className={`${styles.formatButton} ${exportFormat === "UNIFIED" ? styles.formatButtonActive : ""}`}
                     >
                       1 Arquivo Unificado (.json)
                     </button>
                     <button
                       type="button"
                       onClick={() => setExportFormat("SEPARATE_FILES")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-                        exportFormat === "SEPARATE_FILES"
-                          ? "bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]"
-                          : "bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)]"
-                      }`}
+                      className={`${styles.formatButton} ${exportFormat === "SEPARATE_FILES" ? styles.formatButtonActive : ""}`}
                     >
                       Arquivos Individuais por Obra
                     </button>
@@ -424,56 +386,58 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
                 accept=".json"
                 multiple
                 onChange={handleFilesSelected}
-                className="hidden"
+                className={styles.visuallyHidden}
+                tabIndex={-1}
+                aria-hidden="true"
                 data-testid="portability-import-input"
               />
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--accent-primary)] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[var(--bg-elevated)]/30"
+                className={styles.dropzone}
               >
-                <Upload size={26} className="mx-auto mb-2 text-[var(--accent-primary)]" />
-                <p className="text-sm font-bold text-[var(--text-primary)]">
+                <Upload size={26} className={styles.dropzoneIcon} />
+                <p className={styles.dropzoneTitle}>
                   Clique para escolher 1 ou vários arquivos de backup (.json)
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">
+                <p className={styles.dropzoneHint}>
                   Suporta backups de 1 obra individual ou da estante inteira em série.
                 </p>
                 {loadedFileNames.length > 0 && (
-                  <div className="mt-3 text-xs text-emerald-400 font-semibold">
+                  <div className={styles.loadedFiles}>
                     Arquivos carregados: {loadedFileNames.join(", ")}
                   </div>
                 )}
               </div>
 
               {parsedImportItems.length > 0 && (
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[var(--text-primary)]">
+                <div className={styles.field}>
+                  <div className={styles.listHeader}>
+                    <span className={styles.listHeading}>
                       Obras encontradas para importar ({selectedImportIndexes.length} de {parsedImportItems.length}):
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className={styles.listActions}>
                       <button
                         type="button"
                         onClick={() =>
                           setSelectedImportIndexes(parsedImportItems.map((_, idx) => idx))
                         }
-                        className="text-xs text-[var(--accent-primary)] hover:underline font-semibold"
+                        className={styles.linkButtonPrimary}
                       >
                         Selecionar todas
                       </button>
-                      <span className="text-[var(--text-muted)]">•</span>
+                      <span className={styles.separator}>•</span>
                       <button
                         type="button"
                         onClick={() => setSelectedImportIndexes([])}
-                        className="text-xs text-[var(--text-muted)] hover:underline"
+                        className={styles.linkButtonMuted}
                       >
                         Desmarcar
                       </button>
                     </div>
                   </div>
 
-                  <div className="max-h-52 overflow-y-auto border border-[var(--border-subtle)] rounded-xl divide-y divide-[var(--border-subtle)] bg-[var(--bg-base)]">
+                  <div className={styles.workList}>
                     {parsedImportItems.map((item, idx) => {
                       const checked = selectedImportIndexes.includes(idx);
                       return (
@@ -481,41 +445,39 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
                           key={`${item.titulo}-${idx}`}
                           type="button"
                           onClick={() => toggleImportIndex(idx)}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-left hover:bg-[var(--bg-elevated)]/60"
+                          className={styles.workRow}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
+                          <span className={styles.workRowMain}>
                             {checked ? (
-                              <CheckSquare size={15} className="text-[var(--accent-primary)] shrink-0" />
+                              <CheckSquare size={16} className={styles.checkIconActive} />
                             ) : (
-                              <Square size={15} className="text-[var(--text-muted)] shrink-0" />
+                              <Square size={16} className={styles.checkIcon} />
                             )}
                             {item.capaUrl ? (
                               <img
                                 src={item.capaUrl}
                                 alt={item.titulo}
-                                className="w-7 h-10 object-cover rounded border border-[var(--border-subtle)] shrink-0"
+                                className={styles.cover}
                               />
                             ) : (
-                              <div className="w-7 h-10 rounded bg-[var(--bg-elevated)] flex items-center justify-center shrink-0">
+                              <span className={styles.coverPlaceholder}>
                                 <BookOpen size={12} />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <span className="text-xs font-semibold text-[var(--text-primary)] block truncate">
-                                {item.titulo}
                               </span>
-                              <span className="text-[11px] text-[var(--text-muted)] block truncate">
+                            )}
+                            <span className={styles.workText}>
+                              <span className={styles.workTitle}>{item.titulo}</span>
+                              <span className={styles.workMeta}>
                                 {item.tipoObra || "MANGA"} • Cap. {item.progressoAtual || 0}
                                 {item.marcadorOndeParou ? ` • ${item.marcadorOndeParou}` : ""}
                               </span>
-                            </div>
-                          </div>
+                            </span>
+                          </span>
                         </button>
                       );
                     })}
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer pt-1">
+                  <label className={styles.replaceLabel}>
                     <input
                       type="checkbox"
                       checked={replaceExisting}
@@ -530,12 +492,8 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-[var(--border-subtle)] bg-[var(--bg-elevated)]/60">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
-          >
+        <div className={styles.footer}>
+          <button type="button" onClick={onClose} className={styles.secondaryButton}>
             Fechar
           </button>
 
@@ -544,7 +502,7 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
               type="button"
               disabled={isProcessing || shelfItems.length === 0}
               onClick={handleExecuteExport}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--accent-primary)] hover:opacity-95 disabled:opacity-50 text-white text-xs font-bold shadow-lg"
+              className={styles.primaryButton}
             >
               <Download size={15} />
               {exportScope === "SINGLE"
@@ -558,7 +516,7 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
               type="button"
               disabled={isProcessing || selectedImportIndexes.length === 0}
               onClick={handleExecuteImport}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--accent-primary)] hover:opacity-95 disabled:opacity-50 text-white text-xs font-bold shadow-lg"
+              className={styles.primaryButton}
             >
               <Check size={15} />
               Importar {selectedImportIndexes.length} Obra(s) para a Estante
@@ -566,6 +524,6 @@ export const ShelfPortabilityModal: React.FC<ShelfPortabilityModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
